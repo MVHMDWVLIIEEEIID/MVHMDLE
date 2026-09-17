@@ -1,15 +1,19 @@
+import { useState } from "react";
 import CountDown from "./CountDown";
 
 export default function Header({ mode, streak, hearts = 0, onModeClick }) {
   const MAX_HEARTS = 5;
   const isDailyMode = mode?.toLowerCase().includes("daily");
+  const [HoverState, SetHoverState] = useState(false);
   return (
     <header className="flex justify-around items-center px-16 w-full text-2xl dark:bg-gameLight h-full dark:text-gameDark">
       <h1
-        className={`font-bold ${onModeClick ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+        className={`font-bold w-64 text-center ${onModeClick ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
         onClick={onModeClick}
+        onMouseEnter={() => SetHoverState(true)}
+        onMouseLeave={() => SetHoverState(false)}
       >
-        {mode}
+        {HoverState ? "Back To Menu" : mode}
       </h1>
       <div className="flex items-center gap-6">
         {isDailyMode ? (
