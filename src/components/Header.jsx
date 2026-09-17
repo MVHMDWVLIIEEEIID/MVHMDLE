@@ -1,4 +1,4 @@
-import Countdown from "./Countdown";
+import CountDown from "./CountDown";
 
 export default function Header({ mode, streak, hearts = 0, onModeClick }) {
   const MAX_HEARTS = 5;
