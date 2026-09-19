@@ -54,7 +54,13 @@ export default function useDailyGame(mode = "daily") {
     const epoch = new Date("2024-01-01T00:00:00").setHours(0, 0, 0, 0);
     const today = new Date().setHours(0, 0, 0, 0);
     const daysPassed = Math.round((today - epoch) / (1000 * 60 * 60 * 24));
-    return Math.abs(daysPassed % solutionWords.length);
+
+    // This math scrambles the daysPassed number.
+    // Every player on Earth with the same 'daysPassed' gets the identical result.
+    const seed = (daysPassed * 9301 + 49297) % 233280;
+    const randomFraction = seed / 233280;
+
+    return Math.floor(randomFraction * solutionWords.length);
   };
 
   const targetWord = solutionWords[getDailyIndex()];
@@ -132,11 +138,14 @@ export default function useDailyGame(mode = "daily") {
       nextMidnight.setDate(now.getDate() + 1);
       nextMidnight.setHours(0, 0, 0, 0);
 
-      timerId = setTimeout(() => {
-        const nextDay = new Date().toDateString();
-        setTodayString((prev) => (prev === nextDay ? prev : nextDay));
-        scheduleNextDay();
-      }, nextMidnight.getTime() - now.getTime() + 50);
+      timerId = setTimeout(
+        () => {
+          const nextDay = new Date().toDateString();
+          setTodayString((prev) => (prev === nextDay ? prev : nextDay));
+          scheduleNextDay();
+        },
+        nextMidnight.getTime() - now.getTime() + 50,
+      );
     };
 
     scheduleNextDay();
@@ -167,7 +176,9 @@ export default function useDailyGame(mode = "daily") {
     lastDate.setHours(0, 0, 0, 0);
     currentToday.setHours(0, 0, 0, 0);
 
-    const dayDiff = Math.floor((currentToday - lastDate) / (1000 * 60 * 60 * 24));
+    const dayDiff = Math.floor(
+      (currentToday - lastDate) / (1000 * 60 * 60 * 24),
+    );
     if (dayDiff > 1) {
       setStreak(0);
     }
