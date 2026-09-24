@@ -1,5 +1,13 @@
 export default function Keyboard({ letters, lastChanged }) {
   if (!letters || typeof letters !== "object") return null;
+
+  const pressKey = (letter) => {
+    const key = letter === "back" ? "Backspace" : letter === "enter" ? "Enter" : letter;
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }),
+    );
+  };
+
   // Arrays to hold the JSX elements for each keyboard row
   let lettersRow1 = [];
   let lettersRow2 = [];
@@ -20,30 +28,48 @@ export default function Keyboard({ letters, lastChanged }) {
     const animationClass = isTarget ? "animate-pop" : "";
 
     // Base classes for Tailwind styling
-    const baseStyle = `center rounded m-0.5 text-gameDark pointer-events-none text-2xl font-bold uppercase transition-all duration-500 ease-in-out ${color} ${animationClass}`;
+    const baseStyle = `center rounded m-0.5 text-gameDark text-2xl font-bold uppercase transition-all duration-500 ease-in-out active:scale-95 ${color} ${animationClass}`;
 
     // --- Row Distribution ---
     // Categorize letters into their respective rows based on the 'row' property
     if (keyData.row === 1) {
       lettersRow1.push(
-        <div key={uniqueKey} className={`${baseStyle} aspect-square w-14`}>
+        <button
+          key={uniqueKey}
+          type="button"
+          aria-label={letter}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => pressKey(letter)}
+          className={`${baseStyle} aspect-square w-14`}
+        >
           {letter}
-        </div>,
+        </button>,
       );
     } else if (keyData.row === 2) {
       lettersRow2.push(
-        <div key={uniqueKey} className={`${baseStyle} aspect-square w-14`}>
+        <button
+          key={uniqueKey}
+          type="button"
+          aria-label={letter}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => pressKey(letter)}
+          className={`${baseStyle} aspect-square w-14`}
+        >
           {letter}
-        </div>,
+        </button>,
       );
     } else if (keyData.row === 3) {
       lettersRow3.push(
-        <div
+        <button
           key={uniqueKey}
+          type="button"
+          aria-label={letter === "enter" ? "Enter" : letter === "back" ? "Backspace" : letter}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => pressKey(letter)}
           className={`${baseStyle} h-14 ${keyData.big ? " flex-1.5 px-4" : " flex-1"}`}
         >
-          {letter}
-        </div>,
+          {letter === "enter" ? "Enter" : letter === "back" ? "Back" : letter}
+        </button>,
       );
     }
   });

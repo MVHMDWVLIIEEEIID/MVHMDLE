@@ -91,9 +91,11 @@ export default function BossTiles({
         e.preventDefault();
         return;
       }
+      if (e.repeat) return;
       const key = e.key;
 
       if (key === "Enter") {
+        e.preventDefault();
         if (isSubmittingRef.current) return;
         if (gameState !== "playing" || turn >= rowCount) {
           if (gameState === "won") onGameOver("won-already");
@@ -158,6 +160,7 @@ export default function BossTiles({
             setCurrentGuess("");
           }
         }
+        return;
       }
 
       if (gameState !== "playing" || turn >= rowCount) return;

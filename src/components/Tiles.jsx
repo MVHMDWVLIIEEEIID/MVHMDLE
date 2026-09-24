@@ -58,9 +58,11 @@ export default function Tiles({
         e.preventDefault();
         return;
       }
+      if (e.repeat) return;
       const key = e.key;
 
       if (key === "Enter") {
+        e.preventDefault();
         if (isSubmittingRef.current) return;
         // [UPDATED] Use rowCount instead of hardcoded 6
         if (gameState !== "playing" || turn >= rowCount) {
@@ -92,6 +94,7 @@ export default function Tiles({
           setLastSubmittedTurn(turn);
           setCurrentGuess("");
         }
+        return;
       }
 
       // [UPDATED] Use rowCount check
