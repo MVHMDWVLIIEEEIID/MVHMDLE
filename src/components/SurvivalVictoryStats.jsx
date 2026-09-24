@@ -9,7 +9,7 @@ export default function SurvivalVictoryStats({
 
   return (
     <div className="min-h-screen bg-gameDark text-gameLight flex items-center justify-center px-6">
-      <div className="w-full max-w-4xl rounded-3xl border border-gameLight/20 bg-white/[0.03] p-8 md:p-10 shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+      <div className="w-full max-w-4xl rounded-3xl border border-gameLight/20 bg-white/3 p-8 md:p-10 shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-black tracking-tight uppercase">
             Run Complete

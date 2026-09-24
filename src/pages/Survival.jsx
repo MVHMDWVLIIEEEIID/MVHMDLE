@@ -23,6 +23,7 @@ export default function Survival({ mode = "survival" }) {
   const RESULT_ANIMATION_MS = 1500;
   const BOSS_KEY_REVEAL_START_MS = 300;
   const BOSS_KEY_REVEAL_STEP_MS = 150;
+  const BOSS_TILE_REVEAL_TOTAL_MS = 1300;
   const MAX_HEARTS = 5;
   const [gameResetKey, setGameResetKey] = useState(0);
   const [toasts, setToasts] = useState([]);
@@ -32,6 +33,8 @@ export default function Survival({ mode = "survival" }) {
   });
   const [bossKeyboardView, setBossKeyboardView] = useState("all");
   const bossRevealTimersRef = useRef([]);
+  const bossFocusTimerRef = useRef(null);
+  const previousBossSolvedRef = useRef(null);
   const prevBossGuessesLenRef = useRef(0);
   const bossRevealInitializedRef = useRef(false);
   const transitionLockRef = useRef(false);
@@ -136,6 +139,68 @@ export default function Survival({ mode = "survival" }) {
       setBossKeyboardView("all");
     }
   }, [game.isBossGame, game.bossWordCount, bossKeyboardView]);
+
+  useEffect(() => {
+    if (!game.isBossGame || game.bossWordCount <= 1) {
+      if (bossFocusTimerRef.current) {
+        clearTimeout(bossFocusTimerRef.current);
+        bossFocusTimerRef.current = null;
+      }
+      previousBossSolvedRef.current = null;
+      return undefined;
+    }
+
+    const solvedWords = game.targetWords.map((word, wordIdx) =>
+      game.guesses.some(
+        (guess) => guess.word === word?.toLowerCase() && guess.wordIndex === wordIdx,
+      ),
+    );
+    const previousSolvedWords = previousBossSolvedRef.current;
+    const focusedWordWasSolved =
+      typeof bossKeyboardView === "number" &&
+      previousSolvedWords &&
+      !previousSolvedWords[bossKeyboardView] &&
+      solvedWords[bossKeyboardView];
+
+    previousBossSolvedRef.current = solvedWords;
+
+    if (solvedWords.every(Boolean)) {
+      if (bossKeyboardView === "all") return undefined;
+      if (bossFocusTimerRef.current) clearTimeout(bossFocusTimerRef.current);
+      bossFocusTimerRef.current = setTimeout(() => {
+        setBossKeyboardView("all");
+        bossFocusTimerRef.current = null;
+      }, BOSS_TILE_REVEAL_TOTAL_MS);
+      return () => {
+        if (bossFocusTimerRef.current) {
+          clearTimeout(bossFocusTimerRef.current);
+          bossFocusTimerRef.current = null;
+        }
+      };
+    }
+
+    if (!focusedWordWasSolved) return undefined;
+
+    if (bossFocusTimerRef.current) clearTimeout(bossFocusTimerRef.current);
+    bossFocusTimerRef.current = setTimeout(() => {
+      const nextUnsolvedWord = solvedWords.findIndex((isSolved) => !isSolved);
+      setBossKeyboardView(nextUnsolvedWord === -1 ? "all" : nextUnsolvedWord);
+      bossFocusTimerRef.current = null;
+    }, BOSS_TILE_REVEAL_TOTAL_MS);
+
+    return () => {
+      if (bossFocusTimerRef.current) {
+        clearTimeout(bossFocusTimerRef.current);
+        bossFocusTimerRef.current = null;
+      }
+    };
+  }, [
+    game.guesses,
+    game.targetWords,
+    game.isBossGame,
+    game.bossWordCount,
+    bossKeyboardView,
+  ]);
 
   const getBossKeyboardLineColors = () => {
     if (!game.isBossGame || game.bossWordCount <= 1) return {};
@@ -772,6 +837,11 @@ export default function Survival({ mode = "survival" }) {
               rowCount={game.maxTurns}
               selectedView={bossKeyboardView}
               onWordClick={setBossKeyboardView}
+              onWordDoubleClick={(wordIdx) =>
+                setBossKeyboardView((currentView) =>
+                  currentView === wordIdx ? "all" : wordIdx,
+                )
+              }
             />
           ) : (
             <Tiles

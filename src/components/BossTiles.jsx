@@ -3,6 +3,8 @@ import data from "../data/words.json";
 
 const RESIZE_BEFORE_FLIP_MS = 300;
 const FLIP_TOTAL_MS = 1250;
+const WORD_CLICK_DELAY_MS = 250;
+const TILE_REVEAL_STEP_MS = 100;
 
 export default function BossTiles({
   guesses = [],
@@ -15,6 +17,7 @@ export default function BossTiles({
   rowCount = 6,
   selectedView = "all",
   onWordClick,
+  onWordDoubleClick,
 }) {
   const [currentGuess, setCurrentGuess] = useState("");
   const [solutions] = useState(targetWords.map((w) => w?.toLowerCase()));
@@ -22,6 +25,14 @@ export default function BossTiles({
   const [pendingFlipTurn, setPendingFlipTurn] = useState(-1);
   const [lastSubmittedTurn, setLastSubmittedTurn] = useState(-1);
   const isSubmittingRef = useRef(false);
+  const wordClickTimerRef = useRef(null);
+
+  useEffect(
+    () => () => {
+      if (wordClickTimerRef.current) clearTimeout(wordClickTimerRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     isSubmittingRef.current = false;
@@ -288,8 +299,7 @@ export default function BossTiles({
           wordIdx,
           key: `${wordIdx}-${i}-${j}`,
           className: `
-              text-center ${tileWidthClass} ${tileHeight} ${tileMargin} ${fontSize} text-gameDark pointer-events-none font-bold uppercase border-2 transition-[height,font-size,background-color,border-color,color,opacity] duration-300 ease-out outline-none rounded aspect-square
-              ${selectedView === "all" || selectedView === wordIdx ? "opacity-100" : "opacity-60"}
+              text-center ${tileWidthClass} ${tileHeight} ${tileMargin} ${fontSize} text-gameDark pointer-events-none font-bold uppercase border-2 transition-[height,font-size,background-color,border-color,color] duration-300 ease-out outline-none rounded aspect-square
               ${shouldFlip ? "animate-flip" : ""}
               ${isNextTile ? "border-gameGreen!" : "border-transparent"}
               ${shake && isCurrentRow ? "animate-shake border-red-500!" : ""}
@@ -298,8 +308,8 @@ export default function BossTiles({
           value: char || "",
           style: shouldFlip
             ? {
-                animationDelay: `${j * 150}ms`,
-                transitionDelay: `${j * 150 + 300}ms`,
+                animationDelay: `${j * TILE_REVEAL_STEP_MS}ms`,
+                transitionDelay: `${j * TILE_REVEAL_STEP_MS + 300}ms`,
               }
             : {},
         });
@@ -327,8 +337,27 @@ export default function BossTiles({
         return (
           <div
             key={wordIdx}
-            className="flex flex-col items-center m-0 p-0"
-            onClick={() => onWordClick?.(wordIdx)}
+            className={`flex flex-col items-center m-0 p-0 transition-opacity duration-200 ease-out ${
+              selectedView === "all" || selectedView === wordIdx
+                ? "opacity-100"
+                : "opacity-60"
+            }`}
+            onClick={() => {
+              if (wordClickTimerRef.current) {
+                clearTimeout(wordClickTimerRef.current);
+              }
+              wordClickTimerRef.current = setTimeout(() => {
+                onWordClick?.(wordIdx);
+                wordClickTimerRef.current = null;
+              }, WORD_CLICK_DELAY_MS);
+            }}
+            onDoubleClick={() => {
+              if (wordClickTimerRef.current) {
+                clearTimeout(wordClickTimerRef.current);
+                wordClickTimerRef.current = null;
+              }
+              onWordDoubleClick?.(wordIdx);
+            }}
           >
             <div
               className={`grid grid-cols-5 ${isFourWordMode ? "gap-px" : isTwoWordMode ? "gap-1" : "gap-x-1 gap-y-0.5"} w-fit`}
