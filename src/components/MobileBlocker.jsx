@@ -29,19 +29,19 @@ export default function MobileBlocker({ children }) {
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            class="w-16 h-16 text-red-600"
+            className="w-16 h-16 text-red-600"
           >
             <path
               d="M12 2L1 21H23L12 2Z"
               stroke="currentColor"
-              stroke-width="2"
-              stroke-linejoin="round"
+              strokeWidth="2"
+              strokeLinejoin="round"
             />
             <path
               d="M12 9V14"
               stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
+              strokeWidth="2"
+              strokeLinecap="round"
             />
             <circle cx="12" cy="17" r="1" fill="currentColor" />
           </svg>

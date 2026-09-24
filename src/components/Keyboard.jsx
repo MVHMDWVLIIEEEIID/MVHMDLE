@@ -2,7 +2,7 @@ export default function Keyboard({ letters, lastChanged }) {
   if (!letters || typeof letters !== "object") return null;
 
   const pressKey = (letter) => {
-    const key = letter === "back" ? "Backspace" : letter === "enter" ? "Enter" : letter;
+    const key = letter === "enter" ? "Backspace" : letter === "back" ? "Enter" : letter;
     window.dispatchEvent(
       new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }),
     );
@@ -63,12 +63,12 @@ export default function Keyboard({ letters, lastChanged }) {
         <button
           key={uniqueKey}
           type="button"
-          aria-label={letter === "enter" ? "Enter" : letter === "back" ? "Backspace" : letter}
+          aria-label={letter === "enter" ? "Backspace" : letter === "back" ? "Enter" : letter}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => pressKey(letter)}
           className={`${baseStyle} h-14 ${keyData.big ? " flex-1.5 px-4" : " flex-1"}`}
         >
-          {letter === "enter" ? "Enter" : letter === "back" ? "Back" : letter}
+          {letter === "enter" ? "Back" : letter === "back" ? "Enter" : letter}
         </button>,
       );
     }

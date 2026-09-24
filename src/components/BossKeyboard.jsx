@@ -9,7 +9,7 @@ export default function BossKeyboard({
   if (!letters || typeof letters !== "object") return null;
 
   const pressKey = (letter) => {
-    const key = letter === "back" ? "Backspace" : letter === "enter" ? "Enter" : letter;
+    const key = letter === "enter" ? "Backspace" : letter === "back" ? "Enter" : letter;
     window.dispatchEvent(
       new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }),
     );
@@ -79,14 +79,14 @@ export default function BossKeyboard({
         <button
           key={uniqueKey}
           type="button"
-          aria-label={letter === "enter" ? "Enter" : letter === "back" ? "Backspace" : letter}
+          aria-label={letter === "enter" ? "Backspace" : letter === "back" ? "Enter" : letter}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => pressKey(letter)}
           className={`${baseStyle} h-14 ${keyData.big ? "flex-1.5 px-4" : "flex-1"} relative overflow-hidden flex items-center justify-center`}
         >
           {letter === "enter" || letter === "back" ? (
             <span className="relative z-10 text-2xl font-bold leading-none">
-              {letter === "enter" ? "Enter" : "Back"}
+              {letter === "enter" ? "Back" : "Enter"}
             </span>
           ) : (
             keyContent
