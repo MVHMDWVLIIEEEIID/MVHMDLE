@@ -761,6 +761,8 @@ export default function Survival({ mode = "survival" }) {
               onGameOver={handleGameOver}
               addToast={addToast}
               rowCount={game.maxTurns}
+              selectedView={bossKeyboardView}
+              onWordClick={setBossKeyboardView}
             />
           ) : (
             <Tiles

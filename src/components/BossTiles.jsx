@@ -13,6 +13,8 @@ export default function BossTiles({
   onGameOver,
   addToast,
   rowCount = 6,
+  selectedView = "all",
+  onWordClick,
 }) {
   const [currentGuess, setCurrentGuess] = useState("");
   const [solutions] = useState(targetWords.map((w) => w?.toLowerCase()));
@@ -224,7 +226,6 @@ export default function BossTiles({
 
       // Check if this row has a guess for this word (by row index)
       const rowGuess = guessByRow[i];
-      const isCorrectRow = guessByRow[i]?.word === solution;
       const rowHasGuess = Boolean(rowGuess);
       const isPendingRevealRow = i === pendingFlipTurn && rowHasGuess;
       const shouldFlip = i === lastSubmittedTurn && rowHasGuess;
@@ -280,7 +281,7 @@ export default function BossTiles({
           key: `${wordIdx}-${i}-${j}`,
           className: `
               text-center ${tileWidthClass} ${tileHeight} ${tileMargin} ${fontSize} text-gameDark pointer-events-none font-bold uppercase border-2 transition-[height,font-size,background-color,border-color,color,opacity] duration-300 ease-out outline-none rounded aspect-square
-              ${isCurrentRow || isCorrectRow ? "opacity-100" : "opacity-60"}
+              ${selectedView === "all" || selectedView === wordIdx ? "opacity-100" : "opacity-60"}
               ${shouldFlip ? "animate-flip" : ""}
               ${isNextTile ? "border-gameGreen!" : "border-transparent"}
               ${shake && isCurrentRow ? "animate-shake border-red-500!" : ""}
@@ -316,7 +317,11 @@ export default function BossTiles({
         const isSolved = wordGuesses.some((g) => g.word === solution);
 
         return (
-          <div key={wordIdx} className="flex flex-col items-center m-0 p-0">
+          <div
+            key={wordIdx}
+            className="flex flex-col items-center m-0 p-0"
+            onClick={() => onWordClick?.(wordIdx)}
+          >
             <div
               className={`grid grid-cols-5 ${isFourWordMode ? "gap-px" : isTwoWordMode ? "gap-1" : "gap-x-1 gap-y-0.5"} w-fit`}
             >
