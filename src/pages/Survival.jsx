@@ -751,9 +751,18 @@ export default function Survival({ mode = "survival" }) {
               turn={game.turn}
               targetWords={game.targetWords}
               gameState={game.gameState}
-              onGuessSubmit={(g, wordIdx) =>
+              onGuessSubmit={(g, wordIdx, triggerShake, onDuplicateWord) =>
                 (() => {
-                  const accepted = game.submitGuess(g, wordIdx, handleGameOver);
+                  const accepted = game.submitGuess(
+                    g,
+                    wordIdx,
+                    handleGameOver,
+                    () => {
+                      triggerShake?.();
+                      addToast("This word is banned", "error");
+                    },
+                    onDuplicateWord,
+                  );
                   if (accepted) progress.addWordsTyped(1);
                   return accepted;
                 })()
@@ -771,8 +780,17 @@ export default function Survival({ mode = "survival" }) {
               turn={game.turn}
               targetWord={game.targetWord}
               gameState={game.gameState}
-              onGuessSubmit={(g) => {
-                const accepted = game.submitGuess(g, 0, handleGameOver);
+              onGuessSubmit={(g, _wordIdx, triggerShake, onDuplicateWord) => {
+                const accepted = game.submitGuess(
+                  g,
+                  0,
+                  handleGameOver,
+                  () => {
+                    triggerShake?.();
+                    addToast("This word is banned", "error");
+                  },
+                  onDuplicateWord,
+                );
                 if (accepted) progress.addWordsTyped(1);
                 return accepted;
               }}

@@ -15,6 +15,7 @@ export default function useSurvivalGame(mode) {
   const IS_BOSS_GAME_KEY = `wordle-is-boss-${mode}`;
   const BOSS_WORD_COUNT_KEY = `wordle-boss-word-count-${mode}`;
   const GAME_STATE_KEY = `${mode}-game-state`;
+  const BANNED_OPENING_WORDS_KEY = `${mode}-banned-opening-words`;
 
   const getInitialLetters = () => ({
     q: { color: " bg-gameLight ", row: 1 },
@@ -49,6 +50,11 @@ export default function useSurvivalGame(mode) {
 
   const SOLUTION_WORD_COUNT = 2315;
   const solutionWords = useMemo(() => data.slice(0, SOLUTION_WORD_COUNT), []);
+  const [bannedOpeningWords, setBannedOpeningWords] = useState(() => {
+    const saved = secureStorage.getItem(BANNED_OPENING_WORDS_KEY, []);
+    if (!Array.isArray(saved)) return [];
+    return [...new Set(saved.filter((word) => typeof word === "string").map((word) => word.toLowerCase()))];
+  });
   const getAllSolutionIndices = useCallback(() => {
     return Array.from({ length: solutionWords.length }, (_, idx) => idx);
   }, [solutionWords.length]);
@@ -57,6 +63,12 @@ export default function useSurvivalGame(mode) {
     if (!Array.isArray(pool) || pool.length === 0) return null;
     return pool[Math.floor(Math.random() * pool.length)];
   }, []);
+
+  const getEligibleSolutionIndices = useCallback(
+    (pool) =>
+      pool.filter((idx) => !bannedOpeningWords.includes(solutionWords[idx])),
+    [bannedOpeningWords, solutionWords],
+  );
 
   const pickDistinctIndices = useCallback((count, pool = []) => {
     const picked = [];
@@ -111,6 +123,11 @@ export default function useSurvivalGame(mode) {
     },
   );
 
+  const eligibleSolutionIndices = useMemo(
+    () => getEligibleSolutionIndices(availableSolutionIndices),
+    [availableSolutionIndices, getEligibleSolutionIndices],
+  );
+
   // [NEW] Game type info
   const gameTypeInfo = getGameTypeInfo(gameCount);
   const [isBossGame, setIsBossGame] = useState(() => {
@@ -131,9 +148,14 @@ export default function useSurvivalGame(mode) {
 
   // [UPDATED] Random Index(es) - uses secureStorage
   const [random, setRandom] = useState(() => {
+    const savedBannedWords = secureStorage.getItem(BANNED_OPENING_WORDS_KEY, []);
+    const bannedWords = Array.isArray(savedBannedWords) ? savedBannedWords : [];
+    const eligibleIndices = availableSolutionIndices.filter(
+      (idx) => !bannedWords.includes(solutionWords[idx]),
+    );
     return secureStorage.getItem(
       INDEX_KEY,
-      getRandomFromPool(availableSolutionIndices),
+      getRandomFromPool(eligibleIndices),
     );
   });
 
@@ -232,6 +254,10 @@ export default function useSurvivalGame(mode) {
   }, [gameCount, GAME_COUNT_KEY]);
 
   useEffect(() => {
+    secureStorage.setItem(BANNED_OPENING_WORDS_KEY, bannedOpeningWords);
+  }, [bannedOpeningWords, BANNED_OPENING_WORDS_KEY]);
+
+  useEffect(() => {
     secureStorage.setItem(AVAILABLE_INDICES_KEY, availableSolutionIndices);
   }, [availableSolutionIndices, AVAILABLE_INDICES_KEY]);
 
@@ -268,7 +294,7 @@ export default function useSurvivalGame(mode) {
     if (isBossGame && bossWordCount > 1 && randomIndices.length === 0) {
       const newIndices = pickDistinctIndices(
         bossWordCount,
-        availableSolutionIndices,
+        eligibleSolutionIndices,
       );
       setRandomIndices(newIndices);
     }
@@ -277,7 +303,7 @@ export default function useSurvivalGame(mode) {
     bossWordCount,
     randomIndices.length,
     pickDistinctIndices,
-    availableSolutionIndices,
+    eligibleSolutionIndices,
   ]);
 
   const removeSolvedTargetsFromPool = useCallback((indicesToRemove) => {
@@ -337,15 +363,47 @@ export default function useSurvivalGame(mode) {
     return statuses;
   };
 
-  const submitGuess = (guess, _wordIndex, onGameOver) => {
+  const submitGuess = (
+    guess,
+    _wordIndex,
+    onGameOver,
+    onBannedWord,
+    onDuplicateWord,
+  ) => {
     if (gameState !== "playing") return false;
     if (!targetWord && (!Array.isArray(targetWords) || targetWords.length === 0))
       return false;
 
+    const normalizedGuess = guess.toLowerCase();
+    const openingGuessCount = isBossGame
+      ? bossWordCount === 4
+        ? 3
+        : 2
+      : 1;
+    const bannedRows = openingGuessCount + 1;
+
+    if (turn < bannedRows && bannedOpeningWords.includes(normalizedGuess)) {
+      if (onBannedWord) onBannedWord();
+      return false;
+    }
+
+    if (
+      turn < openingGuessCount &&
+      !bannedOpeningWords.includes(normalizedGuess)
+    ) {
+      setBannedOpeningWords((prev) => [...prev, normalizedGuess]);
+    }
+
+    if (
+      (isBossGame && guesses.some((g) => g.word === normalizedGuess)) ||
+      (!isBossGame && guesses.includes(normalizedGuess))
+    ) {
+      if (onDuplicateWord) onDuplicateWord();
+      return false;
+    }
+
     if (isBossGame && bossWordCount > 1) {
       // Reject repeated guesses in boss rounds across all rows/words.
-      if (guesses.some((g) => g.word === guess)) return false;
-
       // Boss game with multiple words
 
       if (bossWordCount === 4) {
@@ -537,17 +595,17 @@ export default function useSurvivalGame(mode) {
     if (
       newGameTypeInfo.isBoss &&
       newGameTypeInfo.wordCount > 1 &&
-      availableSolutionIndices.length >= newGameTypeInfo.wordCount
+      eligibleSolutionIndices.length >= newGameTypeInfo.wordCount
     ) {
       // Generate multiple word indices for boss games
       const newIndices = pickDistinctIndices(
         newGameTypeInfo.wordCount,
-        availableSolutionIndices,
+        eligibleSolutionIndices,
       );
       setRandomIndices(newIndices);
     } else {
       // Normal game - single word
-      const newIndex = getRandomFromPool(availableSolutionIndices);
+      const newIndex = getRandomFromPool(eligibleSolutionIndices);
       setRandom(newIndex);
       setRandomIndices([]);
       nextIsBoss = false;
@@ -580,6 +638,7 @@ export default function useSurvivalGame(mode) {
       BOSS_WORD_COUNT_KEY,
       GAME_STATE_KEY,
       AVAILABLE_INDICES_KEY,
+      BANNED_OPENING_WORDS_KEY,
     ].forEach((key) => secureStorage.removeItem(key));
 
     const firstGameTypeInfo = getGameTypeInfo(0);
@@ -587,6 +646,7 @@ export default function useSurvivalGame(mode) {
     const firstIndex = getRandomFromPool(freshPool);
 
     setGameCount(0);
+    setBannedOpeningWords([]);
     setAvailableSolutionIndices(freshPool);
     setIsBossGame(firstGameTypeInfo.isBoss);
     setBossWordCount(firstGameTypeInfo.wordCount);
@@ -615,14 +675,14 @@ export default function useSurvivalGame(mode) {
     let nextIsBoss = isBossGame && bossWordCount > 1;
     let nextWordCount = nextIsBoss ? bossWordCount : 1;
 
-    if (nextIsBoss && availableSolutionIndices.length >= bossWordCount) {
+    if (nextIsBoss && eligibleSolutionIndices.length >= bossWordCount) {
       const newIndices = pickDistinctIndices(
         bossWordCount,
-        availableSolutionIndices,
+        eligibleSolutionIndices,
       );
       setRandomIndices(newIndices);
     } else {
-      const newIndex = getRandomFromPool(availableSolutionIndices);
+      const newIndex = getRandomFromPool(eligibleSolutionIndices);
       setRandom(newIndex);
       setRandomIndices([]);
       nextIsBoss = false;

@@ -78,18 +78,19 @@ export default function Tiles({
           if (addToast) addToast("Not enough letters!", "error");
           return;
         }
-        if (guesses.includes(guessToSubmit)) {
-          triggerShake();
-          if (addToast) addToast("Word already submitted!", "error");
-          return;
-        }
         if (!data.includes(guessToSubmit)) {
           triggerShake();
           if (addToast) addToast("Incorrect word", "error");
           return;
         }
 
-        if (onGuessSubmit && onGuessSubmit(guessToSubmit)) {
+        if (
+          onGuessSubmit &&
+          onGuessSubmit(guessToSubmit, undefined, triggerShake, () => {
+            triggerShake();
+            if (addToast) addToast("Word already submitted!", "error");
+          })
+        ) {
           isSubmittingRef.current = true;
           setLastSubmittedTurn(turn);
           setCurrentGuess("");

@@ -119,13 +119,6 @@ export default function BossTiles({
           return;
         }
 
-        // Prevent duplicate guesses across the entire boss attempt.
-        if (guesses.some((g) => g.word === guessToSubmit)) {
-          triggerShake();
-          if (addToast) addToast("Word already submitted!", "error");
-          return;
-        }
-
         // For 4-word mode: submit guess to all 4 words
         if (isFourWordMode) {
           // Check if all 4 words are already solved
@@ -139,7 +132,17 @@ export default function BossTiles({
           }
 
           // Submit to all 4 words at once with single call
-          if (onGuessSubmit(guessToSubmit)) {
+          if (
+            onGuessSubmit(
+              guessToSubmit,
+              undefined,
+              triggerShake,
+              () => {
+                triggerShake();
+                if (addToast) addToast("Word already submitted!", "error");
+              },
+            )
+          ) {
             isSubmittingRef.current = true;
             setPendingFlipTurn(turn);
             setCurrentGuess("");
@@ -156,7 +159,12 @@ export default function BossTiles({
           }
 
           // Submit once and it applies to both words
-          if (onGuessSubmit(guessToSubmit, 0)) {
+          if (
+            onGuessSubmit(guessToSubmit, 0, triggerShake, () => {
+              triggerShake();
+              if (addToast) addToast("Word already submitted!", "error");
+            })
+          ) {
             isSubmittingRef.current = true;
             setPendingFlipTurn(turn);
             setCurrentGuess("");
