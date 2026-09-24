@@ -87,7 +87,7 @@ export default function useSurvivalGame(mode) {
 
   // [NEW] Get max turns based on game type
   const getMaxTurns = (isBoss, wordCount) => {
-    if (isBoss && wordCount === 4) return 9;
+    if (isBoss && wordCount === 4) return 10;
     if (isBoss && wordCount === 2) return 7;
     return 6; // Normal game
   };
