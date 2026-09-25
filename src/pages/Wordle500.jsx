@@ -12,16 +12,14 @@ const keyboardLayout = [
 
 const makeLetters = (game) =>
   Object.fromEntries(
-    keyboardLayout
-      .flat()
-      .map((letter) => [
-        letter,
-        {
-          color: game.isTyped(letter) ? "bg-gameLight/30" : "bg-gameLight",
-          row: keyboardLayout.findIndex((row) => row.includes(letter)) + 1,
-          big: letter === "enter" || letter === "back",
-        },
-      ]),
+    keyboardLayout.flat().map((letter) => [
+      letter,
+      {
+        color: game.isTyped(letter) ? "bg-gameGrey" : "bg-gameLight",
+        row: keyboardLayout.findIndex((row) => row.includes(letter)) + 1,
+        big: letter === "enter" || letter === "back",
+      },
+    ]),
   );
 
 export default function Wordle500() {

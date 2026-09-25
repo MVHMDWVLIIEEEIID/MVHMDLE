@@ -49,19 +49,18 @@ export default function Wordle500Board({ game }) {
       setRevealingSubmissionId({ id: submissionId, phase: "resizing" });
     }, 0);
 
-    const revealTimers = Object.keys(countColors).map(
-      (color, index) =>
-        setTimeout(
-          () => {
-            setRevealedCountColors((revealedColors) => ({
-              ...revealedColors,
-              [color]: submissionId,
-            }));
-          },
-          RESIZE_BEFORE_FLIP_MS +
-            FLIP_ANIMATION_MS / 2 +
-            index * TILE_REVEAL_STEP_MS,
-        ), //
+    const revealTimers = Object.keys(countColors).map((color, index) =>
+      setTimeout(
+        () => {
+          setRevealedCountColors((revealedColors) => ({
+            ...revealedColors,
+            [color]: submissionId,
+          }));
+        },
+        RESIZE_BEFORE_FLIP_MS +
+          FLIP_ANIMATION_MS / 2 +
+          index * TILE_REVEAL_STEP_MS,
+      ),
     );
     const resizeTimer = setTimeout(() => {
       setRevealingSubmissionId({ id: submissionId, phase: "flipping" });
@@ -100,10 +99,9 @@ export default function Wordle500Board({ game }) {
       revealingSubmissionId?.id === game.lastSubmittedId &&
       revealingSubmissionId.phase === "flipping";
 
-    // 1. ELEVATED VARIABLES: Moved from the inner letter loop to the row level
     const isCurrentRow =
       rowIndex === game.guesses.length && game.gameState === "playing";
-    const isExpandedRow = isCurrentRow || isResizingRow;
+    const isUncoloredRow = isCurrentRow || isResizingRow;
 
     return (
       <div
@@ -116,7 +114,6 @@ export default function Wordle500Board({ game }) {
             const color = isSubmitted
               ? colors?.[letterIndex] || "gray"
               : "gray";
-            // Variables were cleanly removed from here
             const clickable = isSubmitted && game.gameState === "playing";
             return (
               <button
@@ -125,7 +122,7 @@ export default function Wordle500Board({ game }) {
                 disabled={!clickable}
                 aria-label={`${letter || "empty"} letter ${letterIndex + 1}, ${color}`}
                 onClick={() => game.changeManualColor(rowIndex, letterIndex)}
-                className={`flex ${isExpandedRow ? "h-10 w-10" : "h-8 w-10"} m-[1.5px] items-center justify-center rounded border-2 ${isExpandedRow ? "text-2xl" : "text-[22px]"} font-bold uppercase outline-none transition-[height,font-size,background-color,border-color,color] duration-300 ease-out ${isExpandedRow ? "bg-gameLight border-gameLight text-gameDark" : colorClasses[color]} ${clickable ? "cursor-pointer hover:scale-105" : "cursor-default"} ${isCurrentRow && letterIndex === game.currentGuess.length ? "border-gameGreen!" : "border-transparent"}`}
+                className={`flex h-10 w-10 m-[1.5px] items-center justify-center rounded border-2 text-2xl font-bold uppercase outline-none transition-colors duration-300 ease-out ${isUncoloredRow ? "bg-gameLight border-gameLight text-gameDark" : colorClasses[color]} ${clickable ? "cursor-pointer hover:scale-105" : "cursor-default"} ${isCurrentRow && letterIndex === game.currentGuess.length ? "border-gameGreen!" : "border-transparent"}`}
               >
                 {letter}
               </button>
@@ -143,7 +140,7 @@ export default function Wordle500Board({ game }) {
           {Object.keys(countColors).map((color) => (
             <div
               key={`${color}-${game.lastSubmittedId || 0}`}
-              className={`flex ${isExpandedRow ? "h-10 w-10" : "h-8 w-10"} m-[1.5px] items-center justify-center rounded border-2 ${isExpandedRow ? "text-2xl" : "text-[22px]"} font-bold outline-none transition-[height,font-size] duration-300 ease-out ${countColors[color]} ${shouldFlipCounts ? "animate-flip" : ""}`}
+              className={`flex h-10 w-10 m-[1.5px] items-center justify-center rounded border-2 text-2xl font-bold outline-none ${countColors[color]} ${shouldFlipCounts ? "animate-flip" : ""}`}
               style={
                 shouldFlipCounts
                   ? {
