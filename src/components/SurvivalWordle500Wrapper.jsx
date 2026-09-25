@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Wordle500Board, { MANUAL_COLORS } from "./Wordle500Board";
 import data from "../data/words.json";
 
@@ -10,6 +10,22 @@ export default function SurvivalWordle500Wrapper({
   const [currentGuess, setCurrentGuess] = useState("");
   const [manualColors, setManualColors] = useState([]);
   const [lastSubmittedId, setLastSubmittedId] = useState(0);
+  const [shake, setShake] = useState(false);
+  const shakeTimeoutRef = useRef(null);
+
+  const triggerShake = () => {
+    if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
+    setShake(false);
+    requestAnimationFrame(() => setShake(true));
+    shakeTimeoutRef.current = setTimeout(() => setShake(false), 500);
+  };
+
+  useEffect(
+    () => () => {
+      if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
+    },
+    [],
+  );
 
   // Intercept keystrokes locally to feed currentGuess to the board
   useEffect(() => {
@@ -22,11 +38,13 @@ export default function SurvivalWordle500Wrapper({
         const guessToSubmit = currentGuess.toLowerCase();
 
         if (guessToSubmit.length !== 5) {
+          triggerShake();
           addToast("Not enough letters!", "error");
           return;
         }
 
         if (!data.includes(guessToSubmit)) {
+          triggerShake();
           addToast("Incorrect word", "error");
           return;
         }
@@ -34,8 +52,11 @@ export default function SurvivalWordle500Wrapper({
         const accepted = onGuessSubmit(
           guessToSubmit,
           0,
-          () => addToast("Not enough letters", "error"),
-          () => addToast("Word already submitted!", "error"),
+          triggerShake,
+          () => {
+            triggerShake();
+            addToast("Word already submitted!", "error");
+          },
         );
 
         // If the main hook accepts the guess, update the board's visual state
@@ -76,6 +97,7 @@ export default function SurvivalWordle500Wrapper({
     currentGuess,
     manualColors,
     lastSubmittedId,
+    shake,
     changeManualColor,
   };
 

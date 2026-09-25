@@ -116,7 +116,7 @@ export default function Wordle500Board({ game }) {
 
     return (
       <div
-        className="flex items-center gap-1"
+        className={`flex items-center gap-1 ${game.shake && isCurrentRow ? "animate-shake" : ""}`}
         key={`wordle500-row-${rowIndex}`}
       >
         <div className="grid grid-cols-5 gap-px">
