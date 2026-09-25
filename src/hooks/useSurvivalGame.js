@@ -13,6 +13,8 @@ export default function useSurvivalGame(mode) {
   const MAX_TURNS_KEY = `${mode}-max-turns`;
   const GAME_COUNT_KEY = `wordle-game-count-${mode}`;
   const IS_BOSS_GAME_KEY = `wordle-is-boss-${mode}`;
+  const BOSS_TYPE_KEY = `wordle-boss-type-${mode}`;
+  const PLAYED_BOSS_TYPES_KEY = `wordle-played-boss-types-${mode}`;
   const BOSS_WORD_COUNT_KEY = `wordle-boss-word-count-${mode}`;
   const GAME_STATE_KEY = `${mode}-game-state`;
   const BANNED_OPENING_WORDS_KEY = `${mode}-banned-opening-words`;
@@ -82,19 +84,33 @@ export default function useSurvivalGame(mode) {
     return picked;
   }, []);
 
-  // [NEW] Determine game type and word count
-  const getGameTypeInfo = (gameCount) => {
+  // Add future boss types here. Each boss ID must be unique.
+  const BOSS_TYPES = [
+    { id: "two-word", wordCount: 2 },
+    { id: "four-word", wordCount: 4 },
+  ];
+
+  const getNextBossType = (playedTypes = []) => {
+    const validPlayedTypes = playedTypes.filter((id) =>
+      BOSS_TYPES.some((boss) => boss.id === id),
+    );
+    const availableBosses = BOSS_TYPES.filter(
+      (boss) => !validPlayedTypes.includes(boss.id),
+    );
+    const pool = availableBosses.length > 0 ? availableBosses : BOSS_TYPES;
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+
+  // Bosses appear every 5th game. Their order is random, without repeats
+  // until every configured boss has appeared once.
+  const getGameTypeInfo = (gameCount, playedTypes = []) => {
     const gameNumber = gameCount + 1;
-    if (gameNumber % 10 === 0) {
-      // Every 10 games: Boss (4 words)
-      return { isBoss: true, bossType: "boss", wordCount: 4 };
-    } else if (gameNumber % 5 === 0) {
-      // Every 5 games: Boss Rush (2 words)
-      return { isBoss: true, bossType: "rush", wordCount: 2 };
-    } else {
-      // Normal game (1 word)
+    if (gameNumber % 5 !== 0) {
       return { isBoss: false, bossType: null, wordCount: 1 };
     }
+
+    const boss = getNextBossType(playedTypes);
+    return { isBoss: true, bossType: boss.id, wordCount: boss.wordCount };
   };
 
   // [NEW] Get max turns based on game type
@@ -107,6 +123,12 @@ export default function useSurvivalGame(mode) {
   // [NEW] Game count state - tracks which game number we're on (must be before maxTurns)
   const [gameCount, setGameCount] = useState(() => {
     return secureStorage.getItem(GAME_COUNT_KEY, 0);
+  });
+
+  const [playedBossTypes, setPlayedBossTypes] = useState(() => {
+    const saved = secureStorage.getItem(PLAYED_BOSS_TYPES_KEY, []);
+    if (!Array.isArray(saved)) return [];
+    return saved.filter((id) => BOSS_TYPES.some((boss) => boss.id === id));
   });
 
   const [availableSolutionIndices, setAvailableSolutionIndices] = useState(
@@ -252,6 +274,10 @@ export default function useSurvivalGame(mode) {
   useEffect(() => {
     secureStorage.setItem(GAME_COUNT_KEY, gameCount);
   }, [gameCount, GAME_COUNT_KEY]);
+
+  useEffect(() => {
+    secureStorage.setItem(PLAYED_BOSS_TYPES_KEY, playedBossTypes);
+  }, [playedBossTypes, PLAYED_BOSS_TYPES_KEY]);
 
   useEffect(() => {
     secureStorage.setItem(BANNED_OPENING_WORDS_KEY, bannedOpeningWords);
@@ -570,6 +596,7 @@ export default function useSurvivalGame(mode) {
     secureStorage.removeItem(TILES_TURN_KEY);
     secureStorage.removeItem(MAX_TURNS_KEY);
     secureStorage.removeItem(IS_BOSS_GAME_KEY);
+    secureStorage.removeItem(BOSS_TYPE_KEY);
     secureStorage.removeItem(BOSS_WORD_COUNT_KEY);
 
     if (availableSolutionIndices.length === 0) {
@@ -583,7 +610,27 @@ export default function useSurvivalGame(mode) {
 
     // Increment game count
     const newGameCount = gameCount + 1;
-    const newGameTypeInfo = getGameTypeInfo(newGameCount);
+    const isBossRound = (newGameCount + 1) % 5 === 0;
+    const selectedBoss = isBossRound ? getNextBossType(playedBossTypes) : null;
+    const newGameTypeInfo = isBossRound
+      ? {
+          isBoss: true,
+          bossType: selectedBoss.id,
+          wordCount: selectedBoss.wordCount,
+        }
+      : getGameTypeInfo(newGameCount, playedBossTypes);
+
+    if (selectedBoss) {
+      const nextPlayedBossTypes = BOSS_TYPES.some(
+        (boss) => !playedBossTypes.includes(boss.id),
+      )
+        ? [...playedBossTypes, selectedBoss.id]
+        : [selectedBoss.id];
+      setPlayedBossTypes(nextPlayedBossTypes);
+      secureStorage.setItem(BOSS_TYPE_KEY, selectedBoss.id);
+    } else {
+      secureStorage.removeItem(BOSS_TYPE_KEY);
+    }
 
     setGameCount(newGameCount);
     setIsBossGame(newGameTypeInfo.isBoss);
@@ -635,17 +682,20 @@ export default function useSurvivalGame(mode) {
       MAX_TURNS_KEY,
       GAME_COUNT_KEY,
       IS_BOSS_GAME_KEY,
+      BOSS_TYPE_KEY,
+      PLAYED_BOSS_TYPES_KEY,
       BOSS_WORD_COUNT_KEY,
       GAME_STATE_KEY,
       AVAILABLE_INDICES_KEY,
       BANNED_OPENING_WORDS_KEY,
     ].forEach((key) => secureStorage.removeItem(key));
 
-    const firstGameTypeInfo = getGameTypeInfo(0);
+    const firstGameTypeInfo = getGameTypeInfo(0, []);
     const freshPool = getAllSolutionIndices();
     const firstIndex = getRandomFromPool(freshPool);
 
     setGameCount(0);
+    setPlayedBossTypes([]);
     setBannedOpeningWords([]);
     setAvailableSolutionIndices(freshPool);
     setIsBossGame(firstGameTypeInfo.isBoss);

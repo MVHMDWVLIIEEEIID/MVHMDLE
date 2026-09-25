@@ -87,8 +87,8 @@ export default function SurvivalGuideCustomModal({ isOpen, onClose }) {
               Boss Rounds
             </p>
             <p className="text-sm">
-              Every 5th Game is 2-Words Boss, Every 10th Game is 4-Words Boss.
-              (4-Words Drop a Heart When Beaten{" "}
+              Every 5th Game is a random Boss. Bosses do not repeat until every
+              Boss has been played once. (4-Words Drop a Heart When Beaten{" "}
               <strong>If Full Stacked Hearts You Get 50K</strong>)
             </p>
           </div>
