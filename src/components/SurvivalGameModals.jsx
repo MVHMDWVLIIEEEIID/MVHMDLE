@@ -301,7 +301,9 @@ export default function SurvivalGameModals({
             <div className="flex flex-col items-center gap-1 mb-4">
               <p className="text-[10px] text-gameGreen/50 uppercase tracking-widest font-bold">
                 {stats.isBossGame
-                  ? `Boss: ${stats.bossWordCount} words`
+                  ? stats.bossType === "wordle500"
+                    ? "Boss: Wordle500"
+                    : `Boss: ${stats.bossWordCount} words`
                   : "The word was"}
               </p>
               {stats.isBossGame ? (
@@ -522,7 +524,7 @@ export default function SurvivalGameModals({
             <div className="flex flex-col items-center gap-2">
               <p className="text-xs text-white/40 uppercase tracking-widest">
                 {stats.isBossGame
-                  ? `${stats.bossWordCount === 4 ? "4-Words Boss" : "2-Words Boss"} Was :`
+                  ? `${stats.bossType === "wordle500" ? "Wordle500 Boss" : stats.bossWordCount === 4 ? "4-Words Boss" : "2-Words Boss"} Was :`
                   : `The word was`}
               </p>
               {stats.isBossGame ? (

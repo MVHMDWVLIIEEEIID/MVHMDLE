@@ -162,6 +162,7 @@ export default function Survival({ mode = "survival" }) {
           targetWord: game.targetWord,
           targetWords: game.targetWords,
           isBossGame: game.isBossGame,
+          bossType: game.bossType,
           bossWordCount: game.bossWordCount,
           boss2Count: progress.boss2Count,
           boss4Count: progress.boss4Count,

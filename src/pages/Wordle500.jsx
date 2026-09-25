@@ -45,13 +45,6 @@ export default function Wordle500() {
                 ? "Boss defeated"
                 : `Boss was ${game.targetWord}`}
             </span>
-            <button
-              type="button"
-              onClick={game.reset}
-              className="rounded border border-gameLight/40 px-3 py-1 hover:bg-gameLight hover:text-gameDark"
-            >
-              New boss
-            </button>
           </div>
         )}
       </main>

@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 
 export default function Menu() {
-  const tabsArray = ["Daily", "Survival", "Wordle500 Boss"];
+  const tabsArray = ["Daily", "Survival"];
   return (
     <div className="relative h-screen flex flex-col overflow-hidden bg-gameDark text-gameLight">
       <div className="relative z-10 flex-5 h-0 center items-end-safe gameFont uppercase text-8xl">
@@ -13,7 +13,7 @@ export default function Menu() {
             return (
               <Link
                 key={tab}
-                to={tab === "Wordle500 Boss" ? "/wordle500" : `/${tab.toLowerCase()}`}
+                to={`/${tab.toLowerCase()}`}
                 className="text-center text-3xl py-4 rounded-2xl border-2 border-gameLight hover:bg-gameLight/95 hover:text-gameDark transition-all duration-200 uppercase m-auto w-full active:bg-gameLight"
               >
                 {tab}
