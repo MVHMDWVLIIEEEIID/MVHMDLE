@@ -226,6 +226,9 @@ export default function BossTiles({
 
     // Determine if this word is solved
     const isSolved = guessesForWord.some((g) => g.word === solution);
+    const solvedGuessRow = guessesForWord.find(
+      (g) => g.word === solution,
+    )?.rowNumber;
     // Last guess row is the max rowNumber for this word, or -1
     const lastGuessRow =
       guessesForWord.length > 0
@@ -300,6 +303,7 @@ export default function BossTiles({
           key: `${wordIdx}-${i}-${j}`,
           className: `
               text-center ${tileWidthClass} ${tileHeight} ${tileMargin} ${fontSize} text-gameDark pointer-events-none font-bold uppercase border-2 transition-[height,font-size,background-color,border-color,color] duration-300 ease-out outline-none rounded aspect-square
+              ${isCurrentRow || (gameState === "won" && i === turn) || (isSolved && i === solvedGuessRow) ? "opacity-100" : "opacity-75"}
               ${shouldFlip ? "animate-flip" : ""}
               ${isNextTile ? "border-gameGreen!" : "border-transparent"}
               ${shake && isCurrentRow ? "animate-shake border-red-500!" : ""}
@@ -337,11 +341,7 @@ export default function BossTiles({
         return (
           <div
             key={wordIdx}
-            className={`flex flex-col items-center m-0 p-0 transition-opacity duration-200 ease-out ${
-              selectedView === "all" || selectedView === wordIdx
-                ? "opacity-100"
-                : "opacity-60"
-            }`}
+            className="flex flex-col items-center m-0 p-0"
             onClick={() => {
               if (wordClickTimerRef.current) {
                 clearTimeout(wordClickTimerRef.current);
@@ -360,21 +360,29 @@ export default function BossTiles({
             }}
           >
             <div
-              className={`grid grid-cols-5 ${isFourWordMode ? "gap-px" : isTwoWordMode ? "gap-1" : "gap-x-1 gap-y-0.5"} w-fit`}
+              className={`transition-opacity duration-200 ease-out ${
+                selectedView === "all" || selectedView === wordIdx
+                  ? "opacity-100"
+                  : "opacity-60"
+              }`}
             >
-              {wordGrids[wordIdx].map((item) => (
-                <input
-                  key={item.key}
-                  className={item.className}
-                  style={item.style}
-                  value={item.value}
-                  readOnly
-                />
-              ))}
+              <div
+                className={`grid grid-cols-5 ${isFourWordMode ? "gap-px" : isTwoWordMode ? "gap-1" : "gap-x-1 gap-y-0.5"} w-fit`}
+              >
+                {wordGrids[wordIdx].map((item) => (
+                  <input
+                    key={item.key}
+                    className={item.className}
+                    style={item.style}
+                    value={item.value}
+                    readOnly
+                  />
+                ))}
+              </div>
             </div>
             {/* Show Done indicator for solved words */}
             {isSolved && (
-              <div className="mt-2 px-4 py-1 text-gameGreen/50 font-bold rounded text-sm w-full border center">
+              <div className="mt-2 px-4 py-1 text-gameGreen font-bold rounded text-sm w-full border center">
                 Word Defeated
               </div>
             )}
