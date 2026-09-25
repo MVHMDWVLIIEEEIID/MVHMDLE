@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import data from "../data/words.json";
+import useGameInput from "../hooks/useGameInput";
+import WordGrid from "./WordGrid";
 
 const RESIZE_BEFORE_FLIP_MS = 300;
 const FLIP_TOTAL_MS = 1250;
 const WORD_CLICK_DELAY_MS = 250;
-const TILE_REVEAL_STEP_MS = 100;
 
 export default function BossTiles({
   guesses = [],
@@ -19,333 +19,104 @@ export default function BossTiles({
   onWordClick,
   onWordDoubleClick,
 }) {
-  const [currentGuess, setCurrentGuess] = useState("");
   const [solutions] = useState(targetWords.map((w) => w?.toLowerCase()));
   const [shake, setShake] = useState(false);
   const [pendingFlipTurn, setPendingFlipTurn] = useState(-1);
   const [lastSubmittedTurn, setLastSubmittedTurn] = useState(-1);
-  const isSubmittingRef = useRef(false);
   const wordClickTimerRef = useRef(null);
 
-  useEffect(
-    () => () => {
-      if (wordClickTimerRef.current) clearTimeout(wordClickTimerRef.current);
-    },
-    [],
-  );
-
-  useEffect(() => {
-    isSubmittingRef.current = false;
-  }, [turn, gameState, guesses.length]);
+  useEffect(() => () => {
+    if (wordClickTimerRef.current) clearTimeout(wordClickTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (pendingFlipTurn < 0) return undefined;
-
     const timeoutId = setTimeout(() => {
       setLastSubmittedTurn(pendingFlipTurn);
       setPendingFlipTurn(-1);
     }, RESIZE_BEFORE_FLIP_MS);
-
     return () => clearTimeout(timeoutId);
   }, [pendingFlipTurn]);
 
   useEffect(() => {
     if (lastSubmittedTurn < 0) return undefined;
-
     const timeoutId = setTimeout(() => {
       setLastSubmittedTurn(-1);
     }, FLIP_TOTAL_MS);
-
     return () => clearTimeout(timeoutId);
   }, [lastSubmittedTurn]);
 
-  // For 2-word mode: track which word is active
-  // For 4-word mode: apply guess to all words at once
   const isFourWordMode = solutions.length === 4;
   const isTwoWordMode = solutions.length === 2;
+  const sizeMode = isFourWordMode ? "boss-4" : isTwoWordMode ? "boss-2" : "normal";
 
-  const triggerShake = () => {
+  const triggerShake = useCallback(() => {
     setShake(true);
     setTimeout(() => setShake(false), 500);
-  };
+  }, []);
 
-  const getGuessStatuses = useCallback(
-    (guessStr, wordIndex) => {
-      const solution = solutions[wordIndex];
-      if (!solution) return Array(5).fill("bg-gameGrey");
-
-      const splitSolution = solution.split("");
-      const splitGuess = guessStr.split("");
-      const statuses = Array(5).fill("bg-gameGrey");
-
-      splitGuess.forEach((char, i) => {
-        if (char === splitSolution[i]) {
-          statuses[i] = "bg-gameGreen";
-          splitSolution[i] = null;
-        }
-      });
-      splitGuess.forEach((char, i) => {
-        if (statuses[i] !== "bg-gameGreen") {
-          const index = splitSolution.indexOf(char);
-          if (index !== -1) {
-            statuses[i] = "bg-gameYellow";
-            splitSolution[index] = null;
-          }
-        }
-      });
-      return statuses;
-    },
-    [solutions],
-  );
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Tab") {
-        e.preventDefault();
-        return;
-      }
-      if (e.repeat) return;
-      const key = e.key;
-
-      if (key === "Enter") {
-        e.preventDefault();
-        if (isSubmittingRef.current) return;
-        if (gameState !== "playing" || turn >= rowCount) {
-          if (gameState === "won") onGameOver("won-already");
-          else onGameOver("lost-already");
-          return;
-        }
-
-        const guessToSubmit = currentGuess?.toLowerCase();
-
-        if (guessToSubmit.length !== 5) {
-          triggerShake();
-          if (addToast) addToast("Not enough letters!", "error");
-          return;
-        }
-
-        if (!data.includes(guessToSubmit)) {
-          triggerShake();
-          if (addToast) addToast("Incorrect word", "error");
-          return;
-        }
-
-        // For 4-word mode: submit guess to all 4 words
-        if (isFourWordMode) {
-          // Check if all 4 words are already solved
-          const allSolved = solutions.every((solution, idx) =>
-            guesses.some((g) => g.word === solution && g.wordIndex === idx),
-          );
-          if (allSolved) {
-            triggerShake();
-            if (addToast) addToast("Already completed!", "error");
-            return;
-          }
-
-          // Submit to all 4 words at once with single call
-          if (
-            onGuessSubmit(
-              guessToSubmit,
-              undefined,
-              triggerShake,
-              () => {
-                triggerShake();
-                if (addToast) addToast("Word already submitted!", "error");
-              },
-            )
-          ) {
-            isSubmittingRef.current = true;
-            setPendingFlipTurn(turn);
-            setCurrentGuess("");
-          }
-        } else {
-          // For 2-word mode: check if both words are already solved
-          const allSolved = solutions.every((solution, idx) =>
-            guesses.some((g) => g.word === solution && g.wordIndex === idx),
-          );
-          if (allSolved) {
-            triggerShake();
-            if (addToast) addToast("Already completed!", "error");
-            return;
-          }
-
-          // Submit once and it applies to both words
-          if (
-            onGuessSubmit(guessToSubmit, 0, triggerShake, () => {
-              triggerShake();
-              if (addToast) addToast("Word already submitted!", "error");
-            })
-          ) {
-            isSubmittingRef.current = true;
-            setPendingFlipTurn(turn);
-            setCurrentGuess("");
-          }
-        }
-        return;
-      }
-
-      if (gameState !== "playing" || turn >= rowCount) return;
-
-      if (key === "Backspace") {
-        setCurrentGuess((prev) => prev.slice(0, -1));
-        return;
-      }
-
-      if (/^[a-zA-Z]$/.test(key)) {
-        if (currentGuess.length < 5) {
-          setCurrentGuess((prev) => (prev + key)?.toLowerCase());
-        }
-      } else if (key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (addToast) addToast("Game only accepts English letters", "error");
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    currentGuess,
-    turn,
-    guesses,
-    gameState,
-    onGuessSubmit,
-    onGameOver,
-    addToast,
-    rowCount,
-    isFourWordMode,
-    solutions,
-  ]);
-
-  // Build grid for each word
-  const wordGrids = solutions.map((solution, wordIdx) => {
-    // Gather guesses for this word and map them by rowNumber
-    const guessesForWord = guesses.filter((g) => g.wordIndex === wordIdx);
-    const guessByRow = {};
-    guessesForWord.forEach((g) => {
-      if (typeof g.rowNumber === "number") guessByRow[g.rowNumber] = g;
-    });
-
-    // Determine if this word is solved
-    const isSolved = guessesForWord.some((g) => g.word === solution);
-    const solvedGuessRow = guessesForWord.find(
-      (g) => g.word === solution,
-    )?.rowNumber;
-    // Last guess row is the max rowNumber for this word, or -1
-    const lastGuessRow =
-      guessesForWord.length > 0
-        ? Math.max(...guessesForWord.map((g) => g.rowNumber))
-        : -1;
-
-    const items = [];
-
-    for (let i = 0; i < rowCount; i++) {
-      // Quordle mode: if word is solved, skip rows below the last guess
-      if (isSolved && i > lastGuessRow) {
-        continue;
-      }
-
-      const isPrevRow = i < turn || (gameState === "won" && i === turn);
-      const isCurrentRow = i === turn && gameState === "playing";
-
-      // Check if this row has a guess for this word (by row index)
-      const rowGuess = guessByRow[i];
-      const rowHasGuess = Boolean(rowGuess);
-      const isPendingRevealRow = i === pendingFlipTurn && rowHasGuess;
-      const shouldFlip = i === lastSubmittedTurn && rowHasGuess;
-      const shouldShowStatuses = isPrevRow && rowHasGuess && !isPendingRevealRow;
-
-      let rowLetters = Array(5).fill("");
-      let rowStatuses = Array(5).fill("");
-
-      if (isPrevRow && rowHasGuess) {
-        rowLetters = rowGuess.word.split("");
-      }
-
-      if (shouldShowStatuses) {
-        rowStatuses = getGuessStatuses(rowGuess.word, wordIdx);
-      } else if (isCurrentRow) {
-        // Show current guess in all words
-        rowLetters = currentGuess.split("");
-      }
-
-      for (let j = 0; j < 5; j++) {
-        const char = rowLetters[j];
-        const isNextTile = isCurrentRow && j === currentGuess.length;
-
-        let colorClass = "bg-gameLight border-gameLight";
-        if (shouldShowStatuses) {
-          if (rowStatuses[j] === "bg-gameGreen")
-            colorClass = "bg-gameGreen border-gameGreen text-gameDark";
-          else if (rowStatuses[j] === "bg-gameYellow")
-            colorClass = "bg-gameYellow border-gameYellow text-gameDark";
-          else colorClass = "bg-gameGrey border-gameGrey text-gameDark";
-        }
-
-        // Size adjustments: shrink tiles a bit in 4-word mode so columns fit
-        // Slightly larger tiles for better readability
-        const tileWidthClass = isFourWordMode ? "w-10" : "w-12";
-        const tileHeight = isCurrentRow
-          ? isFourWordMode
-            ? "h-10"
-            : "h-11"
-          : isFourWordMode
-            ? "h-7"
-            : "h-10";
-        const fontSize = isCurrentRow
-          ? isFourWordMode
-            ? "text-2xl"
-            : "text-[26px]"
-          : "text-[22px]";
-        // Decrease spacing to match normal `Tiles` component; shrink to 1px
-        const tileMargin = "m-[1.5px]";
-
-        items.push({
-          wordIdx,
-          key: `${wordIdx}-${i}-${j}`,
-          className: `
-              text-center ${tileWidthClass} ${tileHeight} ${tileMargin} ${fontSize} text-gameDark pointer-events-none font-bold uppercase border-2 transition-[height,font-size,background-color,border-color,color] duration-300 ease-out outline-none rounded aspect-square
-              ${isCurrentRow || (gameState === "won" && i === turn) || (isSolved && i === solvedGuessRow) ? "opacity-100" : "opacity-75"}
-              ${shouldFlip ? "animate-flip" : ""}
-              ${isNextTile ? "border-gameGreen!" : "border-transparent"}
-              ${shake && isCurrentRow ? "animate-shake border-red-500!" : ""}
-              ${colorClass}
-            `,
-          value: char || "",
-          style: shouldFlip
-            ? {
-                animationDelay: `${j * TILE_REVEAL_STEP_MS}ms`,
-                transitionDelay: `${j * TILE_REVEAL_STEP_MS + 300}ms`,
-              }
-            : {},
-        });
-      }
+  const handleValidSubmit = useCallback((guessToSubmit) => {
+    const allSolved = solutions.every((solution, idx) =>
+      guesses.some((g) => g.word === solution && g.wordIndex === idx)
+    );
+    
+    if (allSolved) {
+      triggerShake();
+      if (addToast) addToast("Already completed!", "error");
+      return false;
     }
 
-    return items;
+    const accepted = onGuessSubmit(
+      guessToSubmit,
+      isFourWordMode ? undefined : 0,
+      triggerShake,
+      () => {
+        triggerShake();
+        if (addToast) addToast("Word already submitted!", "error");
+      }
+    );
+
+    if (accepted) {
+      setPendingFlipTurn(turn);
+      return true;
+    }
+    return false;
+  }, [solutions, guesses, onGuessSubmit, triggerShake, addToast, turn, isFourWordMode]);
+
+  const { currentGuess } = useGameInput({
+    turn,
+    rowCount,
+    gameState,
+    guessesLength: guesses.length,
+    onValidSubmit: handleValidSubmit,
+    onGameOver,
+    triggerShake,
+    addToast,
   });
 
-  // Layout based on word count
-  // Use tighter gaps for boss modes so they match normal `Tiles` spacing
   const containerClass = isFourWordMode
     ? "flex flex-row gap-4 w-fit"
-    : isTwoWordMode
-      ? "flex flex-row gap-20 w-fit mx-auto"
-      : "flex flex-row gap-20 w-fit mx-auto";
+    : "flex flex-row gap-20 w-fit mx-auto";
 
   return (
     <div className={containerClass}>
       {solutions.map((solution, wordIdx) => {
-        // Check if this word is solved
-        const wordGuesses = guesses.filter((g) => g.wordIndex === wordIdx);
-        const isSolved = wordGuesses.some((g) => g.word === solution);
+        const wordGuessesObjs = guesses.filter((g) => g.wordIndex === wordIdx);
+        const isSolved = wordGuessesObjs.some((g) => g.word === solution);
+        
+        const gridGuesses = Array(rowCount).fill("");
+        wordGuessesObjs.forEach((g) => {
+          if (typeof g.rowNumber === "number") {
+            gridGuesses[g.rowNumber] = g.word;
+          }
+        });
 
         return (
           <div
             key={wordIdx}
             className="flex flex-col items-center m-0 p-0"
             onClick={() => {
-              if (wordClickTimerRef.current) {
-                clearTimeout(wordClickTimerRef.current);
-              }
+              if (wordClickTimerRef.current) clearTimeout(wordClickTimerRef.current);
               wordClickTimerRef.current = setTimeout(() => {
                 onWordClick?.(wordIdx);
                 wordClickTimerRef.current = null;
@@ -366,21 +137,20 @@ export default function BossTiles({
                   : "opacity-60"
               }`}
             >
-              <div
-                className={`grid grid-cols-5 ${isFourWordMode ? "gap-px" : isTwoWordMode ? "gap-1" : "gap-x-1 gap-y-0.5"} w-fit`}
-              >
-                {wordGrids[wordIdx].map((item) => (
-                  <input
-                    key={item.key}
-                    className={item.className}
-                    style={item.style}
-                    value={item.value}
-                    readOnly
-                  />
-                ))}
-              </div>
+              <WordGrid
+                guesses={gridGuesses}
+                currentGuess={currentGuess}
+                targetWord={solution}
+                turn={turn}
+                rowCount={rowCount}
+                gameState={gameState}
+                shake={shake}
+                lastSubmittedTurn={lastSubmittedTurn}
+                pendingFlipTurn={pendingFlipTurn}
+                sizeMode={sizeMode}
+                hideEmptyRowsAfterWin={true} // [FIX] تفعيل إخفاء السطور هنا فقط
+              />
             </div>
-            {/* Show Done indicator for solved words */}
             {isSolved && (
               <div className="mt-2 px-4 py-1 text-gameGreen font-bold rounded text-sm w-full border center">
                 Word Defeated

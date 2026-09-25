@@ -1,382 +1,99 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import data from "../data/words.json";
-import { secureStorage } from "../utils/secureStorage";
+import { useState, useEffect } from "react";
+import useSecureState from "./useSecureState";
+import { getGuessStatuses } from "../utils/gameUtils";
+import useWordPool from "./useWordPool";
+
+const getInitialLetters = () => ({
+  q: { color: " bg-gameLight ", row: 1 },
+  w: { color: " bg-gameLight ", row: 1 },
+  e: { color: " bg-gameLight ", row: 1 },
+  r: { color: " bg-gameLight ", row: 1 },
+  t: { color: " bg-gameLight ", row: 1 },
+  y: { color: " bg-gameLight ", row: 1 },
+  u: { color: " bg-gameLight ", row: 1 },
+  i: { color: " bg-gameLight ", row: 1 },
+  o: { color: " bg-gameLight ", row: 1 },
+  p: { color: " bg-gameLight ", row: 1 },
+  a: { color: " bg-gameLight ", row: 2 },
+  s: { color: " bg-gameLight ", row: 2 },
+  d: { color: " bg-gameLight ", row: 2 },
+  f: { color: " bg-gameLight ", row: 2 },
+  g: { color: " bg-gameLight ", row: 2 },
+  h: { color: " bg-gameLight ", row: 2 },
+  j: { color: " bg-gameLight ", row: 2 },
+  k: { color: " bg-gameLight ", row: 2 },
+  l: { color: " bg-gameLight ", row: 2 },
+  enter: { color: " bg-gameLight ", row: 3, big: true },
+  z: { color: " bg-gameLight ", row: 3 },
+  x: { color: " bg-gameLight ", row: 3 },
+  c: { color: " bg-gameLight ", row: 3 },
+  v: { color: " bg-gameLight ", row: 3 },
+  b: { color: " bg-gameLight ", row: 3 },
+  n: { color: " bg-gameLight ", row: 3 },
+  m: { color: " bg-gameLight ", row: 3 },
+  back: { color: " bg-gameLight ", row: 3, big: true },
+});
 
 export default function useSurvivalGame(mode) {
-  const LETTERS_KEY = `wordle-letters-${mode}`;
-  const INDEX_KEY = `wordle-solution-index-${mode}`;
-  const INDICES_KEY = `wordle-solution-indices-${mode}`;
-  const AVAILABLE_INDICES_KEY = `wordle-available-solution-indices-${mode}`;
+  const pool = useWordPool(mode);
+
   const TILES_GUESSES_KEY = `${mode}-guesses`;
   const TILES_TURN_KEY = `${mode}-turn`;
-  const DATE_KEY = `${mode}-date`;
-  const MAX_TURNS_KEY = `${mode}-max-turns`;
-  const GAME_COUNT_KEY = `wordle-game-count-${mode}`;
-  const IS_BOSS_GAME_KEY = `wordle-is-boss-${mode}`;
-  const BOSS_TYPE_KEY = `wordle-boss-type-${mode}`;
-  const PLAYED_BOSS_TYPES_KEY = `wordle-played-boss-types-${mode}`;
-  const BOSS_WORD_COUNT_KEY = `wordle-boss-word-count-${mode}`;
   const GAME_STATE_KEY = `${mode}-game-state`;
-  const BANNED_OPENING_WORDS_KEY = `${mode}-banned-opening-words`;
+  const LETTERS_KEY = `wordle-letters-${mode}`;
 
-  const getInitialLetters = () => ({
-    q: { color: " bg-gameLight ", row: 1 },
-    w: { color: " bg-gameLight ", row: 1 },
-    e: { color: " bg-gameLight ", row: 1 },
-    r: { color: " bg-gameLight ", row: 1 },
-    t: { color: " bg-gameLight ", row: 1 },
-    y: { color: " bg-gameLight ", row: 1 },
-    u: { color: " bg-gameLight ", row: 1 },
-    i: { color: " bg-gameLight ", row: 1 },
-    o: { color: " bg-gameLight ", row: 1 },
-    p: { color: " bg-gameLight ", row: 1 },
-    a: { color: " bg-gameLight ", row: 2 },
-    s: { color: " bg-gameLight ", row: 2 },
-    d: { color: " bg-gameLight ", row: 2 },
-    f: { color: " bg-gameLight ", row: 2 },
-    g: { color: " bg-gameLight ", row: 2 },
-    h: { color: " bg-gameLight ", row: 2 },
-    j: { color: " bg-gameLight ", row: 2 },
-    k: { color: " bg-gameLight ", row: 2 },
-    l: { color: " bg-gameLight ", row: 2 },
-    enter: { color: " bg-gameLight ", row: 3, big: true },
-    z: { color: " bg-gameLight ", row: 3 },
-    x: { color: " bg-gameLight ", row: 3 },
-    c: { color: " bg-gameLight ", row: 3 },
-    v: { color: " bg-gameLight ", row: 3 },
-    b: { color: " bg-gameLight ", row: 3 },
-    n: { color: " bg-gameLight ", row: 3 },
-    m: { color: " bg-gameLight ", row: 3 },
-    back: { color: " bg-gameLight ", row: 3, big: true },
-  });
-
-  const SOLUTION_WORD_COUNT = 2315;
-  const solutionWords = useMemo(() => data.slice(0, SOLUTION_WORD_COUNT), []);
-  const [bannedOpeningWords, setBannedOpeningWords] = useState(() => {
-    const saved = secureStorage.getItem(BANNED_OPENING_WORDS_KEY, []);
-    if (!Array.isArray(saved)) return [];
-    return [
-      ...new Set(
-        saved
-          .filter((word) => typeof word === "string")
-          .map((word) => word.toLowerCase()),
-      ),
-    ];
-  });
-  const getAllSolutionIndices = useCallback(() => {
-    return Array.from({ length: solutionWords.length }, (_, idx) => idx);
-  }, [solutionWords.length]);
-
-  const getRandomFromPool = useCallback((pool) => {
-    if (!Array.isArray(pool) || pool.length === 0) return null;
-    return pool[Math.floor(Math.random() * pool.length)];
-  }, []);
-
-  const getEligibleSolutionIndices = useCallback(
-    (pool) =>
-      pool.filter((idx) => !bannedOpeningWords.includes(solutionWords[idx])),
-    [bannedOpeningWords, solutionWords],
+  const [guesses, setGuesses] = useSecureState(TILES_GUESSES_KEY, []);
+  const [turn, setTurn] = useSecureState(TILES_TURN_KEY, 0);
+  const [letters, setLetters] = useSecureState(
+    LETTERS_KEY,
+    getInitialLetters(),
   );
-
-  const pickDistinctIndices = useCallback((count, pool = []) => {
-    const picked = [];
-    const primary = [...pool];
-
-    while (picked.length < count && primary.length > 0) {
-      const at = Math.floor(Math.random() * primary.length);
-      picked.push(primary.splice(at, 1)[0]);
-    }
-
-    return picked;
-  }, []);
-
-  const BOSS_TYPES = [
-    { id: "wordle500", wordCount: 1 },
-    { id: "two-word", wordCount: 2 },
-    { id: "four-word", wordCount: 4 },
-  ];
-
-  const getNextBossType = (playedTypes = []) => {
-    const validPlayedTypes = playedTypes.filter((id) =>
-      BOSS_TYPES.some((boss) => boss.id === id),
-    );
-    const availableBosses = BOSS_TYPES.filter(
-      (boss) => !validPlayedTypes.includes(boss.id),
-    );
-    const pool = availableBosses.length > 0 ? availableBosses : BOSS_TYPES;
-    return pool[Math.floor(Math.random() * pool.length)];
-  };
-
-  const getGameTypeInfo = (gameCount, playedTypes = []) => {
-    const gameNumber = gameCount + 1;
-    if (gameNumber % 5 !== 0) {
-      return { isBoss: false, bossType: null, wordCount: 1 };
-    }
-
-    const boss = getNextBossType(playedTypes);
-    return { isBoss: true, bossType: boss.id, wordCount: boss.wordCount };
-  };
-
-  const getMaxTurns = (isBoss, wordCount) => {
-    if (isBoss && wordCount === 1) return 8;
-    if (isBoss && wordCount === 4) return 10;
-    if (isBoss && wordCount === 2) return 7;
-    return 6;
-  };
-
-  const [gameCount, setGameCount] = useState(() => {
-    return secureStorage.getItem(GAME_COUNT_KEY, 0);
-  });
-
-  const [playedBossTypes, setPlayedBossTypes] = useState(() => {
-    const saved = secureStorage.getItem(PLAYED_BOSS_TYPES_KEY, []);
-    if (!Array.isArray(saved)) return [];
-    return saved.filter((id) => BOSS_TYPES.some((boss) => boss.id === id));
-  });
-
-  const [availableSolutionIndices, setAvailableSolutionIndices] = useState(
-    () => {
-      const saved = secureStorage.getItem(AVAILABLE_INDICES_KEY, null);
-      if (
-        Array.isArray(saved) &&
-        saved.every((idx) => Number.isInteger(idx) && idx >= 0) &&
-        saved.length <= solutionWords.length
-      ) {
-        return saved;
-      }
-      return getAllSolutionIndices();
-    },
-  );
-
-  const eligibleSolutionIndices = useMemo(
-    () => getEligibleSolutionIndices(availableSolutionIndices),
-    [availableSolutionIndices, getEligibleSolutionIndices],
-  );
-
-  const getEligibleWordle500Indices = useCallback(
-    () =>
-      getEligibleSolutionIndices(
-        availableSolutionIndices.filter((idx) => idx < 500),
-      ),
-    [availableSolutionIndices, getEligibleSolutionIndices],
-  );
-
-  const gameTypeInfo = getGameTypeInfo(gameCount, playedBossTypes);
-  const savedBossType = secureStorage.getItem(BOSS_TYPE_KEY, null);
-
-  const [isBossGame, setIsBossGame] = useState(() => {
-    const saved = secureStorage.getItem(IS_BOSS_GAME_KEY, null);
-    if (saved !== null) return saved;
-    // Heal corrupted state: If a boss type was saved, it must be a boss game
-    if (savedBossType) return true;
-    return gameTypeInfo.isBoss;
-  });
-
-  const [bossType, setBossType] = useState(() => {
-    if (
-      typeof savedBossType === "string" &&
-      BOSS_TYPES.some((boss) => boss.id === savedBossType)
-    ) {
-      return savedBossType;
-    }
-    return gameTypeInfo.bossType;
-  });
-
-  const [bossWordCount, setBossWordCount] = useState(() => {
-    const savedWordCount = secureStorage.getItem(BOSS_WORD_COUNT_KEY, null);
-
-    if (
-      savedBossType === "wordle500" ||
-      (!savedBossType && gameTypeInfo.bossType === "wordle500")
-    ) {
-      return 1;
-    }
-
-    // Heal corrupted state: Automatically restore missing word count using the saved boss name
-    if (savedWordCount === null && typeof savedBossType === "string") {
-      const matchedBoss = BOSS_TYPES.find((b) => b.id === savedBossType);
-      if (matchedBoss) return matchedBoss.wordCount;
-    }
-
-    if (savedWordCount !== null) return savedWordCount;
-
-    return gameTypeInfo.wordCount;
-  });
-
-  const [maxTurns, setMaxTurns] = useState(() => {
-    const savedMaxTurns = secureStorage.getItem(MAX_TURNS_KEY, null);
-    if (savedMaxTurns !== null) return savedMaxTurns;
-    // Always use the explicitly resolved configuration variables
-    return getMaxTurns(isBossGame, bossWordCount);
-  });
-
-  const [random, setRandom] = useState(() => {
-    const savedBannedWords = secureStorage.getItem(
-      BANNED_OPENING_WORDS_KEY,
-      [],
-    );
-    const bannedWords = Array.isArray(savedBannedWords) ? savedBannedWords : [];
-    const eligibleIndices = availableSolutionIndices.filter(
-      (idx) => !bannedWords.includes(solutionWords[idx]),
-    );
-    return secureStorage.getItem(INDEX_KEY, getRandomFromPool(eligibleIndices));
-  });
-
-  const [randomIndices, setRandomIndices] = useState(() => {
-    return secureStorage.getItem(INDICES_KEY, []);
-  });
-
-  const targetWords = useMemo(() => {
-    if (isBossGame && bossWordCount > 1) {
-      return randomIndices.map((idx) => solutionWords[idx]);
-    }
-    if (random === null || random === undefined) return [];
-    return [solutionWords[random]];
-  }, [isBossGame, bossWordCount, randomIndices, random, solutionWords]);
-
-  const targetWord = targetWords[0];
-
-  useEffect(() => {
-    if (!Array.isArray(targetWords) || targetWords.length === 0) return;
-
-    if (isBossGame && bossWordCount > 1) {
-      console.log(
-        `[DEBUG][${mode}] target words (${bossWordCount}): ${targetWords.join(", ")}`,
-      );
-      return;
-    }
-
-    if (targetWord) {
-      console.log(`[DEBUG][${mode}] target word: ${targetWord}`);
-    }
-  }, [mode, isBossGame, bossWordCount, targetWord, targetWords]);
-
-  const [guesses, setGuesses] = useState(() => {
-    const savedGuesses = secureStorage.getItem(TILES_GUESSES_KEY, null);
-    return savedGuesses ? savedGuesses : [];
-  });
-
-  const [turn, setTurn] = useState(() => {
-    const savedTurn = secureStorage.getItem(TILES_TURN_KEY, null);
-    return savedTurn ? savedTurn : 0;
-  });
-
-  const [gameState, setGameState] = useState(() => {
-    const savedGameState = secureStorage.getItem(GAME_STATE_KEY, null);
-    if (savedGameState) return savedGameState;
-
-    if (!isBossGame) {
-      const lastGuess = guesses[guesses.length - 1];
-      if (
-        typeof lastGuess === "string" &&
-        lastGuess === targetWord?.toLowerCase()
-      )
-        return "won";
-      if (turn >= maxTurns) return "lost";
-    } else {
-      if (guesses.length > 0 && Array.isArray(guesses[0])) {
-        const allWordsGuessed = targetWords.every((word) =>
-          guesses.some(
-            (g) =>
-              g.word === word?.toLowerCase() &&
-              g.wordIndex === targetWords.indexOf(word),
-          ),
-        );
-        if (allWordsGuessed) return "won";
-      }
-      if (turn >= maxTurns) return "lost";
-    }
-    return "playing";
-  });
-
-  const [letters, setLetters] = useState(() => {
-    return secureStorage.getItem(LETTERS_KEY, getInitialLetters());
-  });
-
   const [lastChanged, setLastChanged] = useState({
     letter: null,
     timestamp: 0,
   });
 
-  useEffect(() => {
-    secureStorage.setItem(MAX_TURNS_KEY, maxTurns);
-  }, [maxTurns, MAX_TURNS_KEY]);
-
-  useEffect(() => {
-    secureStorage.setItem(GAME_COUNT_KEY, gameCount);
-  }, [gameCount, GAME_COUNT_KEY]);
-
-  useEffect(() => {
-    secureStorage.setItem(PLAYED_BOSS_TYPES_KEY, playedBossTypes);
-  }, [playedBossTypes, PLAYED_BOSS_TYPES_KEY]);
-
-  useEffect(() => {
-    secureStorage.setItem(BANNED_OPENING_WORDS_KEY, bannedOpeningWords);
-  }, [bannedOpeningWords, BANNED_OPENING_WORDS_KEY]);
-
-  useEffect(() => {
-    secureStorage.setItem(AVAILABLE_INDICES_KEY, availableSolutionIndices);
-  }, [availableSolutionIndices, AVAILABLE_INDICES_KEY]);
-
-  useEffect(() => {
-    secureStorage.setItem(IS_BOSS_GAME_KEY, isBossGame);
-  }, [isBossGame, IS_BOSS_GAME_KEY]);
-
-  useEffect(() => {
-    if (bossType) secureStorage.setItem(BOSS_TYPE_KEY, bossType);
-    else secureStorage.removeItem(BOSS_TYPE_KEY);
-  }, [bossType, BOSS_TYPE_KEY]);
-
-  useEffect(() => {
-    secureStorage.setItem(BOSS_WORD_COUNT_KEY, bossWordCount);
-  }, [bossWordCount, BOSS_WORD_COUNT_KEY]);
-
-  useEffect(() => {
-    secureStorage.setItem(LETTERS_KEY, letters);
-    secureStorage.setItem(INDEX_KEY, random);
-  }, [letters, random, LETTERS_KEY, INDEX_KEY]);
-
-  useEffect(() => {
-    if (randomIndices.length > 0) {
-      secureStorage.setItem(INDICES_KEY, randomIndices);
+  const [gameState, setGameState] = useSecureState(GAME_STATE_KEY, () => {
+    // [NEW] الاعتماد على الفئة الجديدة (Category) بدلاً من الاختباص في الشروط
+    if (pool.bossCategory === "multi") {
+      if (guesses.length > 0 && Array.isArray(guesses[0])) {
+        const allWordsGuessed = pool.targetWords.every((word, idx) =>
+          guesses.some(
+            (g) => g.word === word?.toLowerCase() && g.wordIndex === idx,
+          ),
+        );
+        if (allWordsGuessed) return "won";
+      }
+      if (turn >= pool.maxTurns) return "lost";
     } else {
-      secureStorage.removeItem(INDICES_KEY);
+      const lastGuess = guesses[guesses.length - 1];
+      if (
+        typeof lastGuess === "string" &&
+        lastGuess === pool.targetWord?.toLowerCase()
+      )
+        return "won";
+      if (turn >= pool.maxTurns) return "lost";
     }
-  }, [randomIndices, INDICES_KEY]);
+    return "playing";
+  });
 
   useEffect(() => {
-    secureStorage.setItem(TILES_GUESSES_KEY, guesses);
-    secureStorage.setItem(TILES_TURN_KEY, turn);
-  }, [guesses, turn, TILES_GUESSES_KEY, TILES_TURN_KEY]);
-
-  useEffect(() => {
-    secureStorage.setItem(GAME_STATE_KEY, gameState);
-  }, [gameState, GAME_STATE_KEY]);
-
-  useEffect(() => {
-    if (isBossGame && bossWordCount > 1 && randomIndices.length === 0) {
-      const newIndices = pickDistinctIndices(
-        bossWordCount,
-        eligibleSolutionIndices,
+    if (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
+      return;
+    if (pool.bossCategory === "multi") {
+      console.log(
+        `[DEBUG][${mode}] target words (${pool.bossWordCount}): ${pool.targetWords.join(", ")}`,
       );
-      setRandomIndices(newIndices);
+    } else if (pool.targetWord) {
+      console.log(`[DEBUG][${mode}] target word: ${pool.targetWord}`);
     }
   }, [
-    isBossGame,
-    bossType,
-    bossWordCount,
-    randomIndices.length,
-    pickDistinctIndices,
-    eligibleSolutionIndices,
+    mode,
+    pool.bossCategory,
+    pool.bossWordCount,
+    pool.targetWord,
+    pool.targetWords,
   ]);
-
-  const removeSolvedTargetsFromPool = useCallback((indicesToRemove) => {
-    if (!Array.isArray(indicesToRemove) || indicesToRemove.length === 0) return;
-    const toRemove = new Set(indicesToRemove);
-    setAvailableSolutionIndices((prev) =>
-      prev.filter((idx) => !toRemove.has(idx)),
-    );
-  }, []);
 
   const changeColor = (newColor, letterKey) => {
     const key = letterKey.toLowerCase();
@@ -395,36 +112,9 @@ export default function useSurvivalGame(mode) {
         newColor.includes("bg-gameGrey")
       )
         return prev;
-
       setLastChanged({ letter: key, timestamp: Date.now() });
       return { ...prev, [key]: { ...current, color: newColor } };
     });
-  };
-
-  const getGuessStatuses = (guessStr, wordIndex = 0) => {
-    const solution = targetWords[wordIndex]?.toLowerCase();
-    if (!solution) return Array(5).fill("bg-gameGrey");
-
-    const splitSolution = solution.split("");
-    const splitGuess = guessStr.split("");
-    const statuses = Array(5).fill("bg-gameGrey");
-
-    splitGuess.forEach((char, i) => {
-      if (char === splitSolution[i]) {
-        statuses[i] = "bg-gameGreen";
-        splitSolution[i] = null;
-      }
-    });
-    splitGuess.forEach((char, i) => {
-      if (statuses[i] !== "bg-gameGreen") {
-        const indexInSolution = splitSolution.indexOf(char);
-        if (indexInSolution !== -1) {
-          statuses[i] = "bg-gameYellow";
-          splitSolution[indexInSolution] = null;
-        }
-      }
-    });
-    return statuses;
   };
 
   const submitGuess = (
@@ -436,370 +126,153 @@ export default function useSurvivalGame(mode) {
   ) => {
     if (gameState !== "playing") return false;
     if (
-      !targetWord &&
-      (!Array.isArray(targetWords) || targetWords.length === 0)
+      !pool.targetWord &&
+      (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
     )
       return false;
 
     const normalizedGuess = guess.toLowerCase();
-    const openingGuessCount = isBossGame ? (bossWordCount === 4 ? 3 : 2) : 1;
+    const openingGuessCount = pool.isBossGame
+      ? pool.bossWordCount === 4
+        ? 3
+        : 2
+      : 1;
     const bannedRows = openingGuessCount + 1;
 
     if (
-      (isBossGame && guesses.some((g) => g.word === normalizedGuess)) ||
-      (!isBossGame && guesses.includes(normalizedGuess))
+      (pool.bossCategory === "multi" &&
+        guesses.some((g) => g.word === normalizedGuess)) ||
+      (pool.bossCategory !== "multi" && guesses.includes(normalizedGuess))
     ) {
       if (onDuplicateWord) onDuplicateWord();
       return false;
     }
-
-    if (turn < bannedRows && bannedOpeningWords.includes(normalizedGuess)) {
+    if (
+      turn < bannedRows &&
+      pool.bannedOpeningWords.includes(normalizedGuess)
+    ) {
       if (onBannedWord) onBannedWord();
       return false;
     }
-
     if (
       turn < openingGuessCount &&
-      !bannedOpeningWords.includes(normalizedGuess)
+      !pool.bannedOpeningWords.includes(normalizedGuess)
     ) {
-      setBannedOpeningWords((prev) => [...prev, normalizedGuess]);
+      pool.setBannedOpeningWords((prev) => [...prev, normalizedGuess]);
     }
 
-    if (isBossGame && bossWordCount > 1) {
-      if (bossWordCount === 4) {
-        const guessesToAdd = [];
-        for (let i = 0; i < 4; i++) {
-          const isSolved = guesses.some(
-            (g) =>
-              g.word === targetWords[i]?.toLowerCase() && g.wordIndex === i,
-          );
-          if (!isSolved) {
-            guessesToAdd.push({ word: guess, wordIndex: i, rowNumber: turn });
-          }
-        }
-        const newGuesses = [...guesses, ...guessesToAdd];
-        setGuesses(newGuesses);
+    if (pool.bossCategory === "multi") {
+      const limit = pool.bossWordCount;
+      const guessesToAdd = [];
 
-        for (let i = 0; i < 4; i++) {
-          const isSolved = guesses.some(
-            (g) =>
-              g.word === targetWords[i]?.toLowerCase() && g.wordIndex === i,
-          );
-          if (!isSolved) {
-            const statuses = getGuessStatuses(guess, i);
-            guess.split("").forEach((char, j) => {
-              setTimeout(() => changeColor(statuses[j], char), j * 150 + 300);
-            });
-          }
-        }
-
-        const allWordsGuessed = targetWords.every((word, idx) =>
-          newGuesses.some(
-            (g) => g.word === word?.toLowerCase() && g.wordIndex === idx,
-          ),
+      for (let i = 0; i < limit; i++) {
+        const isSolved = guesses.some(
+          (g) =>
+            g.word === pool.targetWords[i]?.toLowerCase() && g.wordIndex === i,
         );
+        if (!isSolved)
+          guessesToAdd.push({ word: guess, wordIndex: i, rowNumber: turn });
+      }
 
-        const newlySolved = [];
-        for (let i = 0; i < 4; i++) {
-          const wasSolvedBefore = guesses.some(
-            (g) =>
-              g.word === targetWords[i]?.toLowerCase() && g.wordIndex === i,
-          );
-          if (!wasSolvedBefore && guess === targetWords[i]?.toLowerCase()) {
-            newlySolved.push(randomIndices[i]);
-          }
-        }
-        removeSolvedTargetsFromPool(newlySolved);
+      const newGuesses = [...guesses, ...guessesToAdd];
+      setGuesses(newGuesses);
 
-        if (allWordsGuessed) {
-          setGameState("won");
-          onGameOver("won", newGuesses.length);
-        } else {
-          const newTurn = turn + 1;
-          setTurn(newTurn);
-          if (newTurn >= maxTurns) {
-            setGameState("lost");
-            onGameOver("lost", maxTurns);
-          }
+      for (let i = 0; i < limit; i++) {
+        const isSolved = guesses.some(
+          (g) =>
+            g.word === pool.targetWords[i]?.toLowerCase() && g.wordIndex === i,
+        );
+        if (!isSolved) {
+          const statuses = getGuessStatuses(guess, pool.targetWords[i]);
+          guess.split("").forEach((char, j) => {
+            setTimeout(() => changeColor(statuses[j], char), j * 150 + 300);
+          });
         }
+      }
+
+      const allWordsGuessed = pool.targetWords.every((word, idx) =>
+        newGuesses.some(
+          (g) => g.word === word?.toLowerCase() && g.wordIndex === idx,
+        ),
+      );
+
+      const newlySolved = [];
+      for (let i = 0; i < limit; i++) {
+        const wasSolvedBefore = guesses.some(
+          (g) =>
+            g.word === pool.targetWords[i]?.toLowerCase() && g.wordIndex === i,
+        );
+        if (!wasSolvedBefore && guess === pool.targetWords[i]?.toLowerCase()) {
+          newlySolved.push(pool.randomIndices[i]);
+        }
+      }
+
+      pool.removeSolvedTargets(newlySolved);
+
+      if (allWordsGuessed) {
+        setGameState("won");
+        onGameOver("won", newGuesses.length);
       } else {
-        const guessesToAdd = [];
-        for (let i = 0; i < 2; i++) {
-          const isSolved = guesses.some(
-            (g) =>
-              g.word === targetWords[i]?.toLowerCase() && g.wordIndex === i,
-          );
-          if (!isSolved) {
-            guessesToAdd.push({ word: guess, wordIndex: i, rowNumber: turn });
-          }
-        }
-        const newGuesses = [...guesses, ...guessesToAdd];
-        setGuesses(newGuesses);
-
-        for (let i = 0; i < 2; i++) {
-          const isSolved = guesses.some(
-            (g) =>
-              g.word === targetWords[i]?.toLowerCase() && g.wordIndex === i,
-          );
-          if (!isSolved) {
-            const statuses = getGuessStatuses(guess, i);
-            guess.split("").forEach((char, j) => {
-              setTimeout(() => changeColor(statuses[j], char), j * 150 + 300);
-            });
-          }
-        }
-
-        const allWordsGuessed = targetWords.every((word, idx) =>
-          newGuesses.some(
-            (g) => g.word === word?.toLowerCase() && g.wordIndex === idx,
-          ),
-        );
-
-        const newlySolved = [];
-        for (let i = 0; i < 2; i++) {
-          const wasSolvedBefore = guesses.some(
-            (g) =>
-              g.word === targetWords[i]?.toLowerCase() && g.wordIndex === i,
-          );
-          if (!wasSolvedBefore && guess === targetWords[i]?.toLowerCase()) {
-            newlySolved.push(randomIndices[i]);
-          }
-        }
-        removeSolvedTargetsFromPool(newlySolved);
-
-        if (allWordsGuessed) {
-          setGameState("won");
-          onGameOver("won", newGuesses.length);
-        } else {
-          const newTurn = turn + 1;
-          setTurn(newTurn);
-          if (newTurn >= maxTurns) {
-            setGameState("lost");
-            onGameOver("lost", maxTurns);
-          }
+        const newTurn = turn + 1;
+        setTurn(newTurn);
+        if (newTurn >= pool.maxTurns) {
+          setGameState("lost");
+          onGameOver("lost", pool.maxTurns);
         }
       }
     } else {
       const newGuesses = [...guesses, guess];
       setGuesses(newGuesses);
 
-      const statuses = getGuessStatuses(guess, 0);
+      const statuses = getGuessStatuses(guess, pool.targetWord);
       guess.split("").forEach((char, i) => {
         setTimeout(() => changeColor(statuses[i], char), i * 150 + 300);
       });
 
-      if (guess === targetWord?.toLowerCase()) {
-        removeSolvedTargetsFromPool([random]);
+      if (guess === pool.targetWord?.toLowerCase()) {
+        pool.removeSolvedTargets([pool.random]);
         setGameState("won");
         onGameOver("won", newGuesses.length);
       } else {
         const newTurn = turn + 1;
         setTurn(newTurn);
-        if (newTurn >= maxTurns) {
+        if (newTurn >= pool.maxTurns) {
           setGameState("lost");
-          onGameOver("lost", maxTurns);
+          onGameOver("lost", pool.maxTurns);
         }
       }
     }
     return true;
   };
 
-  const addExtraRow = () => {
-    setMaxTurns((prev) => prev + 1);
+  const addExtraRow = () => pool.setMaxTurns((prev) => prev + 1);
+
+  const resetBoard = () => {
+    setLetters(getInitialLetters());
+    setLastChanged({ letter: null, timestamp: 0 });
+    setGuesses([]);
+    setTurn(0);
+    setGameState("playing");
   };
 
   const resetGame = () => {
-    secureStorage.removeItem(INDEX_KEY);
-    secureStorage.removeItem(INDICES_KEY);
-    secureStorage.removeItem(LETTERS_KEY);
-    secureStorage.removeItem(TILES_GUESSES_KEY);
-    secureStorage.removeItem(TILES_TURN_KEY);
-    secureStorage.removeItem(MAX_TURNS_KEY);
-
-    if (availableSolutionIndices.length === 0) {
-      setRandom(null);
-      setRandomIndices([]);
-      setGuesses([]);
-      setTurn(0);
+    const hasWords = pool.generateNextGame(true);
+    if (!hasWords) {
+      resetBoard();
       setGameState("won");
       return;
     }
-
-    const newGameCount = gameCount + 1;
-    const newGameTypeInfo = getGameTypeInfo(newGameCount, playedBossTypes);
-    const selectedBoss = newGameTypeInfo.bossType
-      ? BOSS_TYPES.find((boss) => boss.id === newGameTypeInfo.bossType)
-      : null;
-
-    if (selectedBoss) {
-      const nextPlayedBossTypes = BOSS_TYPES.some(
-        (boss) => !playedBossTypes.includes(boss.id),
-      )
-        ? [...playedBossTypes, selectedBoss.id]
-        : [selectedBoss.id];
-      setPlayedBossTypes(nextPlayedBossTypes);
-
-      // Force direct, synchronous saves to prevent layout bugs on immediate reload
-      secureStorage.setItem(BOSS_TYPE_KEY, selectedBoss.id);
-      secureStorage.setItem(IS_BOSS_GAME_KEY, true);
-      secureStorage.setItem(BOSS_WORD_COUNT_KEY, selectedBoss.wordCount);
-    } else {
-      secureStorage.removeItem(BOSS_TYPE_KEY);
-      secureStorage.setItem(IS_BOSS_GAME_KEY, false);
-      secureStorage.setItem(BOSS_WORD_COUNT_KEY, 1);
-    }
-
-    setGameCount(newGameCount);
-    setIsBossGame(newGameTypeInfo.isBoss);
-    setBossType(newGameTypeInfo.bossType);
-    setBossWordCount(newGameTypeInfo.wordCount);
-
-    let nextIsBoss = newGameTypeInfo.isBoss;
-    let nextWordCount = newGameTypeInfo.wordCount;
-
-    if (
-      newGameTypeInfo.isBoss &&
-      newGameTypeInfo.wordCount > 1 &&
-      eligibleSolutionIndices.length >= newGameTypeInfo.wordCount
-    ) {
-      const newIndices = pickDistinctIndices(
-        newGameTypeInfo.wordCount,
-        eligibleSolutionIndices,
-      );
-      setRandomIndices(newIndices);
-    } else {
-      const selectionPool =
-        newGameTypeInfo.bossType === "wordle500"
-          ? getEligibleWordle500Indices()
-          : eligibleSolutionIndices;
-      const newIndex = getRandomFromPool(selectionPool);
-      setRandom(newIndex);
-      setRandomIndices([]);
-      if (!newGameTypeInfo.isBoss) {
-        nextIsBoss = false;
-        nextWordCount = 1;
-      }
-    }
-
-    setIsBossGame(nextIsBoss);
-    setBossType(nextIsBoss ? newGameTypeInfo.bossType : null);
-    setBossWordCount(nextWordCount);
-
-    setLetters(getInitialLetters());
-    setLastChanged({ letter: null, timestamp: 0 });
-    setGuesses([]);
-    setTurn(0);
-    setMaxTurns(getMaxTurns(nextIsBoss, nextWordCount));
-    setGameState("playing");
+    resetBoard();
   };
 
   const resetAllGameData = () => {
-    [
-      LETTERS_KEY,
-      INDEX_KEY,
-      INDICES_KEY,
-      TILES_GUESSES_KEY,
-      TILES_TURN_KEY,
-      DATE_KEY,
-      MAX_TURNS_KEY,
-      GAME_COUNT_KEY,
-      IS_BOSS_GAME_KEY,
-      BOSS_TYPE_KEY,
-      PLAYED_BOSS_TYPES_KEY,
-      BOSS_WORD_COUNT_KEY,
-      GAME_STATE_KEY,
-      AVAILABLE_INDICES_KEY,
-      BANNED_OPENING_WORDS_KEY,
-    ].forEach((key) => secureStorage.removeItem(key));
-
-    const firstGameTypeInfo = getGameTypeInfo(0, []);
-    const freshPool = getAllSolutionIndices();
-    const firstIndex = getRandomFromPool(freshPool);
-
-    secureStorage.setItem(IS_BOSS_GAME_KEY, firstGameTypeInfo.isBoss);
-    secureStorage.setItem(BOSS_WORD_COUNT_KEY, firstGameTypeInfo.wordCount);
-    if (firstGameTypeInfo.bossType)
-      secureStorage.setItem(BOSS_TYPE_KEY, firstGameTypeInfo.bossType);
-
-    setGameCount(0);
-    setPlayedBossTypes([]);
-    setBannedOpeningWords([]);
-    setAvailableSolutionIndices(freshPool);
-    setIsBossGame(firstGameTypeInfo.isBoss);
-    setBossType(firstGameTypeInfo.bossType);
-    setBossWordCount(firstGameTypeInfo.wordCount);
-    setRandom(firstIndex);
-    setRandomIndices([]);
-    setLetters(getInitialLetters());
-    setLastChanged({ letter: null, timestamp: 0 });
-    setGuesses([]);
-    setTurn(0);
-    setMaxTurns(
-      getMaxTurns(firstGameTypeInfo.isBoss, firstGameTypeInfo.wordCount),
-    );
-    setGameState("playing");
+    pool.resetPoolData();
+    resetBoard();
   };
 
   const retryCurrentGame = () => {
-    secureStorage.removeItem(INDICES_KEY);
-    secureStorage.removeItem(INDEX_KEY);
-    secureStorage.removeItem(LETTERS_KEY);
-    secureStorage.removeItem(TILES_GUESSES_KEY);
-    secureStorage.removeItem(TILES_TURN_KEY);
-
-    let nextIsBoss = isBossGame;
-    let nextWordCount =
-      nextIsBoss && bossType === "wordle500"
-        ? 1
-        : nextIsBoss
-          ? bossWordCount
-          : 1;
-
-    if (nextIsBoss && bossType === "wordle500") {
-      const newIndex = getRandomFromPool(getEligibleWordle500Indices());
-      setRandom(newIndex);
-      setRandomIndices([]);
-    } else if (
-      nextIsBoss &&
-      bossWordCount > 1 &&
-      eligibleSolutionIndices.length >= bossWordCount
-    ) {
-      const newIndices = pickDistinctIndices(
-        bossWordCount,
-        eligibleSolutionIndices,
-      );
-      setRandomIndices(newIndices);
-    } else {
-      const newIndex = getRandomFromPool(eligibleSolutionIndices);
-      setRandom(newIndex);
-      setRandomIndices([]);
-      nextIsBoss = false;
-      nextWordCount = 1;
-    }
-
-    // Force direct, synchronous saves to prevent layout bugs on immediate reload
-    secureStorage.setItem(IS_BOSS_GAME_KEY, nextIsBoss);
-    if (nextIsBoss && bossType) {
-      secureStorage.setItem(BOSS_TYPE_KEY, bossType);
-      secureStorage.setItem(BOSS_WORD_COUNT_KEY, nextWordCount);
-    } else {
-      secureStorage.removeItem(BOSS_TYPE_KEY);
-      secureStorage.setItem(BOSS_WORD_COUNT_KEY, 1);
-    }
-
-    setIsBossGame(nextIsBoss);
-    setBossType(nextIsBoss ? bossType : null);
-    setBossWordCount(nextWordCount);
-    setLetters(getInitialLetters());
-    setLastChanged({ letter: null, timestamp: 0 });
-    setGuesses([]);
-    setTurn(0);
-    setMaxTurns(getMaxTurns(nextIsBoss, nextWordCount));
-    setGameState("playing");
-  };
-
-  const retryBoss = () => {
-    retryCurrentGame();
+    pool.generateNextGame(false);
+    resetBoard();
   };
 
   const undoLastGuess = () => {
@@ -813,11 +286,11 @@ export default function useSurvivalGame(mode) {
   };
 
   return {
-    targetWord,
-    targetWords,
+    targetWord: pool.targetWord,
+    targetWords: pool.targetWords,
     guesses,
     turn,
-    maxTurns,
+    maxTurns: pool.maxTurns,
     gameState,
     letters,
     lastChanged,
@@ -826,13 +299,14 @@ export default function useSurvivalGame(mode) {
     resetGame,
     resetAllGameData,
     retryCurrentGame,
-    retryBoss,
+    retryBoss: retryCurrentGame,
     undoLastGuess,
     addExtraRow,
-    isBossGame,
-    bossWordCount,
-    bossType,
-    gameCount,
-    availableSolutionCount: availableSolutionIndices.length,
+    isBossGame: pool.isBossGame,
+    bossWordCount: pool.bossWordCount,
+    bossType: pool.bossType,
+    bossCategory: pool.bossCategory, // [NEW] تم تصديرها للواجهة
+    gameCount: pool.gameCount,
+    availableSolutionCount: pool.availableSolutionCount,
   };
 }

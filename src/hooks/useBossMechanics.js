@@ -1,23 +1,23 @@
 import { useState, useRef, useLayoutEffect, useEffect } from "react";
 
 export default function useBossMechanics(game) {
-  const BOSS_KEY_REVEAL_START_MS = 300; //
-  const BOSS_KEY_REVEAL_STEP_MS = 150; //
-  const BOSS_TILE_REVEAL_TOTAL_MS = 1300; //
+  const BOSS_KEY_REVEAL_START_MS = 300;
+  const BOSS_KEY_REVEAL_STEP_MS = 150;
+  const BOSS_TILE_REVEAL_TOTAL_MS = 1300;
 
   const [bossRevealProgress, setBossRevealProgress] = useState({
     rowNumber: -1,
     revealedCount: 5,
-  }); //[cite: 1]
-  const [bossKeyboardView, setBossKeyboardView] = useState("all"); //[cite: 1]
+  });
 
-  const bossRevealTimersRef = useRef([]); //[cite: 1]
-  const bossFocusTimerRef = useRef(null); //[cite: 1]
-  const previousBossSolvedRef = useRef(null); //[cite: 1]
-  const prevBossGuessesLenRef = useRef(0); //[cite: 1]
-  const bossRevealInitializedRef = useRef(false); //[cite: 1]
+  const [bossKeyboardView, setBossKeyboardView] = useState("all");
+  const bossRevealTimersRef = useRef([]);
+  const bossFocusTimerRef = useRef(null);
+  const previousBossSolvedRef = useRef(null);
+  const prevBossGuessesLenRef = useRef(0);
+  const bossRevealInitializedRef = useRef(false);
 
-  // Reveal Animation Logic[cite: 1]
+  // --- Reveal Animation Logic ---
   useLayoutEffect(() => {
     const clearTimers = () => {
       bossRevealTimersRef.current.forEach((t) => clearTimeout(t));
@@ -63,6 +63,7 @@ export default function useBossMechanics(game) {
     const startTimer = setTimeout(() => {
       step = 1;
       setBossRevealProgress({ rowNumber: latestRowNumber, revealedCount: 1 });
+
       const interval = setInterval(() => {
         step += 1;
         if (step > 5) {
@@ -79,10 +80,11 @@ export default function useBossMechanics(game) {
     }, BOSS_KEY_REVEAL_START_MS);
 
     bossRevealTimersRef.current.push(startTimer);
+
     return clearTimers;
   }, [game.guesses, game.isBossGame, game.bossWordCount]);
 
-  // Focus View Logic[cite: 1]
+  // --- Focus View Logic ---
   useEffect(() => {
     if (!game.isBossGame || game.bossWordCount <= 1) {
       setBossKeyboardView("all");
@@ -109,6 +111,7 @@ export default function useBossMechanics(game) {
           guess.word === word?.toLowerCase() && guess.wordIndex === wordIdx,
       ),
     );
+
     const previousSolvedWords = previousBossSolvedRef.current;
     const focusedWordWasSolved =
       typeof bossKeyboardView === "number" &&
@@ -144,12 +147,14 @@ export default function useBossMechanics(game) {
     bossKeyboardView,
   ]);
 
-  // Derived State: Line Colors[cite: 1]
+  // --- Derived State: Line Colors [THE FIX IS HERE] ---
   const getBossKeyboardLineColors = () => {
     if (!game.isBossGame || game.bossWordCount <= 1) return {};
+
     const isRevealLocked = bossRevealProgress.rowNumber >= 0;
     const latestRowNumber = bossRevealProgress.rowNumber;
     const revealedCount = bossRevealProgress.revealedCount;
+
     const visibleWordIndices =
       bossKeyboardView === "all"
         ? Array.from({ length: game.bossWordCount }, (_, idx) => idx)
@@ -178,12 +183,30 @@ export default function useBossMechanics(game) {
     visibleWordIndices.forEach((wordIdx, segmentIdx) => {
       const targetWord = game.targetWords[wordIdx];
       if (!targetWord) return;
+
       const solution = targetWord.toLowerCase();
 
       Object.keys(game.letters).forEach((key) => {
         const letter = key.toLowerCase();
         if (!/^[a-z]$/.test(letter)) return;
 
+        // هل الحرف تم استخدامه في اللعبة بشكل عام؟
+        const globalColor = game.letters[key].color;
+        const isGuessedGlobally = !globalColor.includes("bg-gameLight");
+
+        // 1. إذا كان الحرف (غير موجود) في الكلمة الحالية:
+        if (!solution.includes(letter)) {
+          if (isGuessedGlobally) {
+            // تم استخدامه في مكان ما، إذن هو بالتأكيد "رصاصي" لهذه الكلمة
+            keyMap[key][segmentIdx] = "bg-gameGrey";
+          } else {
+            // لم يتم استخدامه أبداً
+            keyMap[key][segmentIdx] = "bg-gameLight";
+          }
+          return;
+        }
+
+        // 2. إذا كان الحرف (موجود) في الكلمة، نختبر مدى صحة مكانه
         const guessesForWord = game.guesses.filter(
           (g) =>
             typeof g?.word === "string" &&
@@ -191,12 +214,9 @@ export default function useBossMechanics(game) {
             isLetterRevealedForGuess(g, letter),
         );
 
-        if (guessesForWord.length === 0) {
-          keyMap[key][segmentIdx] = "bg-gameLight";
-          return;
-        }
-
         let hasGreen = false;
+        let hasYellow = false;
+
         guessesForWord.forEach((guessObj) => {
           const guess = guessObj.word.toLowerCase();
           const maxIdx =
@@ -207,24 +227,27 @@ export default function useBossMechanics(game) {
               : guess.length;
 
           for (let i = 0; i < maxIdx; i++) {
-            if (guess[i] === letter && solution[i] === letter) {
-              hasGreen = true;
-              break;
+            if (guess[i] === letter) {
+              if (solution[i] === letter) {
+                hasGreen = true;
+              } else {
+                hasYellow = true;
+              }
             }
           }
         });
 
         if (hasGreen) {
           keyMap[key][segmentIdx] = "bg-gameGreen";
-          return;
-        }
-        if (solution.includes(letter)) {
+        } else if (hasYellow || isGuessedGlobally) {
+          // إذا كان الحرف موجوداً في الكلمة، وتم تخمينه (سواء أصفر، أو في كلمة أخرى)
           keyMap[key][segmentIdx] = "bg-gameYellow";
         } else {
-          keyMap[key][segmentIdx] = "bg-gameGrey";
+          keyMap[key][segmentIdx] = "bg-gameLight";
         }
       });
     });
+
     return keyMap;
   };
 

@@ -6,21 +6,20 @@ import Tiles from "../components/Tiles";
 import DailyGameModals from "../components/DailyGameModals";
 import useDailyGame from "../hooks/useDailyGame";
 import Toast from "../components/Toast";
-import confetti from "canvas-confetti"; // Import confetti
+import useToast from "../hooks/useToast";
+import { handleConfetti } from "../utils/confettiUtils";
+import GameBoardLayout from "../components/GameBoardLayout"; // [REFACTORED]
 
 export default function Daily({ mode = "daily" }) {
   const navigate = useNavigate();
-  // 1. Call the hook FIRST
   const game = useDailyGame(mode);
+  const { toasts, addToast } = useToast();
 
-  // 2. Initialize Modal State
   const [isModalOpen, setIsModalOpen] = useState(() => {
     if (game.gameState === "won") return [true, "won"];
     if (game.gameState === "lost") return [true, "lost"];
     return [false, "playing"];
   });
-
-  const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
     if (game.gameState === "playing") {
@@ -28,52 +27,10 @@ export default function Daily({ mode = "daily" }) {
     }
   }, [game.gameState, game.todayString]);
 
-  const addToast = (msg, type = "info") => {
-    const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev.slice(-2), { id, msg, type }]);
-    setTimeout(
-      () => setToasts((prev) => prev.filter((t) => t.id !== id)),
-      2500,
-    );
-  };
-
-  // --- NEW: Advanced Confetti Animation ---
-  const handleConfetti = () => {
-    const end = Date.now() + 3000;
-    const colors = ["#ed143d", "#3498db", "#ffd500", "#00e196"];
-
-    const frame = () => {
-      if (Date.now() > end) return;
-
-      // Left side confetti
-      confetti({
-        particleCount: 4,
-        angle: 90,
-        spread: 75,
-        origin: { x: 0, y: 0.75 },
-        colors,
-      });
-
-      // Right side confetti
-      confetti({
-        particleCount: 4,
-        angle: 90,
-        spread: 75,
-        origin: { x: 1, y: 0.75 },
-        colors,
-      });
-
-      requestAnimationFrame(frame);
-    };
-
-    frame();
-  };
-
   const handleGameOver = (result) => {
     setTimeout(() => {
       if (result === "won") {
         setIsModalOpen([true, "won"]);
-        // Trigger the new advanced confetti animation
         handleConfetti();
       } else if (result === "lost") {
         setIsModalOpen([true, "lost"]);
@@ -83,14 +40,12 @@ export default function Daily({ mode = "daily" }) {
 
   const handleShare = async () => {
     if (game.guesses.length === 0) return;
-
     const grid = game.guesses
       .map((guess) => {
         const splitSolution = game.targetWord.toLowerCase().split("");
         const splitGuess = guess.toLowerCase().split("");
         const statuses = Array(5).fill("⬛");
 
-        // 1. Green Pass
         splitGuess.forEach((char, i) => {
           if (char === splitSolution[i]) {
             statuses[i] = "🟩";
@@ -98,9 +53,8 @@ export default function Daily({ mode = "daily" }) {
           }
         });
 
-        // 2. Yellow Pass
         splitGuess.forEach((char, i) => {
-          if (statuses[i] !== "🟩") {
+          if (statuses[i] !== "⬛") {
             const idx = splitSolution.indexOf(char);
             if (idx !== -1) {
               statuses[i] = "🟨";
@@ -127,7 +81,6 @@ export default function Daily({ mode = "daily" }) {
     <div className="flex flex-col h-screen relative overflow-hidden bg-gameDark text-white">
       <Toast toasts={toasts} />
 
-      {/* Header with Streak */}
       <div className="flex-1 center flex-col">
         <Header
           mode="DAILY CHALLENGE"
@@ -136,9 +89,10 @@ export default function Daily({ mode = "daily" }) {
         />
       </div>
 
-      {/* Game Board */}
-      <div className="flex-6 flex justify-center items-center">
-        <div className="w-96">
+      {/* [REFACTORED] استخدام القالب الموحد بدون بانلات جانبية */}
+      <GameBoardLayout
+        boardContainerClass="w-96"
+        board={
           <Tiles
             guesses={game.guesses}
             turn={game.turn}
@@ -152,15 +106,12 @@ export default function Daily({ mode = "daily" }) {
             }}
             addToast={addToast}
           />
-        </div>
-      </div>
+        }
+        keyboard={
+          <Keyboard letters={game.letters} lastChanged={game.lastChanged} />
+        }
+      />
 
-      {/* Keyboard */}
-      <div className="flex-5 center shrink-0 mb-4">
-        <Keyboard letters={game.letters} lastChanged={game.lastChanged} />
-      </div>
-
-      {/* Modals */}
       <DailyGameModals
         isOpen={isModalOpen}
         onClose={() => {

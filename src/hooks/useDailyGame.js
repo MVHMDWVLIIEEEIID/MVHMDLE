@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import data from "../data/words.json";
-import { secureStorage } from "../utils/secureStorage"; // [NEW] Import
+import { secureStorage } from "../utils/secureStorage";
+import { getGuessStatuses } from "../utils/gameUtils"; // [REFACTORED]
 
-// Initial Keyboard State
 const getInitialLetters = () => ({
   q: { color: " bg-gameLight ", row: 1 },
   w: { color: " bg-gameLight ", row: 1 },
@@ -35,31 +35,24 @@ const getInitialLetters = () => ({
 });
 
 export default function useDailyGame(mode = "daily") {
-  // Keys
   const LETTERS_KEY = `wordle-letters-${mode}`;
   const GUESSES_KEY = `wordle-guesses-${mode}`;
   const GAME_STATE_KEY = `wordle-state-${mode}`;
   const LAST_PLAYED_KEY = `wordle-last-played-${mode}`;
   const STREAK_KEY = `wordle-daily-streak-${mode}`;
 
-  // Date Logic
   const [todayString, setTodayString] = useState(() =>
     new Date().toDateString(),
   );
 
-  // --- Word Selection Logic ---
   const solutionWords = data.slice(0, 2314);
 
   const getDailyIndex = () => {
     const epoch = new Date("2024-01-01T00:00:00").setHours(0, 0, 0, 0);
     const today = new Date().setHours(0, 0, 0, 0);
     const daysPassed = Math.round((today - epoch) / (1000 * 60 * 60 * 24));
-
-    // This math scrambles the daysPassed number.
-    // Every player on Earth with the same 'daysPassed' gets the identical result.
     const seed = (daysPassed * 9301 + 49297) % 233280;
     const randomFraction = seed / 233280;
-
     return Math.floor(randomFraction * solutionWords.length);
   };
 
@@ -70,10 +63,7 @@ export default function useDailyGame(mode = "daily") {
     console.log(`[DEBUG][${mode}] target word: ${targetWord}`);
   }, [mode, targetWord, todayString]);
 
-  // --- Lazy State Initialization with Encryption ---
-
   const [guesses, setGuesses] = useState(() => {
-    // [UPDATED] Use secureStorage.getItem
     const savedDate = secureStorage.getItem(LAST_PLAYED_KEY, null);
     if (savedDate === todayString) {
       return secureStorage.getItem(GUESSES_KEY, []);
@@ -82,7 +72,6 @@ export default function useDailyGame(mode = "daily") {
   });
 
   const [gameState, setGameState] = useState(() => {
-    // [UPDATED] Use secureStorage.getItem
     const savedDate = secureStorage.getItem(LAST_PLAYED_KEY, null);
     if (savedDate === todayString) {
       return secureStorage.getItem(GAME_STATE_KEY, "playing");
@@ -91,7 +80,6 @@ export default function useDailyGame(mode = "daily") {
   });
 
   const [letters, setLetters] = useState(() => {
-    // [UPDATED] Use secureStorage.getItem
     const savedDate = secureStorage.getItem(LAST_PLAYED_KEY, null);
     if (savedDate === todayString) {
       return secureStorage.getItem(LETTERS_KEY, getInitialLetters());
@@ -100,23 +88,18 @@ export default function useDailyGame(mode = "daily") {
   });
 
   const [streak, setStreak] = useState(() => {
-    // [UPDATED] Use secureStorage.getItem
     const savedDate = secureStorage.getItem(LAST_PLAYED_KEY, null);
-    // Note: secureStorage handles type parsing, so we don't need parseInt
     const savedStreak = secureStorage.getItem(STREAK_KEY, 0);
 
     if (savedDate === todayString) return savedStreak;
-
     if (savedDate) {
       const lastDate = new Date(savedDate);
       const currentToday = new Date();
       lastDate.setHours(0, 0, 0, 0);
       currentToday.setHours(0, 0, 0, 0);
-
       const dayDiff = Math.floor(
         (currentToday - lastDate) / (1000 * 60 * 60 * 24),
       );
-
       if (dayDiff > 1) return 0;
       return savedStreak;
     }
@@ -128,16 +111,13 @@ export default function useDailyGame(mode = "daily") {
     timestamp: 0,
   });
 
-  // Auto-roll to the next daily game at midnight while the page is open.
   useEffect(() => {
     let timerId;
-
     const scheduleNextDay = () => {
       const now = new Date();
       const nextMidnight = new Date(now);
       nextMidnight.setDate(now.getDate() + 1);
       nextMidnight.setHours(0, 0, 0, 0);
-
       timerId = setTimeout(
         () => {
           const nextDay = new Date().toDateString();
@@ -147,16 +127,13 @@ export default function useDailyGame(mode = "daily") {
         nextMidnight.getTime() - now.getTime() + 50,
       );
     };
-
     scheduleNextDay();
     return () => clearTimeout(timerId);
   }, []);
 
-  // Rehydrate/reset state whenever the day changes.
   useEffect(() => {
     const savedDate = secureStorage.getItem(LAST_PLAYED_KEY, null);
     const savedStreak = secureStorage.getItem(STREAK_KEY, 0);
-
     if (savedDate === todayString) {
       setGuesses(secureStorage.getItem(GUESSES_KEY, []));
       setGameState(secureStorage.getItem(GAME_STATE_KEY, "playing"));
@@ -164,7 +141,6 @@ export default function useDailyGame(mode = "daily") {
       setStreak(savedStreak);
       return;
     }
-
     setGuesses([]);
     setGameState("playing");
     setLetters(getInitialLetters());
@@ -175,7 +151,6 @@ export default function useDailyGame(mode = "daily") {
     const currentToday = new Date(todayString);
     lastDate.setHours(0, 0, 0, 0);
     currentToday.setHours(0, 0, 0, 0);
-
     const dayDiff = Math.floor(
       (currentToday - lastDate) / (1000 * 60 * 60 * 24),
     );
@@ -191,9 +166,7 @@ export default function useDailyGame(mode = "daily") {
     LETTERS_KEY,
   ]);
 
-  // --- Persistence with Encryption ---
   useEffect(() => {
-    // [UPDATED] Replace localStorage.setItem with secureStorage.setItem
     secureStorage.setItem(GUESSES_KEY, guesses);
     secureStorage.setItem(LETTERS_KEY, letters);
     secureStorage.setItem(GAME_STATE_KEY, gameState);
@@ -208,31 +181,6 @@ export default function useDailyGame(mode = "daily") {
     GAME_STATE_KEY,
     STREAK_KEY,
   ]);
-
-  // --- Game Logic (Unchanged) ---
-  const getGuessStatuses = (guessStr) => {
-    const solution = targetWord.toLowerCase();
-    const splitSolution = solution.split("");
-    const splitGuess = guessStr.split("");
-    const statuses = Array(5).fill("bg-gameGrey");
-
-    splitGuess.forEach((char, i) => {
-      if (char === splitSolution[i]) {
-        statuses[i] = "bg-gameGreen";
-        splitSolution[i] = null;
-      }
-    });
-    splitGuess.forEach((char, i) => {
-      if (statuses[i] !== "bg-gameGreen") {
-        const idx = splitSolution.indexOf(char);
-        if (idx !== -1) {
-          statuses[i] = "bg-gameYellow";
-          splitSolution[idx] = null;
-        }
-      }
-    });
-    return statuses;
-  };
 
   const changeColor = (newColor, letterKey) => {
     const key = letterKey.toLowerCase();
@@ -261,13 +209,14 @@ export default function useDailyGame(mode = "daily") {
   const submitGuess = (guess, onGameOverCallback) => {
     if (gameState !== "playing") return false;
 
-    // Mark the day as played only when the user actually makes a guess.
     secureStorage.setItem(LAST_PLAYED_KEY, todayString);
 
     const newGuesses = [...guesses, guess];
     setGuesses(newGuesses);
 
-    const statuses = getGuessStatuses(guess);
+    // [REFACTORED] Using the shared utility
+    const statuses = getGuessStatuses(guess, targetWord);
+
     guess.split("").forEach((char, i) => {
       setTimeout(() => changeColor(statuses[i], char), i * 150 + 300);
     });

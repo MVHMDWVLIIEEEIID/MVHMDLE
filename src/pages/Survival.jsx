@@ -16,10 +16,12 @@ import useSurvivalGame from "../hooks/useSurvivalGame";
 import useSurvivalProgress from "../hooks/useSurvivalProgress";
 import useBossMechanics from "../hooks/useBossMechanics";
 import useSurvivalActions from "../hooks/useSurvivalActions";
+import useToast from "../hooks/useToast"; // [REFACTORED]
 
 export default function Survival({ mode = "survival" }) {
   const navigate = useNavigate();
-  const [toasts, setToasts] = useState([]);
+  const { toasts, addToast } = useToast(); // [REFACTORED] Uses shared hook
+
   const [gameResetKey, setGameResetKey] = useState(0);
   const [streakBeforeLastLoss, setStreakBeforeLastLoss] = useState(0);
   const modalReadyAtRef = useRef(0);
@@ -29,7 +31,6 @@ export default function Survival({ mode = "survival" }) {
     () => !secureStorage.getItem(GUIDE_SEEN_KEY, false),
   );
 
-  // Base Data Hooks
   const game = useSurvivalGame(mode);
   const progress = useSurvivalProgress(mode);
 
@@ -40,21 +41,9 @@ export default function Survival({ mode = "survival" }) {
     return [false, "playing"];
   });
 
-  const addToast = (msg, type = "info") => {
-    const id = Date.now() + Math.random();
-    setToasts((prev) => {
-      const updated = [...prev, { id, msg, type }];
-      return updated.length > 3 ? updated.slice(updated.length - 3) : updated;
-    });
-    setTimeout(
-      () => setToasts((prev) => prev.filter((t) => t.id !== id)),
-      2500,
-    );
-  };
-
-  // Dedicated Hooks
   const { bossKeyboardView, setBossKeyboardView, bossKeyboardLineColors } =
     useBossMechanics(game);
+
   const {
     handleResetWrapper,
     handleRetryBoss,
