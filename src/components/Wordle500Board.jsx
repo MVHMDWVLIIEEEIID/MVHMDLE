@@ -116,10 +116,11 @@ export default function Wordle500Board({ game }) {
 
     return (
       <div
-        className={`flex items-center gap-1 ${game.shake && isCurrentRow ? "animate-shake" : ""}`}
+        className="flex items-center gap-1"
         key={`wordle500-row-${rowIndex}`}
       >
-        <div className="grid grid-cols-5 gap-px">
+        {/* SHAKE MOVED HERE: Only the tiles grid shakes */}
+        <div className={`grid grid-cols-5 gap-px ${game.shake && isCurrentRow ? "animate-shake" : ""}`}>
           {Array.from({ length: 5 }, (_, letterIndex) => {
             const letter = guess[letterIndex] || "";
             const color = isSubmitted
@@ -138,7 +139,19 @@ export default function Wordle500Board({ game }) {
                   e.currentTarget.blur();
                   game.changeManualColor(rowIndex, letterIndex);
                 }}
-                className={`flex h-10 w-10 m-[1.5px] items-center justify-center rounded border-2 text-2xl font-bold uppercase outline-none transition-colors duration-300 ease-out ${isUncoloredRow ? "bg-gameLight border-gameLight text-gameDark" : colorClasses[color]} ${clickable ? "cursor-pointer hover:scale-105" : "cursor-default"} ${isCurrentRow && letterIndex === game.currentGuess.length ? "border-gameGreen!" : "border-transparent"}`}
+                className={`flex h-10 w-10 m-[1.5px] items-center justify-center rounded border-2 text-2xl font-bold uppercase outline-none transition-colors duration-300 ease-out ${
+                  isUncoloredRow
+                    ? "bg-gameLight border-gameLight text-gameDark"
+                    : colorClasses[color]
+                } ${
+                  clickable ? "cursor-pointer hover:scale-105" : "cursor-default"
+                } ${
+                  game.shake && isCurrentRow
+                    ? "border-red-500!"
+                    : isCurrentRow && letterIndex === game.currentGuess.length
+                      ? "border-gameGreen!"
+                      : "border-transparent"
+                }`}
               >
                 {letter}
               </button>
