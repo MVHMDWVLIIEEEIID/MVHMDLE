@@ -119,9 +119,13 @@ export default function Wordle500Board({ game }) {
               <button
                 key={`${rowIndex}-${letterIndex}`}
                 type="button"
+                tabIndex={-1}
                 disabled={!clickable}
                 aria-label={`${letter || "empty"} letter ${letterIndex + 1}, ${color}`}
-                onClick={() => game.changeManualColor(rowIndex, letterIndex)}
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  game.changeManualColor(rowIndex, letterIndex);
+                }}
                 className={`flex h-10 w-10 m-[1.5px] items-center justify-center rounded border-2 text-2xl font-bold uppercase outline-none transition-colors duration-300 ease-out ${isUncoloredRow ? "bg-gameLight border-gameLight text-gameDark" : colorClasses[color]} ${clickable ? "cursor-pointer hover:scale-105" : "cursor-default"} ${isCurrentRow && letterIndex === game.currentGuess.length ? "border-gameGreen!" : "border-transparent"}`}
               >
                 {letter}
