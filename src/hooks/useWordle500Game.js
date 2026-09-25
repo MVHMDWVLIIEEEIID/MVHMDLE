@@ -95,6 +95,7 @@ export default function useWordle500Game() {
     if (state.gameState !== "playing" || currentGuess.length !== 5) return false;
 
     const guess = currentGuess.toLowerCase();
+    if (state.guesses.includes(guess)) return false;
     if (!data.includes(guess)) return false;
 
     const guesses = [...state.guesses, guess];

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Wordle500Board, { MANUAL_COLORS } from "./Wordle500Board";
+import data from "../data/words.json";
 
 export default function SurvivalWordle500Wrapper({
   game,
@@ -18,13 +19,23 @@ export default function SurvivalWordle500Wrapper({
       if (e.key === "Backspace") {
         setCurrentGuess((prev) => prev.slice(0, -1));
       } else if (e.key === "Enter") {
-        if (currentGuess.length !== 5) return;
+        const guessToSubmit = currentGuess.toLowerCase();
+
+        if (guessToSubmit.length !== 5) {
+          addToast("Not enough letters!", "error");
+          return;
+        }
+
+        if (!data.includes(guessToSubmit)) {
+          addToast("Incorrect word", "error");
+          return;
+        }
 
         const accepted = onGuessSubmit(
-          currentGuess,
+          guessToSubmit,
           0,
           () => addToast("Not enough letters", "error"),
-          () => addToast("Already guessed", "error"),
+          () => addToast("Word already submitted!", "error"),
         );
 
         // If the main hook accepts the guess, update the board's visual state

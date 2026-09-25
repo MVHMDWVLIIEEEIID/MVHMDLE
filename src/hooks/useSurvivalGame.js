@@ -453,6 +453,14 @@ export default function useSurvivalGame(mode) {
     const openingGuessCount = isBossGame ? (bossWordCount === 4 ? 3 : 2) : 1;
     const bannedRows = openingGuessCount + 1;
 
+    if (
+      (isBossGame && guesses.some((g) => g.word === normalizedGuess)) ||
+      (!isBossGame && guesses.includes(normalizedGuess))
+    ) {
+      if (onDuplicateWord) onDuplicateWord();
+      return false;
+    }
+
     if (turn < bannedRows && bannedOpeningWords.includes(normalizedGuess)) {
       if (onBannedWord) onBannedWord();
       return false;
@@ -463,14 +471,6 @@ export default function useSurvivalGame(mode) {
       !bannedOpeningWords.includes(normalizedGuess)
     ) {
       setBannedOpeningWords((prev) => [...prev, normalizedGuess]);
-    }
-
-    if (
-      (isBossGame && guesses.some((g) => g.word === normalizedGuess)) ||
-      (!isBossGame && guesses.includes(normalizedGuess))
-    ) {
-      if (onDuplicateWord) onDuplicateWord();
-      return false;
     }
 
     if (isBossGame && bossWordCount > 1) {
