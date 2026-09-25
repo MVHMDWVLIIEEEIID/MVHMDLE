@@ -135,7 +135,9 @@ export default function useSurvivalGame(mode) {
     const openingGuessCount = pool.isBossGame
       ? pool.bossWordCount === 4
         ? 3
-        : 2
+        : pool.bossWordCount === 2
+          ? 2
+          : 1
       : 1;
     const bannedRows = openingGuessCount + 1;
 
