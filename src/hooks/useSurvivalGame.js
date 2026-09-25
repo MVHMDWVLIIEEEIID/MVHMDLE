@@ -183,7 +183,18 @@ export default function useSurvivalGame(mode) {
     return gameTypeInfo.bossType;
   });
   const [bossWordCount, setBossWordCount] = useState(() => {
-    return secureStorage.getItem(BOSS_WORD_COUNT_KEY, gameTypeInfo.wordCount);
+    const savedWordCount = secureStorage.getItem(
+      BOSS_WORD_COUNT_KEY,
+      gameTypeInfo.wordCount,
+    );
+
+    // Wordle500 is always a single-target boss. Normalize older persisted
+    // state so a previous multi-word boss cannot leak into this game.
+    if (savedBossType === "wordle500" || gameTypeInfo.bossType === "wordle500") {
+      return 1;
+    }
+
+    return savedWordCount;
   });
 
   // [UPDATED] Max Turns State - uses secureStorage
@@ -335,6 +346,8 @@ export default function useSurvivalGame(mode) {
   useEffect(() => {
     if (randomIndices.length > 0) {
       secureStorage.setItem(INDICES_KEY, randomIndices);
+    } else {
+      secureStorage.removeItem(INDICES_KEY);
     }
   }, [randomIndices, INDICES_KEY]);
 
@@ -761,7 +774,10 @@ export default function useSurvivalGame(mode) {
     secureStorage.removeItem(TILES_TURN_KEY);
 
     let nextIsBoss = isBossGame;
-    let nextWordCount = nextIsBoss ? bossWordCount : 1;
+    // Wordle500 must never retry as a multi-word boss, even if stale state
+    // was saved before the target-count normalization above.
+    let nextWordCount =
+      nextIsBoss && bossType === "wordle500" ? 1 : nextIsBoss ? bossWordCount : 1;
 
     if (nextIsBoss && bossType === "wordle500") {
       const newIndex = getRandomFromPool(getEligibleWordle500Indices());
