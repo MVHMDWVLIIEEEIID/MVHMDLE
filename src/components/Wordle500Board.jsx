@@ -1,0 +1,140 @@
+import { useEffect, useRef, useState } from "react";
+import {
+  getLetterStatuses,
+  getStatusCounts,
+  MANUAL_COLORS,
+  WORDLE500_TURNS,
+} from "../hooks/useWordle500Game";
+
+const RESIZE_BEFORE_FLIP_MS = 300;
+const FLIP_TOTAL_MS = 1250;
+const TILE_REVEAL_STEP_MS = 100;
+
+const colorClasses = {
+  gray: "bg-gameGrey border-gameGrey text-gameDark",
+  red: "bg-gameRed border-gameRed text-white",
+  yellow: "bg-gameYellow border-gameYellow text-gameDark",
+  green: "bg-gameGreen border-gameGreen text-gameDark",
+};
+
+const countColors = {
+  green: "bg-gameGreen border-gameGreen text-gameDark",
+  yellow: "bg-gameYellow border-gameYellow text-gameDark",
+  red: "bg-gameRed border-gameRed text-white",
+};
+
+export default function Wordle500Board({ game }) {
+  const [revealingSubmissionId, setRevealingSubmissionId] = useState(null);
+  const previousSubmissionIdRef = useRef(game.lastSubmittedId || 0);
+
+  useEffect(() => {
+    const submissionId = game.lastSubmittedId || 0;
+    if (submissionId === previousSubmissionIdRef.current || submissionId === 0)
+      return undefined;
+
+    previousSubmissionIdRef.current = submissionId;
+    const startTimer = setTimeout(() => {
+      setRevealingSubmissionId({ id: submissionId, phase: "resizing" });
+    }, 0);
+
+    const resizeTimer = setTimeout(() => {
+      setRevealingSubmissionId({ id: submissionId, phase: "flipping" });
+    }, RESIZE_BEFORE_FLIP_MS);
+    const clearTimer = setTimeout(() => {
+      setRevealingSubmissionId(null);
+    }, FLIP_TOTAL_MS);
+
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(resizeTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [game.lastSubmittedId]);
+
+  const rows = Array.from({ length: WORDLE500_TURNS }, (_, rowIndex) => {
+    const guess =
+      game.guesses[rowIndex] ||
+      (rowIndex === game.guesses.length ? game.currentGuess : "");
+    const isSubmitted = rowIndex < game.guesses.length;
+    const actualColors = isSubmitted
+      ? getLetterStatuses(guess, game.targetWord)
+      : [];
+    const colors =
+      game.gameState === "playing" ? game.manualColors[rowIndex] : actualColors;
+    const counts = isSubmitted ? getStatusCounts(guess, game.targetWord) : null;
+    const isLastSubmittedRow =
+      isSubmitted && rowIndex === game.guesses.length - 1;
+    const isResizingRow =
+      isLastSubmittedRow &&
+      revealingSubmissionId?.id === game.lastSubmittedId &&
+      revealingSubmissionId.phase === "resizing";
+    const shouldFlipCounts =
+      isLastSubmittedRow &&
+      revealingSubmissionId?.id === game.lastSubmittedId &&
+      revealingSubmissionId.phase === "flipping";
+
+    // 1. ELEVATED VARIABLES: Moved from the inner letter loop to the row level
+    const isCurrentRow =
+      rowIndex === game.guesses.length && game.gameState === "playing";
+    const isExpandedRow = isCurrentRow || isResizingRow;
+
+    return (
+      <div
+        className="flex items-center gap-1"
+        key={`wordle500-row-${rowIndex}`}
+      >
+        <div className="grid grid-cols-5 gap-px">
+          {Array.from({ length: 5 }, (_, letterIndex) => {
+            const letter = guess[letterIndex] || "";
+            const color = isSubmitted
+              ? colors?.[letterIndex] || "gray"
+              : "gray";
+            // Variables were cleanly removed from here
+            const clickable = isSubmitted && game.gameState === "playing";
+            return (
+              <button
+                key={`${rowIndex}-${letterIndex}`}
+                type="button"
+                disabled={!clickable}
+                aria-label={`${letter || "empty"} letter ${letterIndex + 1}, ${color}`}
+                onClick={() => game.changeManualColor(rowIndex, letterIndex)}
+                className={`flex ${isExpandedRow ? "h-10 w-10" : "h-8 w-10"} m-[1.5px] items-center justify-center rounded border-2 ${isExpandedRow ? "text-2xl" : "text-[22px]"} font-bold uppercase outline-none transition-[height,font-size,background-color,border-color,color] duration-300 ease-out ${isExpandedRow ? "bg-gameLight border-gameLight text-gameDark" : colorClasses[color]} ${clickable ? "cursor-pointer hover:scale-105" : "cursor-default"} ${shouldFlipCounts ? "animate-flip" : ""} ${isCurrentRow && letterIndex === game.currentGuess.length ? "border-gameGreen!" : "border-transparent"}`}
+              >
+                {letter}
+              </button>
+            );
+          })}
+        </div>
+        <div
+          className="flex gap-px"
+          aria-label={
+            counts
+              ? `${counts.green} green, ${counts.yellow} yellow, ${counts.red} red`
+              : "No result yet"
+          }
+        >
+          {Object.keys(countColors).map((color) => (
+            <div
+              key={`${color}-${game.lastSubmittedId || 0}`}
+              // 2. APPLIED HERE: Changed isResizingRow to isExpandedRow for both height and text size
+              className={`flex ${isExpandedRow ? "h-10 w-10" : "h-8 w-10"} m-[1.5px] items-center justify-center rounded border-2 ${isExpandedRow ? "text-2xl" : "text-[22px]"} font-bold outline-none transition-[height,font-size] duration-300 ease-out ${countColors[color]} ${shouldFlipCounts ? "animate-flip" : ""}`}
+              style={
+                shouldFlipCounts
+                  ? {
+                      animationDelay: `${Object.keys(countColors).indexOf(color) * 100}ms`,
+                    }
+                  : undefined
+              }
+            >
+              {counts ? counts[color] : ""}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  });
+
+  return <div className="flex flex-col gap-px">{rows}</div>;
+}
+
+export { MANUAL_COLORS };
