@@ -8,6 +8,7 @@ import {
 
 const RESIZE_BEFORE_FLIP_MS = 300;
 const FLIP_TOTAL_MS = 1250;
+const FLIP_ANIMATION_MS = 600;
 const TILE_REVEAL_STEP_MS = 100;
 
 const colorClasses = {
@@ -25,6 +26,16 @@ const countColors = {
 
 export default function Wordle500Board({ game }) {
   const [revealingSubmissionId, setRevealingSubmissionId] = useState(null);
+  const [revealedCountColors, setRevealedCountColors] = useState(() =>
+    game.lastSubmittedId
+      ? Object.fromEntries(
+          Object.keys(countColors).map((color) => [
+            color,
+            game.lastSubmittedId,
+          ]),
+        )
+      : null,
+  );
   const previousSubmissionIdRef = useRef(game.lastSubmittedId || 0);
 
   useEffect(() => {
@@ -33,10 +44,25 @@ export default function Wordle500Board({ game }) {
       return undefined;
 
     previousSubmissionIdRef.current = submissionId;
+
     const startTimer = setTimeout(() => {
       setRevealingSubmissionId({ id: submissionId, phase: "resizing" });
     }, 0);
 
+    const revealTimers = Object.keys(countColors).map(
+      (color, index) =>
+        setTimeout(
+          () => {
+            setRevealedCountColors((revealedColors) => ({
+              ...revealedColors,
+              [color]: submissionId,
+            }));
+          },
+          RESIZE_BEFORE_FLIP_MS +
+            FLIP_ANIMATION_MS / 2 +
+            index * TILE_REVEAL_STEP_MS,
+        ), //
+    );
     const resizeTimer = setTimeout(() => {
       setRevealingSubmissionId({ id: submissionId, phase: "flipping" });
     }, RESIZE_BEFORE_FLIP_MS);
@@ -46,6 +72,7 @@ export default function Wordle500Board({ game }) {
 
     return () => {
       clearTimeout(startTimer);
+      revealTimers.forEach(clearTimeout);
       clearTimeout(resizeTimer);
       clearTimeout(clearTimer);
     };
@@ -98,7 +125,7 @@ export default function Wordle500Board({ game }) {
                 disabled={!clickable}
                 aria-label={`${letter || "empty"} letter ${letterIndex + 1}, ${color}`}
                 onClick={() => game.changeManualColor(rowIndex, letterIndex)}
-                className={`flex ${isExpandedRow ? "h-10 w-10" : "h-8 w-10"} m-[1.5px] items-center justify-center rounded border-2 ${isExpandedRow ? "text-2xl" : "text-[22px]"} font-bold uppercase outline-none transition-[height,font-size,background-color,border-color,color] duration-300 ease-out ${isExpandedRow ? "bg-gameLight border-gameLight text-gameDark" : colorClasses[color]} ${clickable ? "cursor-pointer hover:scale-105" : "cursor-default"} ${shouldFlipCounts ? "animate-flip" : ""} ${isCurrentRow && letterIndex === game.currentGuess.length ? "border-gameGreen!" : "border-transparent"}`}
+                className={`flex ${isExpandedRow ? "h-10 w-10" : "h-8 w-10"} m-[1.5px] items-center justify-center rounded border-2 ${isExpandedRow ? "text-2xl" : "text-[22px]"} font-bold uppercase outline-none transition-[height,font-size,background-color,border-color,color] duration-300 ease-out ${isExpandedRow ? "bg-gameLight border-gameLight text-gameDark" : colorClasses[color]} ${clickable ? "cursor-pointer hover:scale-105" : "cursor-default"} ${isCurrentRow && letterIndex === game.currentGuess.length ? "border-gameGreen!" : "border-transparent"}`}
               >
                 {letter}
               </button>
@@ -116,17 +143,20 @@ export default function Wordle500Board({ game }) {
           {Object.keys(countColors).map((color) => (
             <div
               key={`${color}-${game.lastSubmittedId || 0}`}
-              // 2. APPLIED HERE: Changed isResizingRow to isExpandedRow for both height and text size
               className={`flex ${isExpandedRow ? "h-10 w-10" : "h-8 w-10"} m-[1.5px] items-center justify-center rounded border-2 ${isExpandedRow ? "text-2xl" : "text-[22px]"} font-bold outline-none transition-[height,font-size] duration-300 ease-out ${countColors[color]} ${shouldFlipCounts ? "animate-flip" : ""}`}
               style={
                 shouldFlipCounts
                   ? {
-                      animationDelay: `${Object.keys(countColors).indexOf(color) * 100}ms`,
+                      animationDelay: `${Object.keys(countColors).indexOf(color) * TILE_REVEAL_STEP_MS}ms`,
                     }
                   : undefined
               }
             >
-              {counts ? counts[color] : ""}
+              {counts &&
+              (!isLastSubmittedRow ||
+                revealedCountColors?.[color] === game.lastSubmittedId)
+                ? counts[color]
+                : ""}
             </div>
           ))}
         </div>
