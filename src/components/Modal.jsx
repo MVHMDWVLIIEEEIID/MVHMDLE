@@ -46,16 +46,16 @@ const BrokenHeartIcon = ({
 export default function Modal({
   isOpen,
   onClose,
-  status = "success", // "success" | "error" | "warning"
+  status = "success",
   title,
   subtitle,
-  highlight, // String or ReactNode
-  highlightType = "normal", // "normal" | "boss"
-  heartsData, // { active, broken, empty }
-  statCards = [], // Array of objects: { value, label, valueColor, component, className }
-  customBody, // Optional ReactNode for complex inner sections like Earnings
-  wordsForDef = [], // Array of strings to look up
-  buttons = [], // Array of objects: { label, onClick, variant }
+  highlight,
+  highlightType = "normal",
+  heartsData,
+  statCards = [],
+  customBody,
+  wordsForDef = [],
+  buttons = [],
 }) {
   const defsRef = useRef([]);
   const [expandedDefs, setExpandedDefs] = useState([]);
@@ -87,33 +87,36 @@ export default function Modal({
     : "opacity-0 pointer-events-none backdrop-blur-none";
   const modalTransform = isOpen ? "animate-modalIn" : "animate-modalOut";
 
-  // Dynamic Theme Generator based on Status
+  // Dynamic Theme Generator
   const styles = {
     success: {
       text: "text-gameGreen",
       border: "border-gameGreen/50",
       shadow: "shadow-[0_0_40px_rgba(0,255,100,0.1)]",
       drop: "drop-shadow-[0_0_15px_rgba(74,222,128,0.25)]",
+      scrollColor: "var(--color-gameGreen)",
     },
     error: {
       text: "text-gameRed",
       border: "border-gameRed/50",
       shadow: "shadow-[0_0_40px_rgba(255,50,50,0.1)]",
       drop: "drop-shadow-[0_0_25px_rgba(239,68,68,0.4)]",
+      scrollColor: "var(--color-gameRed)",
     },
     warning: {
       text: "text-gameYellow",
       border: "border-gameYellow/50",
       shadow: "shadow-[0_0_40px_rgba(250,204,21,0.1)]",
       drop: "drop-shadow-[0_0_20px_rgba(250,204,21,0.3)]",
+      scrollColor: "var(--color-gameYellow)",
     },
   };
+
   const theme = styles[status] || styles.success;
 
-  // Render highlighted text dynamically
   const renderHighlight = () => {
     if (!highlight) return null;
-    if (typeof highlight !== "string") return highlight; // If it's custom JSX (like Victory text)
+    if (typeof highlight !== "string") return highlight;
     if (highlightType === "boss") {
       return (
         <div
@@ -136,6 +139,28 @@ export default function Modal({
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ease-out ${visibilityClass}`}
     >
+      {/* ستايل مخصص للسكرول بار لا يمكن للمتصفح أو Tailwind تجاهله */}
+      <style>{`
+        .custom-modal-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-modal-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-modal-scroll::-webkit-scrollbar-thumb {
+          background-color: ${theme.scrollColor};
+          border-radius: 9999px;
+        }
+        .custom-modal-scroll::-webkit-scrollbar-button {
+          display: none;
+        }
+        /* دعم لمتصفح فايرفوكس */
+        .custom-modal-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: ${theme.scrollColor} transparent;
+        }
+      `}</style>
+
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
       <div
         className={`relative w-full max-w-md rounded-3xl bg-[#0a0a0a] border-2 p-8 transition-colors duration-500 flex flex-col items-center ${theme.border} ${theme.shadow} ${modalTransform}`}
@@ -177,7 +202,7 @@ export default function Modal({
           </p>
         )}
 
-        {/* Hearts (For Lost Heart mode) */}
+        {/* Hearts */}
         {heartsData && (
           <div className="flex gap-2 mb-4">
             {[...Array(heartsData.active || 0)].map((_, i) => (
@@ -209,7 +234,7 @@ export default function Modal({
             {statCards.map((card, idx) => (
               <div
                 key={idx}
-                className={`rounded-2xl flex flex-col items-center justify-center p-4 min-h-25 ${card.className || "bg-white/5 border border-white/10"}`}
+                className={`rounded-2xl flex flex-col items-center justify-center p-4 min-h-[100px] ${card.className || "bg-white/5 border border-white/10"}`}
               >
                 {card.component ? (
                   card.component
@@ -232,13 +257,14 @@ export default function Modal({
           </div>
         )}
 
-        {/* Custom Central Body (For complex Earnings logic) */}
+        {/* Custom Central Body */}
         {customBody && <div className="w-full mt-2">{customBody}</div>}
 
         {/* Automatic Dictionary Section */}
         {wordsForDef.length > 0 && (
           <div className="w-full mt-4">
-            <div className="max-h-28 overflow-y-auto space-y-4 hide-scrollbar">
+            {/* استخدمنا كلاس custom-modal-scroll هنا بدلاً من كلاسات Tailwind */}
+            <div className="custom-modal-scroll max-h-[140px] overflow-y-auto overflow-x-hidden space-y-4 -mr-8 pr-8">
               {wordsForDef.map((word, idx) => (
                 <div key={idx} ref={(el) => (defsRef.current[idx] = el)}>
                   <DefinitionSection

@@ -4,7 +4,7 @@ import useSecureState from "./useSecureState";
 
 export const DEV_SETTINGS = {
   FORCE_BOSS_ID: null,
-  EVERY_ROUND_IS_BOSS: true,
+  EVERY_ROUND_IS_BOSS: false,
 };
 export const BOSS_REGISTRY = {
   wordle500: {
