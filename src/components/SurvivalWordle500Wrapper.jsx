@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import Wordle500Board, { MANUAL_COLORS } from "./Wordle500Board";
 import data from "../data/words.json";
 
+const COLORS_STORAGE_KEY = "survival-wordle500-manual-colors";
+
 export default function SurvivalWordle500Wrapper({
   game,
   onGuessSubmit,
@@ -9,12 +11,19 @@ export default function SurvivalWordle500Wrapper({
 }) {
   const [currentGuess, setCurrentGuess] = useState("");
   
-  // Initialize state from existing guesses to fix the refresh bug
-  const [manualColors, setManualColors] = useState(() =>
-    game.guesses
-      ? Array.from({ length: game.guesses.length }, () => Array(5).fill("gray"))
-      : []
-  );
+  // Initialize state from existing guesses and pull saved colors from localStorage
+  const [manualColors, setManualColors] = useState(() => {
+    if (!game.guesses) return [];
+    try {
+      const saved = JSON.parse(localStorage.getItem(COLORS_STORAGE_KEY)) || [];
+      return Array.from({ length: game.guesses.length }, (_, i) => 
+        saved[i] || Array(5).fill("gray")
+      );
+    } catch {
+      return Array.from({ length: game.guesses.length }, () => Array(5).fill("gray"));
+    }
+  });
+
   const [lastSubmittedId, setLastSubmittedId] = useState(() =>
     game.guesses ? game.guesses.length : 0
   );
@@ -35,6 +44,11 @@ export default function SurvivalWordle500Wrapper({
     },
     [],
   );
+
+  // Keep localStorage synced whenever you change a color or add a row
+  useEffect(() => {
+    localStorage.setItem(COLORS_STORAGE_KEY, JSON.stringify(manualColors));
+  }, [manualColors]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
