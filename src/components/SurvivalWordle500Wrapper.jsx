@@ -7,11 +7,11 @@ const COLORS_STORAGE_KEY = "survival-wordle500-manual-colors";
 export default function SurvivalWordle500Wrapper({
   game,
   onGuessSubmit,
+  onGameOver,
   addToast,
 }) {
   const [currentGuess, setCurrentGuess] = useState("");
   
-  // Initialize state from existing guesses and pull saved colors from localStorage
   const [manualColors, setManualColors] = useState(() => {
     if (!game.guesses) return [];
     try {
@@ -45,18 +45,20 @@ export default function SurvivalWordle500Wrapper({
     [],
   );
 
-  // Keep localStorage synced whenever you change a color or add a row
   useEffect(() => {
     localStorage.setItem(COLORS_STORAGE_KEY, JSON.stringify(manualColors));
   }, [manualColors]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (game.gameState !== "playing") return;
+      // Intercept Enter key specifically to reopen the modal if the game is over
+      if (e.key === "Enter") {
+        if (game.gameState !== "playing") {
+          if (game.gameState === "won") onGameOver?.("won-already");
+          else onGameOver?.("lost-already");
+          return;
+        }
 
-      if (e.key === "Backspace") {
-        setCurrentGuess((prev) => prev.slice(0, -1));
-      } else if (e.key === "Enter") {
         const guessToSubmit = currentGuess.toLowerCase();
 
         if (guessToSubmit.length !== 5) {
@@ -92,6 +94,14 @@ export default function SurvivalWordle500Wrapper({
           setLastSubmittedId((prev) => prev + 1);
           setCurrentGuess("");
         }
+        return; // Important: Return early so we don't fall into the block below
+      }
+
+      // Block any other keypresses if the game is no longer active
+      if (game.gameState !== "playing") return;
+
+      if (e.key === "Backspace") {
+        setCurrentGuess((prev) => prev.slice(0, -1));
       } else if (/^[a-zA-Z]$/.test(e.key)) {
         if (currentGuess.length < 5) {
           setCurrentGuess((prev) => prev + e.key.toLowerCase());
@@ -103,7 +113,7 @@ export default function SurvivalWordle500Wrapper({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentGuess, game.gameState, onGuessSubmit, addToast, game.guesses]);
+  }, [currentGuess, game.gameState, onGuessSubmit, onGameOver, addToast, game.guesses]);
 
   const changeManualColor = (rowIndex, letterIndex) => {
     if (game.gameState !== "playing") return;

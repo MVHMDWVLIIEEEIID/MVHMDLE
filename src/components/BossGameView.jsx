@@ -54,6 +54,7 @@ export default function BossGameView({
                 if (accepted) progress.addWordsTyped(1);
                 return accepted;
               }}
+              onGameOver={handleGameOver} // <-- ADDED THIS PROP
               addToast={addToast}
             />
           ) : (
