@@ -77,6 +77,13 @@ export default function Wordle500Board({ game }) {
     };
   }, [game.lastSubmittedId]);
 
+  // Determine if the game was just won and the final count boxes are currently animating
+  const lastGuess = game.guesses[game.guesses.length - 1];
+  const isWinningAnimation =
+    lastGuess === game.targetWord &&
+    revealingSubmissionId?.id === game.lastSubmittedId;
+  const showActualColors = game.gameState !== "playing" && !isWinningAnimation;
+
   const rows = Array.from({ length: WORDLE500_TURNS }, (_, rowIndex) => {
     const guess =
       game.guesses[rowIndex] ||
@@ -85,8 +92,12 @@ export default function Wordle500Board({ game }) {
     const actualColors = isSubmitted
       ? getLetterStatuses(guess, game.targetWord)
       : [];
-    const colors =
-      game.gameState === "playing" ? game.manualColors[rowIndex] : actualColors;
+
+    // Use actual colors only if the game is over AND the win animation has finished
+    const colors = showActualColors
+      ? actualColors
+      : game.manualColors[rowIndex];
+
     const counts = isSubmitted ? getStatusCounts(guess, game.targetWord) : null;
     const isLastSubmittedRow =
       isSubmitted && rowIndex === game.guesses.length - 1;
@@ -115,6 +126,7 @@ export default function Wordle500Board({ game }) {
               ? colors?.[letterIndex] || "gray"
               : "gray";
             const clickable = isSubmitted && game.gameState === "playing";
+
             return (
               <button
                 key={`${rowIndex}-${letterIndex}`}
