@@ -8,8 +8,17 @@ export default function SurvivalWordle500Wrapper({
   addToast,
 }) {
   const [currentGuess, setCurrentGuess] = useState("");
-  const [manualColors, setManualColors] = useState([]);
-  const [lastSubmittedId, setLastSubmittedId] = useState(0);
+  
+  // Initialize state from existing guesses to fix the refresh bug
+  const [manualColors, setManualColors] = useState(() =>
+    game.guesses
+      ? Array.from({ length: game.guesses.length }, () => Array(5).fill("gray"))
+      : []
+  );
+  const [lastSubmittedId, setLastSubmittedId] = useState(() =>
+    game.guesses ? game.guesses.length : 0
+  );
+  
   const [shake, setShake] = useState(false);
   const shakeTimeoutRef = useRef(null);
 
@@ -27,7 +36,6 @@ export default function SurvivalWordle500Wrapper({
     [],
   );
 
-  // Intercept keystrokes locally to feed currentGuess to the board
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (game.gameState !== "playing") return;
@@ -49,6 +57,12 @@ export default function SurvivalWordle500Wrapper({
           return;
         }
 
+        if (game.guesses && game.guesses.includes(guessToSubmit)) {
+          triggerShake();
+          addToast("Word already submitted!", "error");
+          return;
+        }
+
         const accepted = onGuessSubmit(
           guessToSubmit,
           0,
@@ -59,7 +73,6 @@ export default function SurvivalWordle500Wrapper({
           },
         );
 
-        // If the main hook accepts the guess, update the board's visual state
         if (accepted) {
           setManualColors((prev) => [...prev, Array(5).fill("gray")]);
           setLastSubmittedId((prev) => prev + 1);
@@ -69,14 +82,15 @@ export default function SurvivalWordle500Wrapper({
         if (currentGuess.length < 5) {
           setCurrentGuess((prev) => prev + e.key.toLowerCase());
         }
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        addToast("Game only accepts English letters", "error");
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentGuess, game.gameState, onGuessSubmit, addToast]);
+  }, [currentGuess, game.gameState, onGuessSubmit, addToast, game.guesses]);
 
-  // Handle the manual color cycling logic
   const changeManualColor = (rowIndex, letterIndex) => {
     if (game.gameState !== "playing") return;
     setManualColors((prev) => {
@@ -91,7 +105,6 @@ export default function SurvivalWordle500Wrapper({
     });
   };
 
-  // Merge the survival game data with the local typing data
   const unifiedGameObj = {
     ...game,
     currentGuess,
