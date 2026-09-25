@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import BossTiles from "./BossTiles";
 import BossKeyboard from "./BossKeyboard";
 import SurvivalWordle500Wrapper from "./SurvivalWordle500Wrapper";
@@ -13,8 +14,19 @@ export default function BossGameView({
   addToast,
 }) {
   const isWordle500Boss = game.bossType === "wordle500";
+  
+  // Fallback to the targetWords array length if the bossWordCount state is lost on refresh
+  const multiWordCount = game.bossWordCount || game.targetWords?.length || 0;
 
-  // Keep letters white until their state updates, then turn them grey
+  // Force the view to show all grids when the multi-word boss game loads/refreshes
+  useEffect(() => {
+    if (!isWordle500Boss && multiWordCount > 1) {
+      setBossKeyboardView("all");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameResetKey, multiWordCount]);
+
+  // Keep letters white until their state updates, then turn them grey for Wordle500
   const displayLetters = isWordle500Boss && game.letters
     ? Object.fromEntries(
         Object.entries(game.letters).map(([key, val]) => {
@@ -54,7 +66,7 @@ export default function BossGameView({
                 if (accepted) progress.addWordsTyped(1);
                 return accepted;
               }}
-              onGameOver={handleGameOver} // <-- ADDED THIS PROP
+              onGameOver={handleGameOver}
               addToast={addToast}
             />
           ) : (
@@ -97,7 +109,7 @@ export default function BossGameView({
           letters={displayLetters}
           lastChanged={game.lastChanged}
           lineColorsByLetter={isWordle500Boss ? {} : bossKeyboardLineColors}
-          bossWordCount={isWordle500Boss ? 0 : game.bossWordCount}
+          bossWordCount={isWordle500Boss ? 0 : multiWordCount}
           selectedView={bossKeyboardView}
           onSelectedViewChange={setBossKeyboardView}
         />

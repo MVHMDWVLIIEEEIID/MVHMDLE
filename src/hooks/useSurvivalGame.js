@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import data from "../data/words.json";
-import { secureStorage } from "../utils/secureStorage"; // [NEW] Import
+import { secureStorage } from "../utils/secureStorage";
 
 export default function useSurvivalGame(mode) {
   const LETTERS_KEY = `wordle-letters-${mode}`;
@@ -90,7 +90,6 @@ export default function useSurvivalGame(mode) {
     return picked;
   }, []);
 
-  // Add future boss types here. Each boss ID must be unique.
   const BOSS_TYPES = [
     { id: "wordle500", wordCount: 1 },
     { id: "two-word", wordCount: 2 },
@@ -108,9 +107,6 @@ export default function useSurvivalGame(mode) {
     return pool[Math.floor(Math.random() * pool.length)];
   };
 
-  // gameCount is zero-based: 0 is game 1, 4 is game 5, etc.
-  // Bosses appear every 5th game. Their order is random, without repeats
-  // until every configured boss has appeared once.
   const getGameTypeInfo = (gameCount, playedTypes = []) => {
     const gameNumber = gameCount + 1;
     if (gameNumber % 5 !== 0) {
@@ -121,15 +117,13 @@ export default function useSurvivalGame(mode) {
     return { isBoss: true, bossType: boss.id, wordCount: boss.wordCount };
   };
 
-  // [NEW] Get max turns based on game type
   const getMaxTurns = (isBoss, wordCount) => {
     if (isBoss && wordCount === 1) return 8;
     if (isBoss && wordCount === 4) return 10;
     if (isBoss && wordCount === 2) return 7;
-    return 6; // Normal game
+    return 6;
   };
 
-  // [NEW] Game count state - tracks which game number we're on (must be before maxTurns)
   const [gameCount, setGameCount] = useState(() => {
     return secureStorage.getItem(GAME_COUNT_KEY, 0);
   });
@@ -167,12 +161,17 @@ export default function useSurvivalGame(mode) {
     [availableSolutionIndices, getEligibleSolutionIndices],
   );
 
-  // [NEW] Game type info
   const gameTypeInfo = getGameTypeInfo(gameCount, playedBossTypes);
   const savedBossType = secureStorage.getItem(BOSS_TYPE_KEY, null);
+
   const [isBossGame, setIsBossGame] = useState(() => {
-    return secureStorage.getItem(IS_BOSS_GAME_KEY, gameTypeInfo.isBoss);
+    const saved = secureStorage.getItem(IS_BOSS_GAME_KEY, null);
+    if (saved !== null) return saved;
+    // Heal corrupted state: If a boss type was saved, it must be a boss game
+    if (savedBossType) return true;
+    return gameTypeInfo.isBoss;
   });
+
   const [bossType, setBossType] = useState(() => {
     if (
       typeof savedBossType === "string" &&
@@ -182,31 +181,35 @@ export default function useSurvivalGame(mode) {
     }
     return gameTypeInfo.bossType;
   });
-  const [bossWordCount, setBossWordCount] = useState(() => {
-    const savedWordCount = secureStorage.getItem(
-      BOSS_WORD_COUNT_KEY,
-      gameTypeInfo.wordCount,
-    );
 
-    // Wordle500 is always a single-target boss. Normalize older persisted
-    // state so a previous multi-word boss cannot leak into this game.
-    if (savedBossType === "wordle500" || gameTypeInfo.bossType === "wordle500") {
+  const [bossWordCount, setBossWordCount] = useState(() => {
+    const savedWordCount = secureStorage.getItem(BOSS_WORD_COUNT_KEY, null);
+
+    if (
+      savedBossType === "wordle500" ||
+      (!savedBossType && gameTypeInfo.bossType === "wordle500")
+    ) {
       return 1;
     }
 
-    return savedWordCount;
+    // Heal corrupted state: Automatically restore missing word count using the saved boss name
+    if (savedWordCount === null && typeof savedBossType === "string") {
+      const matchedBoss = BOSS_TYPES.find((b) => b.id === savedBossType);
+      if (matchedBoss) return matchedBoss.wordCount;
+    }
+
+    if (savedWordCount !== null) return savedWordCount;
+
+    return gameTypeInfo.wordCount;
   });
 
-  // [UPDATED] Max Turns State - uses secureStorage
   const [maxTurns, setMaxTurns] = useState(() => {
     const savedMaxTurns = secureStorage.getItem(MAX_TURNS_KEY, null);
-    if (savedMaxTurns !== null) return savedMaxTurns; // Return saved value if exists
-    // Otherwise, determine based on game type
-    const gameTypeInfo = getGameTypeInfo(gameCount, playedBossTypes);
-    return getMaxTurns(gameTypeInfo.isBoss, gameTypeInfo.wordCount);
+    if (savedMaxTurns !== null) return savedMaxTurns;
+    // Always use the explicitly resolved configuration variables
+    return getMaxTurns(isBossGame, bossWordCount);
   });
 
-  // [UPDATED] Random Index(es) - uses secureStorage
   const [random, setRandom] = useState(() => {
     const savedBannedWords = secureStorage.getItem(
       BANNED_OPENING_WORDS_KEY,
@@ -219,7 +222,6 @@ export default function useSurvivalGame(mode) {
     return secureStorage.getItem(INDEX_KEY, getRandomFromPool(eligibleIndices));
   });
 
-  // [NEW] Multiple indices for boss games
   const [randomIndices, setRandomIndices] = useState(() => {
     return secureStorage.getItem(INDICES_KEY, []);
   });
@@ -231,6 +233,7 @@ export default function useSurvivalGame(mode) {
     if (random === null || random === undefined) return [];
     return [solutionWords[random]];
   }, [isBossGame, bossWordCount, randomIndices, random, solutionWords]);
+
   const targetWord = targetWords[0];
 
   useEffect(() => {
@@ -248,28 +251,21 @@ export default function useSurvivalGame(mode) {
     }
   }, [mode, isBossGame, bossWordCount, targetWord, targetWords]);
 
-  // [UPDATED] Guesses - now stores objects with wordIndex
   const [guesses, setGuesses] = useState(() => {
     const savedGuesses = secureStorage.getItem(TILES_GUESSES_KEY, null);
-    // For survival games, persist guesses regardless of date (not like daily)
     return savedGuesses ? savedGuesses : [];
   });
 
-  // [UPDATED] Turn - uses secureStorage
   const [turn, setTurn] = useState(() => {
     const savedTurn = secureStorage.getItem(TILES_TURN_KEY, null);
-    // For survival games, persist turn regardless of date (not like daily)
     return savedTurn ? savedTurn : 0;
   });
 
   const [gameState, setGameState] = useState(() => {
-    // First, try to load from storage
     const savedGameState = secureStorage.getItem(GAME_STATE_KEY, null);
     if (savedGameState) return savedGameState;
 
-    // If not saved, determine from current game state
     if (!isBossGame) {
-      // Normal game - check if the one word is guessed
       const lastGuess = guesses[guesses.length - 1];
       if (
         typeof lastGuess === "string" &&
@@ -278,7 +274,6 @@ export default function useSurvivalGame(mode) {
         return "won";
       if (turn >= maxTurns) return "lost";
     } else {
-      // Boss game - check if all words are guessed
       if (guesses.length > 0 && Array.isArray(guesses[0])) {
         const allWordsGuessed = targetWords.every((word) =>
           guesses.some(
@@ -294,7 +289,6 @@ export default function useSurvivalGame(mode) {
     return "playing";
   });
 
-  // [UPDATED] Letters - uses secureStorage
   const [letters, setLetters] = useState(() => {
     return secureStorage.getItem(LETTERS_KEY, getInitialLetters());
   });
@@ -304,7 +298,6 @@ export default function useSurvivalGame(mode) {
     timestamp: 0,
   });
 
-  // Persistence with Encryption
   useEffect(() => {
     secureStorage.setItem(MAX_TURNS_KEY, maxTurns);
   }, [maxTurns, MAX_TURNS_KEY]);
@@ -360,7 +353,6 @@ export default function useSurvivalGame(mode) {
     secureStorage.setItem(GAME_STATE_KEY, gameState);
   }, [gameState, GAME_STATE_KEY]);
 
-  // Initialize randomIndices for boss games if they're missing
   useEffect(() => {
     if (isBossGame && bossWordCount > 1 && randomIndices.length === 0) {
       const newIndices = pickDistinctIndices(
@@ -474,14 +466,9 @@ export default function useSurvivalGame(mode) {
     }
 
     if (isBossGame && bossWordCount > 1) {
-      // Reject repeated guesses in boss rounds across all rows/words.
-      // Boss game with multiple words
-
       if (bossWordCount === 4) {
-        // 4-word Quordle mode: submit same guess to all 4 words at once
         const guessesToAdd = [];
         for (let i = 0; i < 4; i++) {
-          // Skip words that are already solved
           const isSolved = guesses.some(
             (g) =>
               g.word === targetWords[i]?.toLowerCase() && g.wordIndex === i,
@@ -493,9 +480,7 @@ export default function useSurvivalGame(mode) {
         const newGuesses = [...guesses, ...guessesToAdd];
         setGuesses(newGuesses);
 
-        // Apply color changes for all 4 words with staggered timing
         for (let i = 0; i < 4; i++) {
-          // Skip if already solved
           const isSolved = guesses.some(
             (g) =>
               g.word === targetWords[i]?.toLowerCase() && g.wordIndex === i,
@@ -508,7 +493,6 @@ export default function useSurvivalGame(mode) {
           }
         }
 
-        // Check if all 4 words are solved
         const allWordsGuessed = targetWords.every((word, idx) =>
           newGuesses.some(
             (g) => g.word === word?.toLowerCase() && g.wordIndex === idx,
@@ -531,7 +515,6 @@ export default function useSurvivalGame(mode) {
           setGameState("won");
           onGameOver("won", newGuesses.length);
         } else {
-          // Move to next row
           const newTurn = turn + 1;
           setTurn(newTurn);
           if (newTurn >= maxTurns) {
@@ -540,10 +523,8 @@ export default function useSurvivalGame(mode) {
           }
         }
       } else {
-        // 2-word Quordle mode: submit same guess to both words at once
         const guessesToAdd = [];
         for (let i = 0; i < 2; i++) {
-          // Skip words that are already solved
           const isSolved = guesses.some(
             (g) =>
               g.word === targetWords[i]?.toLowerCase() && g.wordIndex === i,
@@ -555,9 +536,7 @@ export default function useSurvivalGame(mode) {
         const newGuesses = [...guesses, ...guessesToAdd];
         setGuesses(newGuesses);
 
-        // Apply color changes for both words with staggered timing
         for (let i = 0; i < 2; i++) {
-          // Skip if already solved
           const isSolved = guesses.some(
             (g) =>
               g.word === targetWords[i]?.toLowerCase() && g.wordIndex === i,
@@ -570,7 +549,6 @@ export default function useSurvivalGame(mode) {
           }
         }
 
-        // Check if all 2 words are solved
         const allWordsGuessed = targetWords.every((word, idx) =>
           newGuesses.some(
             (g) => g.word === word?.toLowerCase() && g.wordIndex === idx,
@@ -593,7 +571,6 @@ export default function useSurvivalGame(mode) {
           setGameState("won");
           onGameOver("won", newGuesses.length);
         } else {
-          // Move to next row
           const newTurn = turn + 1;
           setTurn(newTurn);
           if (newTurn >= maxTurns) {
@@ -603,7 +580,6 @@ export default function useSurvivalGame(mode) {
         }
       }
     } else {
-      // Normal game with one word
       const newGuesses = [...guesses, guess];
       setGuesses(newGuesses);
 
@@ -633,16 +609,12 @@ export default function useSurvivalGame(mode) {
   };
 
   const resetGame = () => {
-    // [UPDATED] Use secureStorage.removeItem
     secureStorage.removeItem(INDEX_KEY);
     secureStorage.removeItem(INDICES_KEY);
     secureStorage.removeItem(LETTERS_KEY);
     secureStorage.removeItem(TILES_GUESSES_KEY);
     secureStorage.removeItem(TILES_TURN_KEY);
     secureStorage.removeItem(MAX_TURNS_KEY);
-    secureStorage.removeItem(IS_BOSS_GAME_KEY);
-    secureStorage.removeItem(BOSS_TYPE_KEY);
-    secureStorage.removeItem(BOSS_WORD_COUNT_KEY);
 
     if (availableSolutionIndices.length === 0) {
       setRandom(null);
@@ -653,10 +625,7 @@ export default function useSurvivalGame(mode) {
       return;
     }
 
-    // Increment game count
     const newGameCount = gameCount + 1;
-    // The new game is number newGameCount + 1, so boss games are 5, 10, 15...
-    // Calculate the type once so the random boss cannot change between checks.
     const newGameTypeInfo = getGameTypeInfo(newGameCount, playedBossTypes);
     const selectedBoss = newGameTypeInfo.bossType
       ? BOSS_TYPES.find((boss) => boss.id === newGameTypeInfo.bossType)
@@ -669,9 +638,15 @@ export default function useSurvivalGame(mode) {
         ? [...playedBossTypes, selectedBoss.id]
         : [selectedBoss.id];
       setPlayedBossTypes(nextPlayedBossTypes);
+
+      // Force direct, synchronous saves to prevent layout bugs on immediate reload
       secureStorage.setItem(BOSS_TYPE_KEY, selectedBoss.id);
+      secureStorage.setItem(IS_BOSS_GAME_KEY, true);
+      secureStorage.setItem(BOSS_WORD_COUNT_KEY, selectedBoss.wordCount);
     } else {
       secureStorage.removeItem(BOSS_TYPE_KEY);
+      secureStorage.setItem(IS_BOSS_GAME_KEY, false);
+      secureStorage.setItem(BOSS_WORD_COUNT_KEY, 1);
     }
 
     setGameCount(newGameCount);
@@ -687,14 +662,12 @@ export default function useSurvivalGame(mode) {
       newGameTypeInfo.wordCount > 1 &&
       eligibleSolutionIndices.length >= newGameTypeInfo.wordCount
     ) {
-      // Generate multiple word indices for boss games
       const newIndices = pickDistinctIndices(
         newGameTypeInfo.wordCount,
         eligibleSolutionIndices,
       );
       setRandomIndices(newIndices);
     } else {
-      // Normal and Wordle500 boss games use one target word.
       const selectionPool =
         newGameTypeInfo.bossType === "wordle500"
           ? getEligibleWordle500Indices()
@@ -721,7 +694,6 @@ export default function useSurvivalGame(mode) {
   };
 
   const resetAllGameData = () => {
-    // Remove all persisted survival run data.
     [
       LETTERS_KEY,
       INDEX_KEY,
@@ -744,6 +716,11 @@ export default function useSurvivalGame(mode) {
     const freshPool = getAllSolutionIndices();
     const firstIndex = getRandomFromPool(freshPool);
 
+    secureStorage.setItem(IS_BOSS_GAME_KEY, firstGameTypeInfo.isBoss);
+    secureStorage.setItem(BOSS_WORD_COUNT_KEY, firstGameTypeInfo.wordCount);
+    if (firstGameTypeInfo.bossType)
+      secureStorage.setItem(BOSS_TYPE_KEY, firstGameTypeInfo.bossType);
+
     setGameCount(0);
     setPlayedBossTypes([]);
     setBannedOpeningWords([]);
@@ -763,10 +740,7 @@ export default function useSurvivalGame(mode) {
     setGameState("playing");
   };
 
-  // Retry current level without advancing game counter.
-  // Keeps the same level number (gameCount) and game type.
   const retryCurrentGame = () => {
-    // Clear guesses/turn but keep gameCount
     secureStorage.removeItem(INDICES_KEY);
     secureStorage.removeItem(INDEX_KEY);
     secureStorage.removeItem(LETTERS_KEY);
@@ -774,10 +748,12 @@ export default function useSurvivalGame(mode) {
     secureStorage.removeItem(TILES_TURN_KEY);
 
     let nextIsBoss = isBossGame;
-    // Wordle500 must never retry as a multi-word boss, even if stale state
-    // was saved before the target-count normalization above.
     let nextWordCount =
-      nextIsBoss && bossType === "wordle500" ? 1 : nextIsBoss ? bossWordCount : 1;
+      nextIsBoss && bossType === "wordle500"
+        ? 1
+        : nextIsBoss
+          ? bossWordCount
+          : 1;
 
     if (nextIsBoss && bossType === "wordle500") {
       const newIndex = getRandomFromPool(getEligibleWordle500Indices());
@@ -801,6 +777,16 @@ export default function useSurvivalGame(mode) {
       nextWordCount = 1;
     }
 
+    // Force direct, synchronous saves to prevent layout bugs on immediate reload
+    secureStorage.setItem(IS_BOSS_GAME_KEY, nextIsBoss);
+    if (nextIsBoss && bossType) {
+      secureStorage.setItem(BOSS_TYPE_KEY, bossType);
+      secureStorage.setItem(BOSS_WORD_COUNT_KEY, nextWordCount);
+    } else {
+      secureStorage.removeItem(BOSS_TYPE_KEY);
+      secureStorage.setItem(BOSS_WORD_COUNT_KEY, 1);
+    }
+
     setIsBossGame(nextIsBoss);
     setBossType(nextIsBoss ? bossType : null);
     setBossWordCount(nextWordCount);
@@ -812,7 +798,6 @@ export default function useSurvivalGame(mode) {
     setGameState("playing");
   };
 
-  // Backward-compatible alias for boss retry flow
   const retryBoss = () => {
     retryCurrentGame();
   };
