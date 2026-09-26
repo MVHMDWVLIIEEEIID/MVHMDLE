@@ -14,6 +14,7 @@ const TILE_REVEAL_STEP_MS = 100;
 const colorClasses = {
   gray: "bg-gameGrey border-gameGrey text-gameDark",
   red: "bg-gameRed border-gameRed text-white",
+  "locked-red": "bg-gameRed border-gameRed text-white",
   yellow: "bg-gameYellow border-gameYellow text-gameDark",
   green: "bg-gameGreen border-gameGreen text-gameDark",
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Wordle500Board, { MANUAL_COLORS } from "./Wordle500Board";
-import useGameInput from "../hooks/useGameInput"; // [REFACTORED]
-
+import useGameInput from "../hooks/useGameInput";
+import { getStatusCounts } from "../hooks/useWordle500Game";
 const COLORS_STORAGE_KEY = "survival-wordle500-manual-colors";
 
 export default function SurvivalWordle500Wrapper({
@@ -77,13 +77,52 @@ export default function SurvivalWordle500Wrapper({
       );
 
       if (accepted) {
-        setManualColors((prev) => [...prev, Array(5).fill("gray")]);
+        // Calculate if the submitted guess yielded 0 yellow and 0 green
+        const counts = getStatusCounts(guessToSubmit, game.targetWord);
+
+        setManualColors((prev) => {
+          let newColors = prev.map((row) => [...row]);
+          let currentRowColors = Array(5).fill("gray");
+
+          if (counts.green === 0 && counts.yellow === 0) {
+            currentRowColors = Array(5).fill("locked-red");
+            const badLetters = guessToSubmit.split("");
+
+            // Retroactively turn older matched tiles red
+            newColors = newColors.map((rowColors, rIdx) => {
+              const oldGuessObj = game.guesses[rIdx];
+              const oldGuessStr =
+                typeof oldGuessObj === "string"
+                  ? oldGuessObj
+                  : oldGuessObj?.word || "";
+
+              if (!oldGuessStr) return rowColors;
+
+              return rowColors.map((col, cIdx) => {
+                if (badLetters.includes(oldGuessStr[cIdx])) {
+                  return "locked-red";
+                }
+                return col;
+              });
+            });
+          }
+
+          return [...newColors, currentRowColors];
+        });
         setLastSubmittedId((prev) => prev + 1);
         return true;
       }
       return false;
     },
-    [game.guesses, onGuessSubmit, triggerShake, addToast],
+    // Ensure game.targetWord and triggerBannedFlash are in the dependency array
+    [
+      game.guesses,
+      game.targetWord,
+      onGuessSubmit,
+      triggerShake,
+      addToast,
+      triggerBannedFlash,
+    ],
   );
 
   const currentTurn = game.guesses ? game.guesses.length : 0;
@@ -109,7 +148,9 @@ export default function SurvivalWordle500Wrapper({
     setManualColors((prev) => {
       const newColors = prev.map((row) => [...row]);
       const current = newColors[rowIndex]?.[letterIndex];
-      if (!current) return prev;
+
+      // Exit immediately if the tile is locked or invalid
+      if (!current || current === "locked-red") return prev;
 
       const nextColor = forceReset
         ? "gray"
@@ -122,7 +163,11 @@ export default function SurvivalWordle500Wrapper({
         game.guesses.forEach((guessStr, r) => {
           if (typeof guessStr === "string" && newColors[r]) {
             for (let c = 0; c < 5; c++) {
-              if (guessStr[c] === targetLetter) {
+              // Prevent overwriting locked red tiles globally
+              if (
+                guessStr[c] === targetLetter &&
+                newColors[r][c] !== "locked-red"
+              ) {
                 newColors[r][c] = nextColor;
               }
             }

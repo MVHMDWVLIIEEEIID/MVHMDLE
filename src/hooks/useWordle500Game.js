@@ -94,7 +94,6 @@ export default function useWordle500Game() {
   const submitGuess = () => {
     if (state.gameState !== "playing" || currentGuess.length !== 5)
       return false;
-
     const guess = currentGuess.toLowerCase();
     if (state.guesses.includes(guess)) return false;
     if (!data.includes(guess)) return false;
@@ -108,9 +107,34 @@ export default function useWordle500Game() {
           : "lost"
         : "playing";
 
+    // 1. Calculate the exact statuses for the submitted guess
+    const counts = getStatusCounts(guess, targetWord);
+
+    let newManualColors = [...state.manualColors];
+    let currentRowColors = Array(5).fill("gray");
+
+    // 2. If all 5 letters are completely incorrect
+    if (counts.green === 0 && counts.yellow === 0) {
+      currentRowColors = Array(5).fill("locked-red");
+      const badLetters = guess.split("");
+
+      // 3. Retroactively turn these specific letters red in older guesses
+      newManualColors = newManualColors.map((rowColors, rIdx) => {
+        const oldGuess = state.guesses[rIdx];
+        return rowColors.map((col, cIdx) => {
+          if (badLetters.includes(oldGuess[cIdx])) {
+            return "locked-red";
+          }
+          return col;
+        });
+      });
+    }
+
+    newManualColors.push(currentRowColors);
+
     setState({
       guesses,
-      manualColors: [...state.manualColors, Array(5).fill("gray")],
+      manualColors: newManualColors,
       gameState,
       lastSubmittedId: state.lastSubmittedId + 1,
     });
@@ -129,9 +153,10 @@ export default function useWordle500Game() {
     setState((previous) => {
       const manualColors = previous.manualColors.map((row) => [...row]);
       const current = manualColors[rowIndex]?.[letterIndex];
-      if (!current) return previous;
 
-      // If forceReset is true, default to 'gray'. Otherwise, cycle normally.
+      // Exit immediately if the tile is locked or invalid
+      if (!current || current === "locked-red") return previous;
+
       const nextColor = forceReset
         ? "gray"
         : MANUAL_COLORS[
@@ -142,7 +167,12 @@ export default function useWordle500Game() {
         const targetLetter = previous.guesses[rowIndex][letterIndex];
         previous.guesses.forEach((guess, r) => {
           for (let c = 0; c < 5; c++) {
-            if (guess[c] === targetLetter && manualColors[r]) {
+            // Prevent overwriting locked red tiles globally
+            if (
+              guess[c] === targetLetter &&
+              manualColors[r] &&
+              manualColors[r][c] !== "locked-red"
+            ) {
               manualColors[r][c] = nextColor;
             }
           }
