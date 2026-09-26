@@ -35,13 +35,21 @@ export default function StandardGameView({
           turn={game.turn}
           targetWord={game.targetWord}
           gameState={game.gameState}
-          onGuessSubmit={(g, _wordIdx, triggerShake, onDuplicateWord) => {
+          bannedRows={game.bannedRows}
+          onGuessSubmit={(
+            g,
+            _wordIdx,
+            triggerShake,
+            triggerBannedFlash,
+            onDuplicateWord,
+          ) => {
             const accepted = game.submitGuess(
               g,
               0,
               handleGameOver,
               () => {
                 triggerShake?.();
+                triggerBannedFlash?.();
                 addToast("This word is banned", "error");
               },
               onDuplicateWord,

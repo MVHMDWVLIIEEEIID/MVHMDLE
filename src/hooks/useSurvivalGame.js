@@ -53,6 +53,15 @@ export default function useSurvivalGame(mode) {
     timestamp: 0,
   });
 
+  const openingGuessCount = pool.isBossGame
+    ? pool.bossWordCount === 4
+      ? 3
+      : pool.bossWordCount === 2
+        ? 2
+        : 1
+    : 1;
+  const bannedRows = openingGuessCount + 1;
+
   const [gameState, setGameState] = useSecureState(GAME_STATE_KEY, () => {
     // [NEW] الاعتماد على الفئة الجديدة (Category) بدلاً من الاختباص في الشروط
     if (pool.bossCategory === "multi") {
@@ -132,14 +141,6 @@ export default function useSurvivalGame(mode) {
       return false;
 
     const normalizedGuess = guess.toLowerCase();
-    const openingGuessCount = pool.isBossGame
-      ? pool.bossWordCount === 4
-        ? 3
-        : pool.bossWordCount === 2
-          ? 2
-          : 1
-      : 1;
-    const bannedRows = openingGuessCount + 1;
 
     if (
       (pool.bossCategory === "multi" &&
@@ -310,5 +311,6 @@ export default function useSurvivalGame(mode) {
     bossCategory: pool.bossCategory, // [NEW] تم تصديرها للواجهة
     gameCount: pool.gameCount,
     availableSolutionCount: pool.availableSolutionCount,
+    bannedRows,
   };
 }

@@ -15,19 +15,24 @@ export default function BossTiles({
   onGameOver,
   addToast,
   rowCount = 6,
+  bannedRows = 0,
   selectedView = "all",
   onWordClick,
   onWordDoubleClick,
 }) {
   const [solutions] = useState(targetWords.map((w) => w?.toLowerCase()));
   const [shake, setShake] = useState(false);
+  const [bannedFlash, setBannedFlash] = useState(false);
   const [pendingFlipTurn, setPendingFlipTurn] = useState(-1);
   const [lastSubmittedTurn, setLastSubmittedTurn] = useState(-1);
   const wordClickTimerRef = useRef(null);
 
-  useEffect(() => () => {
-    if (wordClickTimerRef.current) clearTimeout(wordClickTimerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (wordClickTimerRef.current) clearTimeout(wordClickTimerRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (pendingFlipTurn < 0) return undefined;
@@ -48,40 +53,60 @@ export default function BossTiles({
 
   const isFourWordMode = solutions.length === 4;
   const isTwoWordMode = solutions.length === 2;
-  const sizeMode = isFourWordMode ? "boss-4" : isTwoWordMode ? "boss-2" : "normal";
+  const sizeMode = isFourWordMode
+    ? "boss-4"
+    : isTwoWordMode
+      ? "boss-2"
+      : "normal";
 
   const triggerShake = useCallback(() => {
     setShake(true);
     setTimeout(() => setShake(false), 500);
   }, []);
+  const triggerBannedFlash = useCallback(() => {
+    setBannedFlash(true);
+    setTimeout(() => setBannedFlash(false), 2000);
+  }, []);
 
-  const handleValidSubmit = useCallback((guessToSubmit) => {
-    const allSolved = solutions.every((solution, idx) =>
-      guesses.some((g) => g.word === solution && g.wordIndex === idx)
-    );
-    
-    if (allSolved) {
-      triggerShake();
-      if (addToast) addToast("Already completed!", "error");
-      return false;
-    }
+  const handleValidSubmit = useCallback(
+    (guessToSubmit) => {
+      const allSolved = solutions.every((solution, idx) =>
+        guesses.some((g) => g.word === solution && g.wordIndex === idx),
+      );
 
-    const accepted = onGuessSubmit(
-      guessToSubmit,
-      isFourWordMode ? undefined : 0,
-      triggerShake,
-      () => {
+      if (allSolved) {
         triggerShake();
-        if (addToast) addToast("Word already submitted!", "error");
+        if (addToast) addToast("Already completed!", "error");
+        return false;
       }
-    );
 
-    if (accepted) {
-      setPendingFlipTurn(turn);
-      return true;
-    }
-    return false;
-  }, [solutions, guesses, onGuessSubmit, triggerShake, addToast, turn, isFourWordMode]);
+      const accepted = onGuessSubmit(
+        guessToSubmit,
+        isFourWordMode ? undefined : 0,
+        triggerShake,
+        triggerBannedFlash,
+        () => {
+          triggerShake();
+          if (addToast) addToast("Word already submitted!", "error");
+        },
+      );
+
+      if (accepted) {
+        setPendingFlipTurn(turn);
+        return true;
+      }
+      return false;
+    },
+    [
+      solutions,
+      guesses,
+      onGuessSubmit,
+      triggerShake,
+      addToast,
+      turn,
+      isFourWordMode,
+    ],
+  );
 
   const { currentGuess } = useGameInput({
     turn,
@@ -103,7 +128,7 @@ export default function BossTiles({
       {solutions.map((solution, wordIdx) => {
         const wordGuessesObjs = guesses.filter((g) => g.wordIndex === wordIdx);
         const isSolved = wordGuessesObjs.some((g) => g.word === solution);
-        
+
         const gridGuesses = Array(rowCount).fill("");
         wordGuessesObjs.forEach((g) => {
           if (typeof g.rowNumber === "number") {
@@ -116,7 +141,8 @@ export default function BossTiles({
             key={wordIdx}
             className="flex flex-col items-center m-0 p-0"
             onClick={() => {
-              if (wordClickTimerRef.current) clearTimeout(wordClickTimerRef.current);
+              if (wordClickTimerRef.current)
+                clearTimeout(wordClickTimerRef.current);
               wordClickTimerRef.current = setTimeout(() => {
                 onWordClick?.(wordIdx);
                 wordClickTimerRef.current = null;
@@ -145,10 +171,12 @@ export default function BossTiles({
                 rowCount={rowCount}
                 gameState={gameState}
                 shake={shake}
-                lastSubmittedTurn={lastSubmittedTurn}
+                lastSubmittedTurn={lastSubmittedTurn} 
                 pendingFlipTurn={pendingFlipTurn}
                 sizeMode={sizeMode}
                 hideEmptyRowsAfterWin={true} // [FIX] تفعيل إخفاء السطور هنا فقط
+                bannedRows={bannedRows}
+                bannedFlash={bannedFlash}
               />
             </div>
             {isSolved && (

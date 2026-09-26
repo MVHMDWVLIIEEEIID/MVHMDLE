@@ -85,6 +85,7 @@ export default function Wordle500Board({ game }) {
   const showActualColors = game.gameState !== "playing" && !isWinningAnimation;
 
   const rows = Array.from({ length: WORDLE500_TURNS }, (_, rowIndex) => {
+    const isBannedRow = rowIndex < (game.bannedRows || 0);
     const guess =
       game.guesses[rowIndex] ||
       (rowIndex === game.guesses.length ? game.currentGuess : "");
@@ -120,7 +121,9 @@ export default function Wordle500Board({ game }) {
         key={`wordle500-row-${rowIndex}`}
       >
         {/* SHAKE MOVED HERE: Only the tiles grid shakes */}
-        <div className={`grid grid-cols-5 gap-px ${game.shake && isCurrentRow ? "animate-shake" : ""}`}>
+        <div
+          className={`grid grid-cols-5 gap-px ${game.shake && isCurrentRow ? "animate-shake" : ""}`}
+        >
           {Array.from({ length: 5 }, (_, letterIndex) => {
             const letter = guess[letterIndex] || "";
             const color = isSubmitted
@@ -144,13 +147,17 @@ export default function Wordle500Board({ game }) {
                     ? "bg-gameLight border-gameLight text-gameDark"
                     : colorClasses[color]
                 } ${
-                  clickable ? "cursor-pointer hover:scale-105" : "cursor-default"
+                  clickable
+                    ? "cursor-pointer hover:scale-105"
+                    : "cursor-default"
                 } ${
                   game.shake && isCurrentRow
                     ? "border-red-500!"
                     : isCurrentRow && letterIndex === game.currentGuess.length
                       ? "border-gameGreen!"
-                      : "border-transparent"
+                      : isBannedRow && !isSubmitted && game.bannedFlash
+                        ? "border-gameRed"
+                        : "border-transparent"
                 }`}
               >
                 {letter}

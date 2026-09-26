@@ -50,13 +50,20 @@ export default function BossGameView({
           <SurvivalWordle500Wrapper
             key={gameResetKey}
             game={game}
-            onGuessSubmit={(g, _wordIdx, triggerShake, onDuplicateWord) => {
+            onGuessSubmit={(
+              g,
+              _wordIdx,
+              triggerShake,
+              triggerBannedFlash,
+              onDuplicateWord,
+            ) => {
               const accepted = game.submitGuess(
                 g,
                 0,
                 handleGameOver,
                 () => {
                   triggerShake?.();
+                  triggerBannedFlash?.();
                   addToast("This word is banned", "error");
                 },
                 onDuplicateWord,
@@ -74,15 +81,17 @@ export default function BossGameView({
             turn={game.turn}
             targetWords={game.targetWords}
             gameState={game.gameState}
-            onGuessSubmit={(g, wordIdx, triggerShake, onDuplicateWord) => {
+            bannedRows={game.bannedRows}
+            onGuessSubmit={(g, wordIdx, triggerShake, triggerBannedFlash, onDuplicateWord) => {
               const accepted = game.submitGuess(
                 g,
                 wordIdx,
                 handleGameOver,
                 () => {
                   triggerShake?.();
+                  triggerBannedFlash?.();
                   addToast("This word is banned", "error");
-                },
+                },  
                 onDuplicateWord,
               );
               if (accepted) progress.addWordsTyped(1);

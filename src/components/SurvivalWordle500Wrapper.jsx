@@ -30,6 +30,7 @@ export default function SurvivalWordle500Wrapper({
   );
 
   const [shake, setShake] = useState(false);
+  const [bannedFlash, setBannedFlash] = useState(false);
   const shakeTimeoutRef = useRef(null);
 
   const triggerShake = useCallback(() => {
@@ -37,6 +38,11 @@ export default function SurvivalWordle500Wrapper({
     setShake(false);
     requestAnimationFrame(() => setShake(true));
     shakeTimeoutRef.current = setTimeout(() => setShake(false), 500);
+  }, []);
+
+  const triggerBannedFlash = useCallback(() => {
+    setBannedFlash(true);
+    setTimeout(() => setBannedFlash(false), 2000);
   }, []);
 
   useEffect(
@@ -59,7 +65,7 @@ export default function SurvivalWordle500Wrapper({
         return false;
       }
 
-      const accepted = onGuessSubmit(guessToSubmit, 0, triggerShake, () => {
+      const accepted = onGuessSubmit(guessToSubmit, 0, triggerShake, triggerBannedFlash, () => {
         triggerShake();
         addToast("Word already submitted!", "error");
       });
@@ -106,6 +112,7 @@ export default function SurvivalWordle500Wrapper({
     manualColors,
     lastSubmittedId,
     shake,
+    bannedFlash,
     changeManualColor,
   };
 
