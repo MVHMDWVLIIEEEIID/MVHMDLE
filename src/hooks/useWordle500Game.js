@@ -92,7 +92,8 @@ export default function useWordle500Game() {
   };
 
   const submitGuess = () => {
-    if (state.gameState !== "playing" || currentGuess.length !== 5) return false;
+    if (state.gameState !== "playing" || currentGuess.length !== 5)
+      return false;
 
     const guess = currentGuess.toLowerCase();
     if (state.guesses.includes(guess)) return false;
@@ -100,9 +101,12 @@ export default function useWordle500Game() {
 
     const guesses = [...state.guesses, guess];
     const won = guess === targetWord;
-    const gameState = won || guesses.length >= WORDLE500_TURNS
-      ? won ? "won" : "lost"
-      : "playing";
+    const gameState =
+      won || guesses.length >= WORDLE500_TURNS
+        ? won
+          ? "won"
+          : "lost"
+        : "playing";
 
     setState({
       guesses,
@@ -114,14 +118,39 @@ export default function useWordle500Game() {
     return true;
   };
 
-  const changeManualColor = (rowIndex, letterIndex) => {
+  const changeManualColor = (
+    rowIndex,
+    letterIndex,
+    applyToAll = false,
+    forceReset = false,
+  ) => {
     if (state.gameState !== "playing") return;
+
     setState((previous) => {
       const manualColors = previous.manualColors.map((row) => [...row]);
       const current = manualColors[rowIndex]?.[letterIndex];
       if (!current) return previous;
-      const nextIndex = (MANUAL_COLORS.indexOf(current) + 1) % MANUAL_COLORS.length;
-      manualColors[rowIndex][letterIndex] = MANUAL_COLORS[nextIndex];
+
+      // If forceReset is true, default to 'gray'. Otherwise, cycle normally.
+      const nextColor = forceReset
+        ? "gray"
+        : MANUAL_COLORS[
+            (MANUAL_COLORS.indexOf(current) + 1) % MANUAL_COLORS.length
+          ];
+
+      if (applyToAll) {
+        const targetLetter = previous.guesses[rowIndex][letterIndex];
+        previous.guesses.forEach((guess, r) => {
+          for (let c = 0; c < 5; c++) {
+            if (guess[c] === targetLetter && manualColors[r]) {
+              manualColors[r][c] = nextColor;
+            }
+          }
+        });
+      } else {
+        manualColors[rowIndex][letterIndex] = nextColor;
+      }
+
       return { ...previous, manualColors };
     });
   };
@@ -133,7 +162,8 @@ export default function useWordle500Game() {
   };
 
   const handleKeyDown = (event) => {
-    if (event.key === "Backspace") setCurrentGuess((guess) => guess.slice(0, -1));
+    if (event.key === "Backspace")
+      setCurrentGuess((guess) => guess.slice(0, -1));
     else if (event.key === "Enter") submitGuess();
     else if (/^[a-z]$/i.test(event.key)) typeLetter(event.key.toLowerCase());
   };

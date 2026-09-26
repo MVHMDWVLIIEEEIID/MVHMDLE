@@ -12,7 +12,7 @@ export default function WordGrid({
   lastSubmittedTurn = -1,
   pendingFlipTurn = -1,
   sizeMode = "normal",
-  hideEmptyRowsAfterWin = false, // [FIX] خاصية جديدة لمعرفة متى نخفي السطور
+  hideEmptyRowsAfterWin = false,
   bannedRows = 0,
   bannedFlash = false,
 }) {

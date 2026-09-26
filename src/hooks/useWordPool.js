@@ -3,8 +3,8 @@ import data from "../data/words.json";
 import useSecureState from "./useSecureState";
 
 export const DEV_SETTINGS = {
-  FORCE_BOSS_ID: null,
-  EVERY_ROUND_IS_BOSS: false,
+  FORCE_BOSS_ID: 'wordle500',
+  EVERY_ROUND_IS_BOSS: true,
 };
 export const BOSS_REGISTRY = {
   wordle500: {

@@ -65,10 +65,16 @@ export default function SurvivalWordle500Wrapper({
         return false;
       }
 
-      const accepted = onGuessSubmit(guessToSubmit, 0, triggerShake, triggerBannedFlash, () => {
-        triggerShake();
-        addToast("Word already submitted!", "error");
-      });
+      const accepted = onGuessSubmit(
+        guessToSubmit,
+        0,
+        triggerShake,
+        triggerBannedFlash,
+        () => {
+          triggerShake();
+          addToast("Word already submitted!", "error");
+        },
+      );
 
       if (accepted) {
         setManualColors((prev) => [...prev, Array(5).fill("gray")]);
@@ -93,15 +99,38 @@ export default function SurvivalWordle500Wrapper({
     addToast,
   });
 
-  const changeManualColor = (rowIndex, letterIndex) => {
+  const changeManualColor = (
+    rowIndex,
+    letterIndex,
+    applyToAll = false,
+    forceReset = false,
+  ) => {
     if (game.gameState !== "playing") return;
     setManualColors((prev) => {
       const newColors = prev.map((row) => [...row]);
       const current = newColors[rowIndex]?.[letterIndex];
       if (!current) return prev;
-      const nextIndex =
-        (MANUAL_COLORS.indexOf(current) + 1) % MANUAL_COLORS.length;
-      newColors[rowIndex][letterIndex] = MANUAL_COLORS[nextIndex];
+
+      const nextColor = forceReset
+        ? "gray"
+        : MANUAL_COLORS[
+            (MANUAL_COLORS.indexOf(current) + 1) % MANUAL_COLORS.length
+          ];
+
+      if (applyToAll && game.guesses) {
+        const targetLetter = game.guesses[rowIndex]?.[letterIndex];
+        game.guesses.forEach((guessStr, r) => {
+          if (typeof guessStr === "string" && newColors[r]) {
+            for (let c = 0; c < 5; c++) {
+              if (guessStr[c] === targetLetter) {
+                newColors[r][c] = nextColor;
+              }
+            }
+          }
+        });
+      } else {
+        newColors[rowIndex][letterIndex] = nextColor;
+      }
       return newColors;
     });
   };

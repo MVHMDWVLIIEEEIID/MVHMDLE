@@ -137,10 +137,29 @@ export default function Wordle500Board({ game }) {
                 type="button"
                 tabIndex={-1}
                 disabled={!clickable}
-                aria-label={`${letter || "empty"} letter ${letterIndex + 1}, ${color}`}
+                aria-label={`${letter || "empty"} letter ${letterIndex + 1},${color}`}
                 onClick={(e) => {
                   e.currentTarget.blur();
-                  game.changeManualColor(rowIndex, letterIndex);
+                  // Left click: cycle colors (forceReset = false)
+                  game.changeManualColor(
+                    rowIndex,
+                    letterIndex,
+                    e.shiftKey,
+                    false,
+                  );
+                }}
+                onContextMenu={(e) => {
+                  // This specific line kills the default browser menu
+                  e.preventDefault();
+                  if (!clickable) return;
+                  e.currentTarget.blur();
+                  // Right click: reset to gray (forceReset = true)
+                  game.changeManualColor(
+                    rowIndex,
+                    letterIndex,
+                    e.shiftKey,
+                    true,
+                  );
                 }}
                 className={`flex h-10 w-10 m-[1.5px] items-center justify-center rounded border-2 text-2xl font-bold uppercase outline-none transition-colors duration-300 ease-out ${
                   isUncoloredRow
@@ -197,7 +216,14 @@ export default function Wordle500Board({ game }) {
     );
   });
 
-  return <div className="flex flex-col gap-px">{rows}</div>;
+  return (
+    <div
+      className="flex flex-col gap-px"
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      {rows}
+    </div>
+  );
 }
 
 export { MANUAL_COLORS };
