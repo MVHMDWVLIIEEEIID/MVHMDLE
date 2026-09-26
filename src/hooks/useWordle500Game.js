@@ -3,7 +3,6 @@ import data from "../data/words.json";
 
 export const WORDLE500_TURNS = 8;
 export const MANUAL_COLORS = ["gray", "red", "yellow", "green"];
-
 const STORAGE_KEY = "mvhmdle-wordle500-state";
 export const WORDLE500_TEST_BOSS = "about";
 
@@ -23,14 +22,12 @@ const getTarget = () => {
 export const getLetterStatuses = (guess, target) => {
   const remaining = target.split("");
   const statuses = Array(5).fill("red");
-
   guess.split("").forEach((letter, index) => {
     if (letter === remaining[index]) {
       statuses[index] = "green";
       remaining[index] = null;
     }
   });
-
   guess.split("").forEach((letter, index) => {
     if (statuses[index] === "green") return;
     const matchIndex = remaining.indexOf(letter);
@@ -39,7 +36,6 @@ export const getLetterStatuses = (guess, target) => {
       remaining[matchIndex] = null;
     }
   });
-
   return statuses;
 };
 
@@ -52,6 +48,90 @@ export const getStatusCounts = (guess, target) => {
   };
 };
 
+// --- SHARED WORDLE500 LOGIC HELPERS ---
+
+export const getUpdatedSubmitColors = (
+  guessToSubmit,
+  targetWord,
+  currentColors,
+  guesses,
+) => {
+  const counts = getStatusCounts(guessToSubmit, targetWord);
+  let newColors = currentColors.map((row) => [...row]);
+  let currentRowColors = Array(5).fill("gray");
+
+  if (counts.green === 0 && counts.yellow === 0) {
+    currentRowColors = Array(5).fill("locked-red");
+    const badLetters = guessToSubmit.split("");
+
+    newColors = newColors.map((rowColors, rIdx) => {
+      const oldGuessObj = guesses[rIdx];
+      // Normalizes strings (standalone) and objects (survival)
+      const oldGuessStr =
+        typeof oldGuessObj === "string" ? oldGuessObj : oldGuessObj?.word || "";
+
+      if (!oldGuessStr) return rowColors;
+
+      return rowColors.map((col, cIdx) => {
+        if (badLetters.includes(oldGuessStr[cIdx])) {
+          return "locked-red";
+        }
+        return col;
+      });
+    });
+  }
+  return [...newColors, currentRowColors];
+};
+
+export const getUpdatedManualColors = (
+  rowIndex,
+  letterIndex,
+  applyToAll,
+  forceReset,
+  currentColors,
+  guesses,
+) => {
+  const newColors = currentColors.map((row) => [...row]);
+  const current = newColors[rowIndex]?.[letterIndex];
+
+  if (!current || current === "locked-red") return currentColors;
+
+  const nextColor = forceReset
+    ? "gray"
+    : MANUAL_COLORS[
+        (MANUAL_COLORS.indexOf(current) + 1) % MANUAL_COLORS.length
+      ];
+
+  if (applyToAll && guesses) {
+    const targetGuessObj = guesses[rowIndex];
+    const targetGuessStr =
+      typeof targetGuessObj === "string"
+        ? targetGuessObj
+        : targetGuessObj?.word || "";
+    const targetLetter = targetGuessStr[letterIndex];
+
+    guesses.forEach((guessObj, r) => {
+      const guessStr =
+        typeof guessObj === "string" ? guessObj : guessObj?.word || "";
+      if (guessStr && newColors[r]) {
+        for (let c = 0; c < 5; c++) {
+          if (
+            guessStr[c] === targetLetter &&
+            newColors[r][c] !== "locked-red"
+          ) {
+            newColors[r][c] = nextColor;
+          }
+        }
+      }
+    });
+  } else {
+    newColors[rowIndex][letterIndex] = nextColor;
+  }
+  return newColors;
+};
+
+// --- HOOK ---
+
 export default function useWordle500Game() {
   const dailyTarget = useMemo(() => getTarget(), []);
   const [targetWord, setTargetWord] = useState(() => {
@@ -62,6 +142,7 @@ export default function useWordle500Game() {
       return getTarget();
     }
   });
+
   const [state, setState] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -70,6 +151,7 @@ export default function useWordle500Game() {
       return getInitialState();
     }
   });
+
   const [currentGuess, setCurrentGuess] = useState("");
 
   useEffect(() => {
@@ -107,30 +189,12 @@ export default function useWordle500Game() {
           : "lost"
         : "playing";
 
-    // 1. Calculate the exact statuses for the submitted guess
-    const counts = getStatusCounts(guess, targetWord);
-
-    let newManualColors = [...state.manualColors];
-    let currentRowColors = Array(5).fill("gray");
-
-    // 2. If all 5 letters are completely incorrect
-    if (counts.green === 0 && counts.yellow === 0) {
-      currentRowColors = Array(5).fill("locked-red");
-      const badLetters = guess.split("");
-
-      // 3. Retroactively turn these specific letters red in older guesses
-      newManualColors = newManualColors.map((rowColors, rIdx) => {
-        const oldGuess = state.guesses[rIdx];
-        return rowColors.map((col, cIdx) => {
-          if (badLetters.includes(oldGuess[cIdx])) {
-            return "locked-red";
-          }
-          return col;
-        });
-      });
-    }
-
-    newManualColors.push(currentRowColors);
+    const newManualColors = getUpdatedSubmitColors(
+      guess,
+      targetWord,
+      state.manualColors,
+      state.guesses,
+    );
 
     setState({
       guesses,
@@ -150,39 +214,17 @@ export default function useWordle500Game() {
   ) => {
     if (state.gameState !== "playing") return;
 
-    setState((previous) => {
-      const manualColors = previous.manualColors.map((row) => [...row]);
-      const current = manualColors[rowIndex]?.[letterIndex];
-
-      // Exit immediately if the tile is locked or invalid
-      if (!current || current === "locked-red") return previous;
-
-      const nextColor = forceReset
-        ? "gray"
-        : MANUAL_COLORS[
-            (MANUAL_COLORS.indexOf(current) + 1) % MANUAL_COLORS.length
-          ];
-
-      if (applyToAll) {
-        const targetLetter = previous.guesses[rowIndex][letterIndex];
-        previous.guesses.forEach((guess, r) => {
-          for (let c = 0; c < 5; c++) {
-            // Prevent overwriting locked red tiles globally
-            if (
-              guess[c] === targetLetter &&
-              manualColors[r] &&
-              manualColors[r][c] !== "locked-red"
-            ) {
-              manualColors[r][c] = nextColor;
-            }
-          }
-        });
-      } else {
-        manualColors[rowIndex][letterIndex] = nextColor;
-      }
-
-      return { ...previous, manualColors };
-    });
+    setState((previous) => ({
+      ...previous,
+      manualColors: getUpdatedManualColors(
+        rowIndex,
+        letterIndex,
+        applyToAll,
+        forceReset,
+        previous.manualColors,
+        previous.guesses,
+      ),
+    }));
   };
 
   const typeLetter = (letter) => {

@@ -37,10 +37,12 @@ export default function Wordle500Board({ game }) {
         )
       : null,
   );
+
   const previousSubmissionIdRef = useRef(game.lastSubmittedId || 0);
 
   useEffect(() => {
     const submissionId = game.lastSubmittedId || 0;
+
     if (submissionId === previousSubmissionIdRef.current || submissionId === 0)
       return undefined;
 
@@ -63,9 +65,11 @@ export default function Wordle500Board({ game }) {
           index * TILE_REVEAL_STEP_MS,
       ),
     );
+
     const resizeTimer = setTimeout(() => {
       setRevealingSubmissionId({ id: submissionId, phase: "flipping" });
     }, RESIZE_BEFORE_FLIP_MS);
+
     const clearTimer = setTimeout(() => {
       setRevealingSubmissionId(null);
     }, FLIP_TOTAL_MS);
@@ -83,6 +87,7 @@ export default function Wordle500Board({ game }) {
   const isWinningAnimation =
     lastGuess === game.targetWord &&
     revealingSubmissionId?.id === game.lastSubmittedId;
+
   const showActualColors = game.gameState !== "playing" && !isWinningAnimation;
 
   const rows = Array.from({ length: WORDLE500_TURNS }, (_, rowIndex) => {
@@ -94,7 +99,7 @@ export default function Wordle500Board({ game }) {
     const actualColors = isSubmitted
       ? getLetterStatuses(guess, game.targetWord)
       : [];
-
+      
     // Use actual colors only if the game is over AND the win animation has finished
     const colors = showActualColors
       ? actualColors
@@ -103,10 +108,12 @@ export default function Wordle500Board({ game }) {
     const counts = isSubmitted ? getStatusCounts(guess, game.targetWord) : null;
     const isLastSubmittedRow =
       isSubmitted && rowIndex === game.guesses.length - 1;
+
     const isResizingRow =
       isLastSubmittedRow &&
       revealingSubmissionId?.id === game.lastSubmittedId &&
       revealingSubmissionId.phase === "resizing";
+
     const shouldFlipCounts =
       isLastSubmittedRow &&
       revealingSubmissionId?.id === game.lastSubmittedId &&
@@ -121,7 +128,6 @@ export default function Wordle500Board({ game }) {
         className="flex items-center gap-1"
         key={`wordle500-row-${rowIndex}`}
       >
-        {/* SHAKE MOVED HERE: Only the tiles grid shakes */}
         <div
           className={`grid grid-cols-5 gap-px ${game.shake && isCurrentRow ? "animate-shake" : ""}`}
         >
@@ -130,6 +136,7 @@ export default function Wordle500Board({ game }) {
             const color = isSubmitted
               ? colors?.[letterIndex] || "gray"
               : "gray";
+
             const clickable = isSubmitted && game.gameState === "playing";
 
             return (
@@ -138,29 +145,19 @@ export default function Wordle500Board({ game }) {
                 type="button"
                 tabIndex={-1}
                 disabled={!clickable}
-                aria-label={`${letter || "empty"} letter ${letterIndex + 1},${color}`}
+                aria-label={`${letter || "empty"} letter ${letterIndex + 1}, ${color}`}
                 onClick={(e) => {
                   e.currentTarget.blur();
                   // Left click: cycle colors (forceReset = false)
-                  game.changeManualColor(
-                    rowIndex,
-                    letterIndex,
-                    e.shiftKey,
-                    false,
-                  );
+                  game.changeManualColor(rowIndex, letterIndex, e.shiftKey, false);
                 }}
                 onContextMenu={(e) => {
-                  // This specific line kills the default browser menu
-                  e.preventDefault();
+                  // This specific line kills the default browser menu on tiles
+                  e.preventDefault(); 
                   if (!clickable) return;
                   e.currentTarget.blur();
                   // Right click: reset to gray (forceReset = true)
-                  game.changeManualColor(
-                    rowIndex,
-                    letterIndex,
-                    e.shiftKey,
-                    true,
-                  );
+                  game.changeManualColor(rowIndex, letterIndex, e.shiftKey, true);
                 }}
                 className={`flex h-10 w-10 m-[1.5px] items-center justify-center rounded border-2 text-2xl font-bold uppercase outline-none transition-colors duration-300 ease-out ${
                   isUncoloredRow
@@ -185,6 +182,7 @@ export default function Wordle500Board({ game }) {
             );
           })}
         </div>
+
         <div
           className="flex gap-px"
           aria-label={
@@ -218,7 +216,7 @@ export default function Wordle500Board({ game }) {
   });
 
   return (
-    <div
+    <div 
       className="flex flex-col gap-px"
       onContextMenu={(e) => e.preventDefault()}
     >
@@ -226,5 +224,3 @@ export default function Wordle500Board({ game }) {
     </div>
   );
 }
-
-export { MANUAL_COLORS };
