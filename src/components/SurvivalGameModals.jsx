@@ -118,7 +118,7 @@ export default function SurvivalGameModals({
               </div>
             </div>
           </div>
-          {stats.isBossGame && stats.bossWordCount === 4 && (
+          {stats.isBossGame && stats.isCycleComplete && (
             <div className="w-full flex justify-center mt-3">
               <p className="text-gameRed text-[11px] font-black uppercase tracking-wider">
                 {stats.lastReward.breakdown.heartAdded

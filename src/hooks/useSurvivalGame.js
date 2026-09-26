@@ -312,5 +312,7 @@ export default function useSurvivalGame(mode) {
     gameCount: pool.gameCount,
     availableSolutionCount: pool.availableSolutionCount,
     bannedRows,
+    playedBossTypes: pool.playedBossTypes, // <--- ADD THIS
+    totalBossTypes: pool.totalBossTypes, // <--- ADD THIS
   };
 }

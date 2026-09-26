@@ -88,7 +88,8 @@ export default function SurvivalGuideCustomModal({ isOpen, onClose }) {
             </p>
             <p className="text-sm">
               Every 5th Game is a random Boss. Bosses do not repeat until every
-              Boss has been played once. (4-Words Drop a Heart When Beaten{" "}
+              Boss has been played once. (The final boss of each cycle drops a
+              Heart when beaten +{" "}
               <strong>If Full Stacked Hearts You Get 50K</strong>)
             </p>
           </div>

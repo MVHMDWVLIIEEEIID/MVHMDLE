@@ -3,8 +3,8 @@ import data from "../data/words.json";
 import useSecureState from "./useSecureState";
 
 export const DEV_SETTINGS = {
-  FORCE_BOSS_ID: 'wordle500',
-  EVERY_ROUND_IS_BOSS: true,
+  FORCE_BOSS_ID: null,
+  EVERY_ROUND_IS_BOSS: false,
 };
 export const BOSS_REGISTRY = {
   wordle500: {
@@ -70,7 +70,7 @@ export default function useWordPool(mode) {
 
   const [random, setRandom] = useSecureState(
     `wordle-solution-index-${mode}`,
-    null,
+    () => Math.floor(Math.random() * SOLUTION_WORD_COUNT),
   );
   const [randomIndices, setRandomIndices] = useSecureState(
     `wordle-solution-indices-${mode}`,
@@ -254,6 +254,8 @@ export default function useWordPool(mode) {
     availableSolutionCount: availableIndices.length,
     bannedOpeningWords,
     setBannedOpeningWords,
+    playedBossTypes, // <--- ADD THIS
+    totalBossTypes: BOSS_TYPES.length, // <--- ADD THIS
     removeSolvedTargets,
     generateNextGame,
     resetPoolData,

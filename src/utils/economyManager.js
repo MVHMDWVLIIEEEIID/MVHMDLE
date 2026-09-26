@@ -1,5 +1,3 @@
-// utils/economyManager.js
-
 export const calculateWinRewards = ({
   game,
   progress,
@@ -12,13 +10,13 @@ export const calculateWinRewards = ({
   let bossBonus = 0;
   let heartAdded = false;
   let heartCashBonus = 0;
-
   let newBoss2Count = progress.boss2Count || 0;
   let newBoss4Count = progress.boss4Count || 0;
   let newBoss500Count = progress.boss500Count || 0;
   let newHearts = progress.hearts;
 
   if (game.isBossGame) {
+    // 1. Calculate Base Boss Rewards
     if (game.bossWordCount === 2) {
       bossBase = 18000;
       bossBonus = 3000 * (1 + newBoss2Count);
@@ -27,22 +25,28 @@ export const calculateWinRewards = ({
       bossBase = 20000;
       bossBonus = 5000 * (1 + newBoss4Count);
       newBoss4Count += 1;
+    } else if (game.bossWordCount === 1) {
+      bossBase = 15000;
+      bossBonus = 3000 * (1 + newBoss500Count);
+      newBoss500Count += 1;
+    }
+
+    // 2. Cycle Completion Check (Bulletproof)
+    const currentCycleLength = game.playedBossTypes?.length || 0;
+    const totalInCycle = game.totalBossTypes || 3;
+
+    if (currentCycleLength > 0 && currentCycleLength === totalInCycle) {
       heartAdded = progress.hearts < MAX_HEARTS;
       if (heartAdded) {
         newHearts = Math.min(MAX_HEARTS, progress.hearts + 1);
       } else {
         heartCashBonus = 50000;
       }
-    } else if (game.bossWordCount === 1) {
-      bossBase = 15000;
-      bossBonus = 3000 * (1 + newBoss500Count);
-      newBoss500Count += 1;
     }
   }
 
   const SPEED_BONUS = unusedRows * 1200;
   const STREAK_BONUS = (progress.streak + 1) * 250;
-
   const totalEarned = bossBase + bossBonus || BASE_WIN;
   let grandTotal = 0;
 
