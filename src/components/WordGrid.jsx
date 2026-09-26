@@ -15,33 +15,32 @@ export default function WordGrid({
   hideEmptyRowsAfterWin = false,
   bannedRows = 0,
   bannedFlash = false,
+  isShapeMode = false, // <--- [NEW]
 }) {
   const items = [];
   const flipDelay = sizeMode === "normal" ? 150 : 100;
 
-  // [FIX] العثور على السطر الذي تم فيه حل الكلمة بنجاح
   const solvedRowIndex = guesses.findIndex(
     (g) => g && targetWord && g.toLowerCase() === targetWord.toLowerCase(),
   );
-  const isGridSolved = solvedRowIndex !== -1;
+
+  // [FIX]: Nullify solvedRowIndex if it's Shape Mode so the grid doesn't artificially lock
+  const isGridSolved = !isShapeMode && solvedRowIndex !== -1;
 
   for (let i = 0; i < rowCount; i++) {
-    // [FIX] إخفاء السطور الزائدة إذا تم حل الكلمة والخاصية مفعلة
     if (hideEmptyRowsAfterWin && isGridSolved && i > solvedRowIndex) {
       continue;
     }
 
     const isBannedRow = i < bannedRows;
     const isPrevRow = i < turn || (gameState === "won" && i === turn);
-
-    // [FIX] منع ظهور مؤشر الكتابة (المربعات البيضاء) على الشبكة التي تم حلها بالفعل
     const isCurrentRow = i === turn && gameState === "playing" && !isGridSolved;
 
     const rowWord = guesses[i] || "";
     const rowHasGuess = Boolean(rowWord);
-
     const isPendingRevealRow = i === pendingFlipTurn && rowHasGuess;
     const shouldFlip = i === lastSubmittedTurn && rowHasGuess;
+
     const shouldShowStatuses = isPrevRow && rowHasGuess && !isPendingRevealRow;
 
     let rowLetters = Array(5).fill("");
@@ -50,20 +49,20 @@ export default function WordGrid({
     if (isPrevRow && rowHasGuess) {
       rowLetters = rowWord.split("");
     }
+
     if (shouldShowStatuses) {
       rowStatuses = getGuessStatuses(rowWord, targetWord);
     } else if (isCurrentRow) {
       rowLetters = currentGuess.split("");
     }
 
-    // [FIX] إعطاء شفافية كاملة للسطر الفائز حتى لو لم تنتهِ اللعبة الكلية بعد
     const isSolvedRow = isGridSolved && i === solvedRowIndex;
 
     for (let j = 0; j < 5; j++) {
       const char = rowLetters[j];
       const isNextTile = isCurrentRow && j === currentGuess.length;
-
       let colorClass = "bg-gameLight border-gameLight text-gameDark";
+
       if (shouldShowStatuses) {
         if (rowStatuses[j] === "bg-gameGreen")
           colorClass = "bg-gameGreen border-gameGreen text-gameDark";
@@ -76,8 +75,13 @@ export default function WordGrid({
       let tileHeight = isCurrentRow ? "h-11" : "h-11";
       let fontSize = "text-2xl";
       let tileMargin = "m-0.5";
+
+      // Keep the whole shape illuminated brightly at 100% opacity upon winning
       const opacityClass =
-        isCurrentRow || (gameState === "won" && i === turn) || isSolvedRow
+        isCurrentRow ||
+        (gameState === "won" && i === turn) ||
+        isSolvedRow ||
+        (isShapeMode && gameState === "won")
           ? "opacity-100"
           : "opacity-60";
 

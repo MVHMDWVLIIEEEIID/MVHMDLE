@@ -3,6 +3,17 @@ import useSecureState from "./useSecureState";
 import { getGuessStatuses } from "../utils/gameUtils";
 import useWordPool from "./useWordPool";
 
+export const SHAPES = {
+  "shape-t": [
+    ["G", "G", "G", "G", "G"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "G", "x", "x"], // 6th row added
+  ],
+};
+
 const getInitialLetters = () => ({
   q: { color: " bg-gameLight ", row: 1 },
   w: { color: " bg-gameLight ", row: 1 },
@@ -44,10 +55,12 @@ export default function useSurvivalGame(mode) {
 
   const [guesses, setGuesses] = useSecureState(TILES_GUESSES_KEY, []);
   const [turn, setTurn] = useSecureState(TILES_TURN_KEY, 0);
+  const [shapeMistakes, setShapeMistakes] = useSecureState(`${mode}-shape-mistakes`, 2);
   const [letters, setLetters] = useSecureState(
     LETTERS_KEY,
     getInitialLetters(),
   );
+
   const [lastChanged, setLastChanged] = useState({
     letter: null,
     timestamp: 0,
@@ -60,10 +73,16 @@ export default function useSurvivalGame(mode) {
         ? 2
         : 1
     : 1;
+
   const bannedRows = openingGuessCount + 1;
 
   const [gameState, setGameState] = useSecureState(GAME_STATE_KEY, () => {
-    // [NEW] الاعتماد على الفئة الجديدة (Category) بدلاً من الاختباص في الشروط
+    if (pool.bossCategory === "shape") {
+      if (turn >= pool.maxTurns) return "won";
+      if (shapeMistakes < 0) return "lost";
+      return "playing";
+    }
+
     if (pool.bossCategory === "multi") {
       if (guesses.length > 0 && Array.isArray(guesses[0])) {
         const allWordsGuessed = pool.targetWords.every((word, idx) =>
@@ -110,6 +129,7 @@ export default function useSurvivalGame(mode) {
       const current = prev[key];
       if (!current) return prev;
       const currentColor = current.color;
+
       if (currentColor.includes("bg-gameGreen")) return prev;
       if (
         currentColor.includes("bg-gameYellow") &&
@@ -121,6 +141,7 @@ export default function useSurvivalGame(mode) {
         newColor.includes("bg-gameGrey")
       )
         return prev;
+
       setLastChanged({ letter: key, timestamp: Date.now() });
       return { ...prev, [key]: { ...current, color: newColor } };
     });
@@ -132,8 +153,10 @@ export default function useSurvivalGame(mode) {
     onGameOver,
     onBannedWord,
     onDuplicateWord,
+    onMistake,
   ) => {
     if (gameState !== "playing") return false;
+
     if (
       !pool.targetWord &&
       (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
@@ -150,6 +173,7 @@ export default function useSurvivalGame(mode) {
       if (onDuplicateWord) onDuplicateWord();
       return false;
     }
+
     if (
       turn < bannedRows &&
       pool.bannedOpeningWords.includes(normalizedGuess)
@@ -157,6 +181,7 @@ export default function useSurvivalGame(mode) {
       if (onBannedWord) onBannedWord();
       return false;
     }
+
     if (
       turn < openingGuessCount &&
       !pool.bannedOpeningWords.includes(normalizedGuess)
@@ -164,10 +189,51 @@ export default function useSurvivalGame(mode) {
       pool.setBannedOpeningWords((prev) => [...prev, normalizedGuess]);
     }
 
+    // --- NEW: SHAPE BOSS LOGIC ---
+    if (pool.bossCategory === "shape") {
+      const requiredRow = SHAPES[pool.bossType]?.[turn];
+      if (!requiredRow) return false;
+
+      const statuses = getGuessStatuses(guess, pool.targetWord);
+      let matches = true;
+
+      for (let i = 0; i < 5; i++) {
+        const expected = requiredRow[i] === "G" ? "bg-gameGreen" : "bg-gameGrey";
+        if (statuses[i] !== expected) {
+          matches = false;
+          break;
+        }
+      }
+
+      if (!matches) {
+        const newMistakes = shapeMistakes - 1;
+        setShapeMistakes(newMistakes);
+        if (newMistakes < 0) {
+          setGameState("lost");
+          onGameOver("lost", pool.maxTurns);
+        } else {
+          if (onMistake) onMistake();
+        }
+        return false; // Returns false so currentGuess stays in the input
+      }
+
+      const newGuesses = [...guesses, guess];
+      setGuesses(newGuesses);
+
+      if (newGuesses.length >= pool.maxTurns) {
+        pool.removeSolvedTargets([pool.random]);
+        setGameState("won");
+        onGameOver("won", newGuesses.length);
+      } else {
+        setTurn(turn + 1);
+      }
+      return true;
+    }
+
+    // --- STANDARD BOSS LOGIC ---
     if (pool.bossCategory === "multi") {
       const limit = pool.bossWordCount;
       const guessesToAdd = [];
-
       for (let i = 0; i < limit; i++) {
         const isSolved = guesses.some(
           (g) =>
@@ -209,7 +275,6 @@ export default function useSurvivalGame(mode) {
           newlySolved.push(pool.randomIndices[i]);
         }
       }
-
       pool.removeSolvedTargets(newlySolved);
 
       if (allWordsGuessed) {
@@ -245,6 +310,7 @@ export default function useSurvivalGame(mode) {
         }
       }
     }
+
     return true;
   };
 
@@ -256,6 +322,7 @@ export default function useSurvivalGame(mode) {
     setGuesses([]);
     setTurn(0);
     setGameState("playing");
+    setShapeMistakes(2);
   };
 
   const resetGame = () => {
@@ -297,6 +364,7 @@ export default function useSurvivalGame(mode) {
     gameState,
     letters,
     lastChanged,
+    shapeMistakes,
     changeColor,
     submitGuess,
     resetGame,
@@ -308,11 +376,11 @@ export default function useSurvivalGame(mode) {
     isBossGame: pool.isBossGame,
     bossWordCount: pool.bossWordCount,
     bossType: pool.bossType,
-    bossCategory: pool.bossCategory, // [NEW] تم تصديرها للواجهة
+    bossCategory: pool.bossCategory,
     gameCount: pool.gameCount,
     availableSolutionCount: pool.availableSolutionCount,
     bannedRows,
-    playedBossTypes: pool.playedBossTypes, // <--- ADD THIS
-    totalBossTypes: pool.totalBossTypes, // <--- ADD THIS
+    playedBossTypes: pool.playedBossTypes,
+    totalBossTypes: pool.totalBossTypes,
   };
 }

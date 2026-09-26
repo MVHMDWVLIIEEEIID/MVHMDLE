@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import useGameInput from "../hooks/useGameInput";
-import WordGrid from "./WordGrid"; // [REFACTORED] نستدعي الكلاس الغبي للشبكة
+import WordGrid from "./WordGrid";
 
 export default function Tiles({
   guesses = [],
@@ -12,6 +12,7 @@ export default function Tiles({
   addToast,
   rowCount = 6,
   bannedRows = 0,
+  isShapeMode = false, // <--- [NEW]
 }) {
   const [shake, setShake] = useState(false);
   const [bannedFlash, setBannedFlash] = useState(false);
@@ -50,7 +51,6 @@ export default function Tiles({
     [onGuessSubmit, triggerShake, addToast, turn],
   );
 
-  // نترك معالجة الكيبورد للخطاف الذكي
   const { currentGuess } = useGameInput({
     turn,
     rowCount,
@@ -62,7 +62,6 @@ export default function Tiles({
     addToast,
   });
 
-  // نطلب من القالب رسم الشبكة ونعطيه البيانات فقط
   return (
     <WordGrid
       guesses={guesses}
@@ -75,7 +74,8 @@ export default function Tiles({
       lastSubmittedTurn={lastSubmittedTurn}
       sizeMode="normal"
       bannedRows={bannedRows}
-      bannedFlash={bannedFlash} 
+      bannedFlash={bannedFlash}
+      isShapeMode={isShapeMode} // <--- [NEW]
     />
   );
 }

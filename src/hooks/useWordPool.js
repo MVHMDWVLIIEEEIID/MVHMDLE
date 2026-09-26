@@ -3,9 +3,10 @@ import data from "../data/words.json";
 import useSecureState from "./useSecureState";
 
 export const DEV_SETTINGS = {
-  FORCE_BOSS_ID: null,
-  EVERY_ROUND_IS_BOSS: false,
+  FORCE_BOSS_ID: "shape-t", // Forced to only spawn the Shape Boss
+  EVERY_ROUND_IS_BOSS: true, // Forces boss rounds immediately
 };
+
 export const BOSS_REGISTRY = {
   wordle500: {
     id: "wordle500",
@@ -20,6 +21,12 @@ export const BOSS_REGISTRY = {
     wordCount: 4,
     maxTurns: 10,
   },
+  "shape-t": {
+    id: "shape-t",
+    category: "shape",
+    wordCount: 1,
+    maxTurns: 6,
+  },
 };
 
 const BOSS_TYPES = Object.values(BOSS_REGISTRY);
@@ -27,7 +34,6 @@ const SOLUTION_WORD_COUNT = 2315;
 
 export default function useWordPool(mode) {
   const solutionWords = useMemo(() => data.slice(0, SOLUTION_WORD_COUNT), []);
-
   const [gameCount, setGameCount] = useSecureState(
     `wordle-game-count-${mode}`,
     0,
@@ -40,7 +46,6 @@ export default function useWordPool(mode) {
     `${mode}-banned-opening-words`,
     [],
   );
-
   const getAllSolutionIndices = useCallback(
     () => Array.from({ length: SOLUTION_WORD_COUNT }, (_, idx) => idx),
     [],
@@ -61,7 +66,7 @@ export default function useWordPool(mode) {
   const [bossCategory, setBossCategory] = useSecureState(
     `wordle-boss-category-${mode}`,
     null,
-  ); // [NEW] التصنيف الجديد
+  );
   const [bossWordCount, setBossWordCount] = useSecureState(
     `wordle-boss-word-count-${mode}`,
     1,
@@ -101,7 +106,6 @@ export default function useWordPool(mode) {
   );
 
   const getGameTypeInfo = (count, played) => {
-    // 1. التحقق من إعدادات المطور أولاً
     const isBossRound =
       DEV_SETTINGS.EVERY_ROUND_IS_BOSS || (count + 1) % 5 === 0;
 
@@ -115,14 +119,12 @@ export default function useWordPool(mode) {
       };
 
     let boss;
-    // 2. إذا كنت تجبر اللعبة على بوس معين للتجربة
     if (
       DEV_SETTINGS.FORCE_BOSS_ID &&
       BOSS_REGISTRY[DEV_SETTINGS.FORCE_BOSS_ID]
     ) {
       boss = BOSS_REGISTRY[DEV_SETTINGS.FORCE_BOSS_ID];
     } else {
-      // 3. اللعب الطبيعي العشوائي
       const validPlayed = played.filter((id) => BOSS_REGISTRY[id]);
       const available = BOSS_TYPES.filter((b) => !validPlayed.includes(b.id));
       const pool = available.length > 0 ? available : BOSS_TYPES;
@@ -201,7 +203,8 @@ export default function useWordPool(mode) {
         !advanceLevel &&
         typeInfo.isBoss &&
         typeInfo.wordCount === 1 &&
-        typeInfo.bossType !== "wordle500"
+        typeInfo.bossType !== "wordle500" &&
+        typeInfo.category !== "shape"
       ) {
         typeInfo.isBoss = false;
         typeInfo.category = null;
@@ -254,8 +257,8 @@ export default function useWordPool(mode) {
     availableSolutionCount: availableIndices.length,
     bannedOpeningWords,
     setBannedOpeningWords,
-    playedBossTypes, // <--- ADD THIS
-    totalBossTypes: BOSS_TYPES.length, // <--- ADD THIS
+    playedBossTypes,
+    totalBossTypes: BOSS_TYPES.length,
     removeSolvedTargets,
     generateNextGame,
     resetPoolData,
