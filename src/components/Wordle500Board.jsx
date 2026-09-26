@@ -171,7 +171,7 @@ export default function Wordle500Board({ game }) {
                   game.shake && isCurrentRow
                     ? "border-red-500!"
                     : isCurrentRow && letterIndex === game.currentGuess.length
-                      ? "border-gameGreen!"
+                      ? "border-gameBlue!"
                       : isBannedRow && !isSubmitted && game.bannedFlash
                         ? "border-gameRed"
                         : "border-transparent"
