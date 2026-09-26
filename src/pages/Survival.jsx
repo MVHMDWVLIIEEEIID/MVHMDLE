@@ -155,6 +155,7 @@ export default function Survival({ mode = "survival" }) {
           bossWordCount: game.bossWordCount,
           boss2Count: progress.boss2Count,
           boss4Count: progress.boss4Count,
+          boss500Count: progress.boss500Count,
         }}
       />
 

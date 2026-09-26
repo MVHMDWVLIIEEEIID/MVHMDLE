@@ -13,41 +13,45 @@ export const calculateWinRewards = ({
   let heartAdded = false;
   let heartCashBonus = 0;
 
-  // سنقوم بتجهيز القيم الجديدة لتحديثها لاحقاً بشكل نظيف
   let newBoss2Count = progress.boss2Count || 0;
   let newBoss4Count = progress.boss4Count || 0;
+  let newBoss500Count = progress.boss500Count || 0;
   let newHearts = progress.hearts;
 
   if (game.isBossGame) {
     if (game.bossWordCount === 2) {
-      bossBase = 10000;
-      bossBonus = 2000 * (1 + newBoss2Count);
+      bossBase = 18000;
+      bossBonus = 3000 * (1 + newBoss2Count);
       newBoss2Count += 1;
     } else if (game.bossWordCount === 4) {
-      bossBase = 16000;
-      bossBonus = 4000 * (1 + newBoss4Count);
+      bossBase = 20000;
+      bossBonus = 5000 * (1 + newBoss4Count);
       newBoss4Count += 1;
-
       heartAdded = progress.hearts < MAX_HEARTS;
       if (heartAdded) {
         newHearts = Math.min(MAX_HEARTS, progress.hearts + 1);
       } else {
         heartCashBonus = 50000;
       }
+    } else if (game.bossWordCount === 1) {
+      bossBase = 15000;
+      bossBonus = 3000 * (1 + newBoss500Count);
+      newBoss500Count += 1;
     }
   }
 
-  const SPEED_BONUS = unusedRows * 1000;
-  const STREAK_BONUS = (progress.streak + 1) * 150;
-  const totalEarned = bossBase + bossBonus || BASE_WIN;
+  const SPEED_BONUS = unusedRows * 1200;
+  const STREAK_BONUS = (progress.streak + 1) * 250;
 
+  const totalEarned = bossBase + bossBonus || BASE_WIN;
   let grandTotal = 0;
+
   if (game.isBossGame) {
-    // [FIX] تم إصلاح خطأ استدعاء progress.boss2Count الذي كان يقرأ من game بالخطأ
     const prevBoss2 = game.bossWordCount === 2 ? progress.boss2Count || 0 : 0;
     const prevBoss4 = game.bossWordCount === 4 ? progress.boss4Count || 0 : 0;
-    const prevStreakBonus = 2000 * (prevBoss2 + prevBoss4);
-
+    const prevBoss500 =
+      game.bossWordCount === 1 ? progress.boss500Count || 0 : 0;
+    const prevStreakBonus = 2000 * (prevBoss2 + prevBoss4 + prevBoss500);
     grandTotal = totalEarned + prevStreakBonus + STREAK_BONUS + heartCashBonus;
   } else {
     grandTotal = totalEarned + SPEED_BONUS + STREAK_BONUS;
@@ -58,6 +62,7 @@ export const calculateWinRewards = ({
     newHearts,
     newBoss2Count,
     newBoss4Count,
+    newBoss500Count,
     breakdown: {
       base: bossBase || BASE_WIN,
       bonus: bossBonus || 0,

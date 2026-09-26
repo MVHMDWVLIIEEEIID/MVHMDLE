@@ -98,6 +98,8 @@ export default function useSurvivalActions({
             progress.setBoss2Count(rewards.newBoss2Count);
           if (game.bossWordCount === 4)
             progress.setBoss4Count(rewards.newBoss4Count);
+          if (game.bossWordCount === 1)
+            progress.setBoss500Count(rewards.newBoss500Count);
           progress.setHearts(rewards.newHearts);
         }
 

@@ -3,12 +3,12 @@ import { secureStorage } from "../utils/secureStorage";
 import useSecureState from "./useSecureState"; // [REFACTORED]
 
 const DEFAULT_HINTS = {
-  "Hide a Letter": { cost: 400, bought: 0, desc: "Discard 1 incorrect key." },
-  "Vowel Letter": { cost: 700, bought: 0, desc: "Locate a hidden vowel." },
-  "Yellow Letter": { cost: 1100, bought: 0, desc: "Find a misplaced key." },
-  "Green Letter": { cost: 1750, bought: 0, desc: "Confirm a correct spot." },
-  Row: { cost: 3200, bought: 0, desc: "Get a Seventh Row" },
-  Heart: { cost: 45000, bought: 0, desc: "+1 Extra Life." },
+  "Hide a Letter": { cost: 800, bought: 0, desc: "Discard 1 incorrect key." },
+  "Vowel Letter": { cost: 1500, bought: 0, desc: "Locate a hidden vowel." },
+  "Yellow Letter": { cost: 2500, bought: 0, desc: "Find a misplaced key." },
+  "Green Letter": { cost: 4000, bought: 0, desc: "Confirm a correct spot." },
+  Row: { cost: 6000, bought: 0, desc: "Get a Seventh Row" },
+  Heart: { cost: 60000, bought: 0, desc: "+1 Extra Life." },
   "Beat The Game": { cost: 1000000, bought: 0, desc: "Instant Extraction." },
 };
 
@@ -34,6 +34,7 @@ export default function useSurvivalProgress(mode) {
   const GAMES_PLAYED_KEY = `wordle-games-played-${mode}`;
   const BOSS2_COUNT_KEY = `wordle-boss2-count-${mode}`;
   const BOSS4_COUNT_KEY = `wordle-boss4-count-${mode}`;
+  const BOSS500_COUNT_KEY = `wordle-boss500-count-${mode}`;
   const RUN_STATS_KEY = `wordle-run-stats-${mode}`;
   const RUN_COMPLETED_KEY = `wordle-run-completed-${mode}`;
 
@@ -62,6 +63,7 @@ export default function useSurvivalProgress(mode) {
   const [lastReward, setLastReward] = useSecureState(LAST_REWARD_KEY, null);
   const [boss2Count, setBoss2Count] = useSecureState(BOSS2_COUNT_KEY, 0);
   const [boss4Count, setBoss4Count] = useSecureState(BOSS4_COUNT_KEY, 0);
+  const [boss500Count, setBoss500Count] = useSecureState(BOSS500_COUNT_KEY, 0);
   const [gamesPlayed, setGamesPlayed] = useSecureState(GAMES_PLAYED_KEY, 1);
   const [runCompleted, setRunCompleted] = useSecureState(
     RUN_COMPLETED_KEY,
@@ -133,6 +135,7 @@ export default function useSurvivalProgress(mode) {
     setLastReward(null);
     setBoss2Count(0);
     setBoss4Count(0);
+    setBoss500Count(0);
     setRunStats(DEFAULT_RUN_STATS);
     setRunCompleted(false);
   };
@@ -158,6 +161,8 @@ export default function useSurvivalProgress(mode) {
     setBoss2Count,
     boss4Count,
     setBoss4Count,
+    boss500Count,
+    setBoss500Count,
     runStats,
     addWordsTyped,
     addWin,

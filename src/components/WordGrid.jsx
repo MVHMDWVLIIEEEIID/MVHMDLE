@@ -99,7 +99,7 @@ export default function WordGrid({
           className={`text-center ${tileWidthClass} ${tileHeight} ${tileMargin} ${fontSize} pointer-events-none font-bold uppercase border-2 transition-[height,font-size,background-color,border-color,color] duration-300 ease-out outline-none rounded aspect-square
             ${opacityClass}
             ${shouldFlip ? "animate-flip" : ""}
-            ${shake && isCurrentRow ? "animate-shake border-red-500!" : isNextTile ? "border-gameGreen!" : isBannedRow && !shouldShowStatuses && bannedFlash ? "border-gameRed" : "border-transparent"}
+            ${shake && isCurrentRow ? "animate-shake border-red-500!" : isNextTile ? "border-gameBlue!" : isBannedRow && !shouldShowStatuses && bannedFlash ? "border-gameRed" : "border-transparent"}
             ${colorClass}`}
           style={
             shouldFlip

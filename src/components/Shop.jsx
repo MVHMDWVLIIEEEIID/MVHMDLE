@@ -1,7 +1,7 @@
 import React from "react";
 
-const HIDE_A_LETTER_STEP = 120;
-const HEART_STEP = 18000;
+const HIDE_A_LETTER_STEP = 150;
+const HEART_STEP = 20000;
 const STANDARD_HINT_SCALING = {
   "Vowel Letter": { perBuyStep: 0.07, maxMultiplier: 2.3 },
   "Yellow Letter": { perBuyStep: 0.09, maxMultiplier: 2.9 },
@@ -73,12 +73,9 @@ export default function Shop({
           } else if (name === "Heart") {
             isLocked = usedCount >= 1 || hearts >= MAX_HEARTS;
           } else if (
-            [
-              "Green Letter",
-              "Yellow Letter",
-              "Vowel Letter",
-              "Row",
-            ].includes(name)
+            ["Green Letter", "Yellow Letter", "Vowel Letter", "Row"].includes(
+              name,
+            )
           ) {
             isLocked = usedCount >= 1;
           }
@@ -128,12 +125,11 @@ export default function Shop({
                 </span>
 
                 {/* Level Display */}
-                {name !== "Hide a Letter" && data.bought > 0 ? (
-                  <span className="text-[8px] text-yellow-600 font-bold uppercase tracking-wide">
-                    Lvl {data.bought}
+                {data.bought > 0 && (
+                  <span className="text-[8.5px] text-gameYellow/80 font-bold uppercase tracking-wider">
+                    ({data.bought} times)
                   </span>
-                ) : // Empty placeholder to keep alignment consistent if needed, or just null
-                null}
+                )}
               </div>
             </button>
           );

@@ -97,7 +97,9 @@ export default function SurvivalGameModals({
                         ? 2000 * stats.boss2Count || 0
                         : stats.bossWordCount === 4
                           ? 4000 * stats.boss4Count || 0
-                          : 0}
+                          : stats.bossWordCount === 1
+                            ? 2000 * stats.boss500Count || 0
+                            : 0}
                     </span>
                   </div>
                 ) : (
