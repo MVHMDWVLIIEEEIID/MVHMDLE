@@ -1,3 +1,4 @@
+// hooks/useSurvivalGame.js
 import { useState, useEffect } from "react";
 import useSecureState from "./useSecureState";
 import { getGuessStatuses } from "../utils/gameUtils";
@@ -10,7 +11,39 @@ export const SHAPES = {
     ["x", "x", "G", "x", "x"],
     ["x", "x", "Y", "Y", "x"],
     ["x", "x", "G", "x", "x"],
-    ["x", "Y", "G", "x", "x"], // 6th row added
+    ["x", "Y", "G", "x", "x"],
+  ],
+  "shape-u": [
+    ["G", "x", "x", "x", "G"],
+    ["G", "x", "x", "x", "G"],
+    ["Y", "x", "x", "x", "Y"],
+    ["Y", "x", "x", "x", "Y"],
+    ["G", "G", "x", "G", "G"],
+    ["G", "G", "G", "G", "G"],
+  ],
+  "shape-x": [
+    ["G", "x", "x", "x", "G"],
+    ["x", "G", "x", "G", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "Y", "x", "Y", "x"],
+    ["Y", "x", "x", "x", "Y"],
+    ["G", "x", "x", "x", "G"],
+  ],
+  "shape-square": [
+    ["G", "G", "G", "G", "G"],
+    ["G", "x", "x", "x", "G"],
+    ["Y", "x", "x", "x", "Y"],
+    ["Y", "x", "x", "x", "Y"],
+    ["G", "x", "x", "x", "G"],
+    ["G", "G", "G", "G", "G"],
+  ],
+  "shape-diamond": [
+    ["x", "x", "G", "x", "x"],
+    ["x", "G", "x", "G", "x"],
+    ["G", "x", "x", "x", "G"],
+    ["Y", "x", "x", "x", "Y"],
+    ["x", "Y", "x", "Y", "x"],
+    ["x", "x", "G", "x", "x"],
   ],
 };
 
@@ -59,11 +92,11 @@ export default function useSurvivalGame(mode) {
     `${mode}-shape-mistakes`,
     2,
   );
+
   const [letters, setLetters] = useSecureState(
     LETTERS_KEY,
     getInitialLetters(),
   );
-
   const [lastChanged, setLastChanged] = useState({
     letter: null,
     timestamp: 0,
@@ -77,7 +110,9 @@ export default function useSurvivalGame(mode) {
         : 1
     : 1;
 
-  const bannedRows = openingGuessCount + 1;
+  // Set bannedRows to 0 if it's a shape boss so the UI doesn't flash red
+  const isShapeBoss = pool.bossCategory === "shape";
+  const bannedRows = isShapeBoss ? 0 : openingGuessCount + 1;
 
   const [gameState, setGameState] = useSecureState(GAME_STATE_KEY, () => {
     if (pool.bossCategory === "shape") {
@@ -159,7 +194,6 @@ export default function useSurvivalGame(mode) {
     onMistake,
   ) => {
     if (gameState !== "playing") return false;
-
     if (
       !pool.targetWord &&
       (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
@@ -177,19 +211,22 @@ export default function useSurvivalGame(mode) {
       return false;
     }
 
-    if (
-      turn < bannedRows &&
-      pool.bannedOpeningWords.includes(normalizedGuess)
-    ) {
-      if (onBannedWord) onBannedWord();
-      return false;
-    }
+    // Bypass ALL banned opening word logic for the Shape Boss
+    if (!isShapeBoss) {
+      if (
+        turn < bannedRows &&
+        pool.bannedOpeningWords.includes(normalizedGuess)
+      ) {
+        if (onBannedWord) onBannedWord();
+        return false;
+      }
 
-    if (
-      turn < openingGuessCount &&
-      !pool.bannedOpeningWords.includes(normalizedGuess)
-    ) {
-      pool.setBannedOpeningWords((prev) => [...prev, normalizedGuess]);
+      if (
+        turn < openingGuessCount &&
+        !pool.bannedOpeningWords.includes(normalizedGuess)
+      ) {
+        pool.setBannedOpeningWords((prev) => [...prev, normalizedGuess]);
+      }
     }
 
     if (pool.bossCategory === "shape") {
@@ -200,7 +237,6 @@ export default function useSurvivalGame(mode) {
       let matches = true;
 
       for (let i = 0; i < 5; i++) {
-        // [NEW] Maps 'Y' to Yellow, 'G' to Green, everything else to Grey
         let expected = "bg-gameGrey";
         if (requiredRow[i] === "G") expected = "bg-gameGreen";
         else if (requiredRow[i] === "Y") expected = "bg-gameYellow";
@@ -220,7 +256,7 @@ export default function useSurvivalGame(mode) {
         } else {
           if (onMistake) onMistake();
         }
-        return false; // Returns false so currentGuess stays in the input
+        return false;
       }
 
       const newGuesses = [...guesses, guess];
@@ -240,6 +276,7 @@ export default function useSurvivalGame(mode) {
     if (pool.bossCategory === "multi") {
       const limit = pool.bossWordCount;
       const guessesToAdd = [];
+
       for (let i = 0; i < limit; i++) {
         const isSolved = guesses.some(
           (g) =>
@@ -281,6 +318,7 @@ export default function useSurvivalGame(mode) {
           newlySolved.push(pool.randomIndices[i]);
         }
       }
+
       pool.removeSolvedTargets(newlySolved);
 
       if (allWordsGuessed) {

@@ -1,9 +1,10 @@
+// hooks/useWordPool.js
 import { useCallback, useMemo } from "react";
 import data from "../data/words.json";
 import useSecureState from "./useSecureState";
 
 export const DEV_SETTINGS = {
-  FORCE_BOSS_ID: "shape-t", // Forced to only spawn the Shape Boss
+  FORCE_BOSS_ID: "shape-boss", // Forced to only spawn the Shape Boss for testing
   EVERY_ROUND_IS_BOSS: true, // Forces boss rounds immediately
 };
 
@@ -21,8 +22,8 @@ export const BOSS_REGISTRY = {
     wordCount: 4,
     maxTurns: 10,
   },
-  "shape-t": {
-    id: "shape-t",
+  "shape-boss": {
+    id: "shape-boss",
     category: "shape",
     wordCount: 1,
     maxTurns: 6,
@@ -31,9 +32,17 @@ export const BOSS_REGISTRY = {
 
 const BOSS_TYPES = Object.values(BOSS_REGISTRY);
 const SOLUTION_WORD_COUNT = 2315;
+export const SHAPE_KEYS = [
+  "shape-t",
+  "shape-u",
+  "shape-x",
+  "shape-square",
+  "shape-diamond",
+];
 
 export default function useWordPool(mode) {
   const solutionWords = useMemo(() => data.slice(0, SOLUTION_WORD_COUNT), []);
+
   const [gameCount, setGameCount] = useSecureState(
     `wordle-game-count-${mode}`,
     0,
@@ -46,10 +55,12 @@ export default function useWordPool(mode) {
     `${mode}-banned-opening-words`,
     [],
   );
+
   const getAllSolutionIndices = useCallback(
     () => Array.from({ length: SOLUTION_WORD_COUNT }, (_, idx) => idx),
     [],
   );
+
   const [availableIndices, setAvailableIndices] = useSecureState(
     `wordle-available-solution-indices-${mode}`,
     getAllSolutionIndices(),
@@ -79,6 +90,12 @@ export default function useWordPool(mode) {
   );
   const [randomIndices, setRandomIndices] = useSecureState(
     `wordle-solution-indices-${mode}`,
+    [],
+  );
+
+  // Track the repeating shuffled shape bag
+  const [shapeBag, setShapeBag] = useSecureState(
+    `wordle-shape-bag-${mode}`,
     [],
   );
 
@@ -171,6 +188,7 @@ export default function useWordPool(mode) {
         };
 
     let nextPlayedBossTypes = playedBossTypes;
+
     if (advanceLevel && typeInfo.isBoss && !DEV_SETTINGS.FORCE_BOSS_ID) {
       nextPlayedBossTypes = BOSS_TYPES.some(
         (b) => !playedBossTypes.includes(b.id),
@@ -178,6 +196,27 @@ export default function useWordPool(mode) {
         ? [...playedBossTypes, typeInfo.bossType]
         : [typeInfo.bossType];
     }
+
+    // --- SHAPE LOOP LOGIC ---
+    let finalBossType = typeInfo.bossType;
+    if (typeInfo.isBoss && typeInfo.category === "shape") {
+      if (advanceLevel) {
+        let currentBag = [...shapeBag];
+        // Create initial shuffle if the bag is empty
+        if (currentBag.length === 0) {
+          currentBag = [...SHAPE_KEYS].sort(() => Math.random() - 0.5);
+        }
+        // Pick the first shape in the shuffled array
+        finalBossType = currentBag[0];
+        // Move it to the back to repeat the EXACT same sequence continuously
+        currentBag.push(currentBag.shift());
+        setShapeBag(currentBag);
+      } else {
+        // Keep the exact same shape on a failed retry
+        finalBossType = bossType;
+      }
+    }
+    // ------------------------
 
     const eligible = getEligible(availableIndices);
     let nextRandom = random;
@@ -190,7 +229,7 @@ export default function useWordPool(mode) {
     ) {
       nextRandomIndices = pickDistinct(typeInfo.wordCount, eligible);
       nextRandom = null;
-    } else if (typeInfo.bossType === "wordle500") {
+    } else if (finalBossType === "wordle500") {
       const eligible500 = getEligible(
         availableIndices.filter((idx) => idx < 500),
       );
@@ -199,11 +238,12 @@ export default function useWordPool(mode) {
     } else {
       nextRandom = pickRandom(eligible);
       nextRandomIndices = [];
+
       if (
         !advanceLevel &&
         typeInfo.isBoss &&
         typeInfo.wordCount === 1 &&
-        typeInfo.bossType !== "wordle500" &&
+        finalBossType !== "wordle500" &&
         typeInfo.category !== "shape"
       ) {
         typeInfo.isBoss = false;
@@ -214,7 +254,7 @@ export default function useWordPool(mode) {
     setGameCount(nextGameCount);
     setPlayedBossTypes(nextPlayedBossTypes);
     setIsBossGame(typeInfo.isBoss);
-    setBossType(typeInfo.bossType);
+    setBossType(finalBossType);
     setBossCategory(typeInfo.category);
     setBossWordCount(typeInfo.wordCount);
     setRandom(nextRandom);
@@ -233,6 +273,7 @@ export default function useWordPool(mode) {
     setPlayedBossTypes([]);
     setBannedOpeningWords([]);
     setAvailableIndices(freshPool);
+    setShapeBag([]); // Reset the shape sequence for a completely fresh run
     setIsBossGame(typeInfo.isBoss);
     setBossType(typeInfo.bossType);
     setBossCategory(typeInfo.category);
