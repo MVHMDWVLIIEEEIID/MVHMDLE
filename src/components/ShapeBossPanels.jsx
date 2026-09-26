@@ -23,7 +23,9 @@ export function ShapeLeftPanel({ bossType }) {
                 className={`w-7 h-7 rounded border-2 transition-all ${
                   cell === "G"
                     ? "bg-gameGreen border-gameGreen shadow-[0_0_10px_rgba(0,225,150,0.5)]"
-                    : "bg-transparent border-gameGrey/20"
+                    : cell === "Y"
+                      ? "bg-gameYellow border-gameYellow shadow-[0_0_10px_rgba(255,213,0,0.5)]"
+                      : "bg-transparent border-gameGrey/20"
                 }`}
               />
             ))}

@@ -6,11 +6,11 @@ import useWordPool from "./useWordPool";
 export const SHAPES = {
   "shape-t": [
     ["G", "G", "G", "G", "G"],
+    ["x", "x", "Y", "x", "x"],
     ["x", "x", "G", "x", "x"],
+    ["x", "x", "Y", "Y", "x"],
     ["x", "x", "G", "x", "x"],
-    ["x", "x", "G", "x", "x"],
-    ["x", "x", "G", "x", "x"],
-    ["x", "x", "G", "x", "x"], // 6th row added
+    ["x", "Y", "G", "x", "x"], // 6th row added
   ],
 };
 
@@ -55,7 +55,10 @@ export default function useSurvivalGame(mode) {
 
   const [guesses, setGuesses] = useSecureState(TILES_GUESSES_KEY, []);
   const [turn, setTurn] = useSecureState(TILES_TURN_KEY, 0);
-  const [shapeMistakes, setShapeMistakes] = useSecureState(`${mode}-shape-mistakes`, 2);
+  const [shapeMistakes, setShapeMistakes] = useSecureState(
+    `${mode}-shape-mistakes`,
+    2,
+  );
   const [letters, setLetters] = useSecureState(
     LETTERS_KEY,
     getInitialLetters(),
@@ -189,7 +192,6 @@ export default function useSurvivalGame(mode) {
       pool.setBannedOpeningWords((prev) => [...prev, normalizedGuess]);
     }
 
-    // --- NEW: SHAPE BOSS LOGIC ---
     if (pool.bossCategory === "shape") {
       const requiredRow = SHAPES[pool.bossType]?.[turn];
       if (!requiredRow) return false;
@@ -198,7 +200,11 @@ export default function useSurvivalGame(mode) {
       let matches = true;
 
       for (let i = 0; i < 5; i++) {
-        const expected = requiredRow[i] === "G" ? "bg-gameGreen" : "bg-gameGrey";
+        // [NEW] Maps 'Y' to Yellow, 'G' to Green, everything else to Grey
+        let expected = "bg-gameGrey";
+        if (requiredRow[i] === "G") expected = "bg-gameGreen";
+        else if (requiredRow[i] === "Y") expected = "bg-gameYellow";
+
         if (statuses[i] !== expected) {
           matches = false;
           break;

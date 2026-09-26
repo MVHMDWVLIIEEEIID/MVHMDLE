@@ -15,7 +15,7 @@ export default function WordGrid({
   hideEmptyRowsAfterWin = false,
   bannedRows = 0,
   bannedFlash = false,
-  isShapeMode = false, // <--- [NEW]
+  isShapeMode = false, // <--- Preserving the shape mode isolation
 }) {
   const items = [];
   const flipDelay = sizeMode === "normal" ? 150 : 100;
@@ -24,7 +24,7 @@ export default function WordGrid({
     (g) => g && targetWord && g.toLowerCase() === targetWord.toLowerCase(),
   );
 
-  // [FIX]: Nullify solvedRowIndex if it's Shape Mode so the grid doesn't artificially lock
+  // Nullify solvedRowIndex if it's Shape Mode so the grid doesn't artificially lock
   const isGridSolved = !isShapeMode && solvedRowIndex !== -1;
 
   for (let i = 0; i < rowCount; i++) {
@@ -76,10 +76,11 @@ export default function WordGrid({
       let fontSize = "text-2xl";
       let tileMargin = "m-0.5";
 
-      // Keep the whole shape illuminated brightly at 100% opacity upon winning
+      // [FIX]: Added "isPrevRow" to the 100% opacity group.
+      // Now only the unplayed future rows will drop to 60%.
       const opacityClass =
+        isPrevRow ||
         isCurrentRow ||
-        (gameState === "won" && i === turn) ||
         isSolvedRow ||
         (isShapeMode && gameState === "won")
           ? "opacity-100"
