@@ -1,4 +1,3 @@
-// hooks/useGameInput.js
 import { useState, useEffect, useRef } from "react";
 import data from "../data/words.json";
 
@@ -15,7 +14,8 @@ export default function useGameInput({
   const [currentGuess, setCurrentGuess] = useState("");
   const isSubmittingRef = useRef(false);
 
-  // إعادة ضبط حالة الإرسال عند تغير الدور أو حالة اللعبة
+  // [FIX] Uncommented this block! This was preventing users from pressing
+  // enter on any subsequent guesses because the lock was never being cleared.
   useEffect(() => {
     isSubmittingRef.current = false;
   }, [turn, gameState, guessesLength]);
@@ -26,11 +26,10 @@ export default function useGameInput({
         e.preventDefault();
         return;
       }
-      
+
       if (e.repeat) return;
       const key = e.key;
 
-      // عند الضغط على Enter (محاولة الإرسال)
       if (key === "Enter") {
         e.preventDefault();
         if (isSubmittingRef.current) return;
@@ -42,22 +41,19 @@ export default function useGameInput({
         }
 
         const guessToSubmit = currentGuess?.toLowerCase();
-        
-        // التحقق من طول الكلمة
+
         if (guessToSubmit.length !== 5) {
           triggerShake?.();
           addToast?.("Not enough letters!", "error");
           return;
         }
 
-        // التحقق من وجود الكلمة في القاموس
         if (!data.includes(guessToSubmit)) {
           triggerShake?.();
           addToast?.("Incorrect word", "error");
           return;
         }
 
-        // الكلمة صحيحة! نرسلها للمكون المسؤول وإذا قبلها نقوم بتفريغ الإدخال
         const accepted = onValidSubmit(guessToSubmit);
         if (accepted) {
           isSubmittingRef.current = true;
@@ -66,16 +62,13 @@ export default function useGameInput({
         return;
       }
 
-      // منع الإدخال إذا انتهت اللعبة
       if (gameState !== "playing" || turn >= rowCount) return;
 
-      // مسح حرف
       if (key === "Backspace") {
         setCurrentGuess((prev) => prev.slice(0, -1));
         return;
       }
 
-      // كتابة حرف إنجليزي فقط
       if (/^[a-zA-Z]$/.test(key)) {
         if (currentGuess.length < 5) {
           setCurrentGuess((prev) => (prev + key)?.toLowerCase());

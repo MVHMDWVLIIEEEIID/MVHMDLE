@@ -1,10 +1,9 @@
-// hooks/useWordPool.js
 import { useCallback, useMemo } from "react";
 import data from "../data/words.json";
 import useSecureState from "./useSecureState";
 
 export const DEV_SETTINGS = {
-  FORCE_BOSS_ID: "shape-boss", // Forced to only spawn the Shape Boss for testing
+  FORCE_BOSS_ID: "shape-boss", // Forced to only spawn the Shape Boss
   EVERY_ROUND_IS_BOSS: true, // Forces boss rounds immediately
 };
 
@@ -92,8 +91,6 @@ export default function useWordPool(mode) {
     `wordle-solution-indices-${mode}`,
     [],
   );
-
-  // Track the repeating shuffled shape bag
   const [shapeBag, setShapeBag] = useSecureState(
     `wordle-shape-bag-${mode}`,
     [],
@@ -197,26 +194,20 @@ export default function useWordPool(mode) {
         : [typeInfo.bossType];
     }
 
-    // --- SHAPE LOOP LOGIC ---
     let finalBossType = typeInfo.bossType;
     if (typeInfo.isBoss && typeInfo.category === "shape") {
       if (advanceLevel) {
         let currentBag = [...shapeBag];
-        // Create initial shuffle if the bag is empty
         if (currentBag.length === 0) {
           currentBag = [...SHAPE_KEYS].sort(() => Math.random() - 0.5);
         }
-        // Pick the first shape in the shuffled array
         finalBossType = currentBag[0];
-        // Move it to the back to repeat the EXACT same sequence continuously
         currentBag.push(currentBag.shift());
         setShapeBag(currentBag);
       } else {
-        // Keep the exact same shape on a failed retry
         finalBossType = bossType;
       }
     }
-    // ------------------------
 
     const eligible = getEligible(availableIndices);
     let nextRandom = random;
@@ -273,7 +264,7 @@ export default function useWordPool(mode) {
     setPlayedBossTypes([]);
     setBannedOpeningWords([]);
     setAvailableIndices(freshPool);
-    setShapeBag([]); // Reset the shape sequence for a completely fresh run
+    setShapeBag([]);
     setIsBossGame(typeInfo.isBoss);
     setBossType(typeInfo.bossType);
     setBossCategory(typeInfo.category);

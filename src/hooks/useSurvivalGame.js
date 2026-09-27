@@ -1,4 +1,3 @@
-// hooks/useSurvivalGame.js
 import { useState, useEffect } from "react";
 import useSecureState from "./useSecureState";
 import { getGuessStatuses } from "../utils/gameUtils";
@@ -110,7 +109,6 @@ export default function useSurvivalGame(mode) {
         : 1
     : 1;
 
-  // Set bannedRows to 0 if it's a shape boss so the UI doesn't flash red
   const isShapeBoss = pool.bossCategory === "shape";
   const bannedRows = isShapeBoss ? 0 : openingGuessCount + 1;
 
@@ -211,7 +209,6 @@ export default function useSurvivalGame(mode) {
       return false;
     }
 
-    // Bypass ALL banned opening word logic for the Shape Boss
     if (!isShapeBoss) {
       if (
         turn < bannedRows &&
@@ -272,7 +269,6 @@ export default function useSurvivalGame(mode) {
       return true;
     }
 
-    // --- STANDARD BOSS LOGIC ---
     if (pool.bossCategory === "multi") {
       const limit = pool.bossWordCount;
       const guessesToAdd = [];
