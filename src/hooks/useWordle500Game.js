@@ -134,7 +134,13 @@ export const getUpdatedManualColors = (
             guessStr[c] === targetLetter &&
             newColors[r][c] !== "locked-red"
           ) {
-            newColors[r][c] = nextColor;
+            // Smart Positional Coloring Logic
+            if (nextColor === "green") {
+              // If we are forcing green, only the clicked column index becomes green. The rest become yellow.
+              newColors[r][c] = c === letterIndex ? "green" : "yellow";
+            } else {
+              newColors[r][c] = nextColor;
+            }
           }
         }
       }

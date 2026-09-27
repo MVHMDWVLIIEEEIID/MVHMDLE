@@ -150,7 +150,7 @@ export default function Wordle500Board({ game }) {
                 aria-label={`${letter || "empty"} letter ${letterIndex + 1}, ${color}`}
                 onClick={(e) => {
                   e.currentTarget.blur();
-                  // Left click: cycle colors. Shift + Left Click applies to all matching letters.
+                  // Restored Shift + Left Click for cycling matching letters
                   game.changeManualColor(
                     rowIndex,
                     letterIndex,
@@ -168,7 +168,7 @@ export default function Wordle500Board({ game }) {
                   e.currentTarget.blur();
 
                   const isClearAll = e.ctrlKey || e.metaKey;
-                  // Right click: reset to gray. Alt + Right click applies to all matching letters.
+                  // Alt + Right Click for clearing matching letters (avoids browser menu popup)
                   game.changeManualColor(
                     rowIndex,
                     letterIndex,
