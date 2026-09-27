@@ -3,8 +3,7 @@ import { useRef } from "react";
 import { handleConfetti, launchBeatGameConfetti } from "../utils/confettiUtils";
 import { calculateWinRewards } from "../utils/economyManager";
 import { executeHintMechanic } from "../utils/hintMechanics";
-import { SHAPES } from "./useWordPool";
-
+import { SHAPES } from "../utils/bossConfig";
 export default function useSurvivalActions({
   game,
   progress,

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import useSecureState from "./useSecureState";
 import { getGuessStatuses } from "../utils/gameUtils";
-import useWordPool, { SHAPES } from "./useWordPool"; // Updated import
+import useWordPool from "./useWordPool"; // Updated import
+import { SHAPES } from "../utils/bossConfig";
 
 const getInitialLetters = () => ({
   q: { color: " bg-gameLight ", row: 1 },

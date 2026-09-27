@@ -1,10 +1,6 @@
-// utils/shapeBuilder.js
-import { SHAPES, SHAPE_KEYS } from "./bossConfig";
-import data from "../data/words.json";
+// utils/shapeValidator.js
 
-function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
-  if (!targetWord || targetWord.length !== 5) return { isValid: false };
-
+export function getCheatSheetForWord(targetWord, shapeArrays, allWords) {
   const validGuessesPerRow = [];
   const globallyUsedGuesses = new Set();
 
@@ -30,7 +26,6 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
     for (let i = 0; i < allWords.length; i++) {
       const guess = allWords[i];
       if (!guess || guess.length !== 5) continue;
-
       if (globallyUsedGuesses.has(guess)) continue;
 
       let statuses = [0, 0, 0, 0, 0];
@@ -160,41 +155,7 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
         if (validForThisRow.length >= 3) break;
       }
     }
-
-    if (validForThisRow.length < 3) return { isValid: false };
     validGuessesPerRow.push(validForThisRow);
   }
-
-  return { isValid: true, validGuessesPerRow };
+  return validGuessesPerRow;
 }
-
-export const generateAndLogShapeData = () => {
-  console.log(
-    "%c[SHAPE DICTIONARY] Building mapping... (This may take a moment)",
-    "color: #ffd500; font-weight: bold;",
-  );
-
-  const solutionWords = data.slice(0, 2315);
-  const dict = {};
-
-  for (const shapeKey of SHAPE_KEYS) {
-    dict[shapeKey] = [];
-    const shapeArrays = SHAPES[shapeKey].map((row) =>
-      row.map((c) => (c === "G" ? 2 : c === "Y" ? 1 : 0)),
-    );
-
-    for (let i = 0; i < solutionWords.length; i++) {
-      const candidate = solutionWords[i];
-      const validation = isWordValidForShapeFast(candidate, shapeArrays, data);
-      if (validation.isValid) {
-        dict[shapeKey].push(i);
-      }
-    }
-  }
-
-  console.log(
-    "%c[SHAPE DICTIONARY] Build complete! Right-click the object below and select 'Copy object':",
-    "color: #00e196; font-weight: bold;",
-  );
-  console.log(dict);
-};
