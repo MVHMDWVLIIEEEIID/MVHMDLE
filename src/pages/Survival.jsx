@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { secureStorage } from "../utils/secureStorage";
-import { generateAndLogShapeData } from "../utils/shapeBuilder";
-
+import {
+  generateAndLogShapeData,
+  generateAndLogUniqueWords,
+} from "../utils/shapeBuilder";
 // Components
 import Header from "../components/Header";
 import Toast from "../components/Toast";
@@ -164,7 +166,16 @@ export default function Survival({ mode = "survival" }) {
             }}
             className="absolute bottom-16 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
           >
-            Log JSON
+            Log Shapes JSON
+          </button>
+
+          <button
+            onClick={() => {
+              generateAndLogUniqueWords();
+            }}
+            className="absolute bottom-28 right-4 bg-gameBlue/20 hover:bg-gameBlue text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameBlue/30 transition-all z-50 uppercase tracking-widest"
+          >
+            Log Words JSON
           </button>
 
           {/* NEW BUTTON */}
@@ -174,7 +185,7 @@ export default function Survival({ mode = "survival" }) {
               document.activeElement.blur();
               window.focus();
             }}
-            className="absolute bottom-28 right-4 bg-gameYellow/20 hover:bg-gameYellow text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameYellow/30 transition-all z-50 uppercase tracking-widest"
+            className="absolute bottom-40 right-4 bg-gameYellow/20 hover:bg-gameYellow text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameYellow/30 transition-all z-50 uppercase tracking-widest"
           >
             Shapes Dict
           </button>

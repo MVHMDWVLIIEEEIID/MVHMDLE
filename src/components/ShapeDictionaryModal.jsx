@@ -22,7 +22,7 @@ export default function ShapeDictionaryModal({ isOpen, onClose }) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ease-out ${visibilityClass}`}
+      className={`fixed inset-0 z-100 flex items-center justify-center p-4 transition-all duration-300 ease-out ${visibilityClass}`}
     >
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
       <div

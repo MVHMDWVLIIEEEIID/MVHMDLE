@@ -198,3 +198,31 @@ export const generateAndLogShapeData = () => {
   );
   console.log(dict);
 };
+
+export const generateAndLogUniqueWords = () => {
+  console.log(
+    "%c[WORDS DICTIONARY] Formatting words and removing duplicates... (This may take a moment)",
+    "color: #ffd500; font-weight: bold;",
+  );
+
+  const uniqueWords = [];
+  const seen = new Set();
+  let removedCount = 0;
+
+  for (let i = 0; i < data.length; i++) {
+    const word = data[i];
+    // If the word hasn't been seen yet, add it to our clean array.
+    if (!seen.has(word)) {
+      seen.add(word);
+      uniqueWords.push(word);
+    } else {
+      removedCount++;
+    }
+  }
+
+  console.log(
+    `%c[WORDS DICTIONARY] Format complete! Removed ${removedCount} duplicates. Right-click the array below and select 'Copy object':`,
+    "color: #00e196; font-weight: bold;",
+  );
+  console.log(uniqueWords);
+};
