@@ -43,11 +43,14 @@ export default function SurvivalWordle500Wrapper({
     );
   }, [manualColors]);
 
+  // Transmit both the color status and the exact manual colors array to BossGameView
   useEffect(() => {
     window.dispatchEvent(
-      new CustomEvent("wordle500-colors-status", { detail: hasColors }),
+      new CustomEvent("wordle500-colors-status", {
+        detail: { hasColors, manualColors },
+      }),
     );
-  }, [hasColors]);
+  }, [hasColors, manualColors]);
 
   const triggerShake = useCallback(() => {
     if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);

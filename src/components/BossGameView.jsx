@@ -20,17 +20,18 @@ export default function BossGameView({
   const isShapeBoss = game.bossCategory === "shape";
   const multiWordCount = game.bossWordCount || game.targetWords?.length || 0;
 
-  // Initialize state directly from local storage so it persists perfectly on refresh
-  const [showClearButton, setShowClearButton] = useState(() => {
+  // Initialize unified state from localStorage so refreshing works flawlessly
+  const [wordle500State, setWordle500State] = useState(() => {
     try {
       const savedColors =
         JSON.parse(localStorage.getItem("survival-wordle500-manual-colors")) ||
         [];
-      return savedColors.some((row) =>
+      const hasColors = savedColors.some((row) =>
         row.some((color) => color !== "gray" && color !== "locked-red"),
       );
+      return { hasColors, manualColors: savedColors };
     } catch {
-      return false;
+      return { hasColors: false, manualColors: [] };
     }
   });
 
@@ -41,11 +42,47 @@ export default function BossGameView({
   }, [gameResetKey, multiWordCount, isWordle500Boss, isShapeBoss]);
 
   useEffect(() => {
-    const handleStatus = (e) => setShowClearButton(e.detail);
+    const handleStatus = (e) => setWordle500State(e.detail);
     window.addEventListener("wordle500-colors-status", handleStatus);
     return () =>
       window.removeEventListener("wordle500-colors-status", handleStatus);
   }, []);
+
+  const showClearButton = wordle500State.hasColors;
+
+  // Track the highest manual color applied to each letter for the Wordle500 keyboard
+  let wordle500LetterColors = {};
+  if (isWordle500Boss && game.guesses && wordle500State.manualColors) {
+    game.guesses.forEach((guessObj, rIdx) => {
+      const guessStr =
+        typeof guessObj === "string" ? guessObj : guessObj?.word || "";
+
+      // If this is the winning guess, all of its letters are automatically green
+      const isWinningGuess =
+        game.gameState === "won" && guessStr === game.targetWord;
+
+      for (let cIdx = 0; cIdx < 5; cIdx++) {
+        const char = guessStr[cIdx];
+        if (!char) continue;
+
+        let color = wordle500State.manualColors[rIdx]?.[cIdx];
+
+        if (isWinningGuess) {
+          color = "green";
+        }
+
+        const currentHighest = wordle500LetterColors[char];
+
+        if (color === "green") {
+          wordle500LetterColors[char] = "green";
+        } else if (color === "yellow" && currentHighest !== "green") {
+          wordle500LetterColors[char] = "yellow";
+        } else if (!currentHighest) {
+          wordle500LetterColors[char] = "gray";
+        }
+      }
+    });
+  }
 
   const displayLetters = isShapeBoss
     ? Object.fromEntries(
@@ -61,13 +98,25 @@ export default function BossGameView({
       ? Object.fromEntries(
           Object.entries(game.letters).map(([key, val]) => {
             const isDefault = !val.color || val.color.includes("bg-gameLight");
+            let finalColorClass = "bg-gameLight border-gameLight text-gameDark";
+
+            if (!isDefault) {
+              const highest = wordle500LetterColors[key];
+              if (highest === "green") {
+                finalColorClass = "bg-gameGreen border-gameGreen text-gameDark";
+              } else if (highest === "yellow") {
+                finalColorClass =
+                  "bg-gameYellow border-gameYellow text-gameDark";
+              } else {
+                finalColorClass = "bg-gameGrey border-gameGrey text-gameDark";
+              }
+            }
+
             return [
               key,
               {
                 ...val,
-                color: isDefault
-                  ? "bg-gameLight border-gameLight text-gameDark"
-                  : "bg-gameGrey border-gameGrey text-gameDark",
+                color: finalColorClass,
               },
             ];
           }),

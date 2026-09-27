@@ -37,7 +37,7 @@ export default function ParticleOverlay() {
   if (particles.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-9999 overflow-hidden">
       <AnimatePresence>
         {particles.map((heart) => (
           <motion.div

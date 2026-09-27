@@ -1,8 +1,8 @@
 // utils/bossConfig.js
 
 export const DEV_SETTINGS = {
-  FORCE_BOSS_ID: 'wordle500',
-  EVERY_ROUND_IS_BOSS: true,
+  FORCE_BOSS_ID: null,
+  EVERY_ROUND_IS_BOSS: false,
 };
 
 export const BOSS_REGISTRY = {
