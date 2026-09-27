@@ -2,8 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { secureStorage } from "../utils/secureStorage";
-import { generateAndDownloadShapeData } from "../utils/shapeBuilder";
-
+import { generateAndLogShapeData } from "../utils/shapeBuilder";
 // Components
 import Header from "../components/Header";
 import Toast from "../components/Toast";
@@ -138,11 +137,11 @@ export default function Survival({ mode = "survival" }) {
 
       <button
         onClick={() => {
-          generateAndDownloadShapeData();
+          generateAndLogShapeData();
         }}
         className="absolute bottom-16 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
       >
-        Get JSON
+        Log JSON
       </button>
 
       <SurvivalGameModals

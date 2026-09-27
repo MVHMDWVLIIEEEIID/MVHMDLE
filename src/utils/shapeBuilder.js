@@ -6,10 +6,8 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
   if (!targetWord || targetWord.length !== 5) return { isValid: false };
 
   const validGuessesPerRow = [];
-  // NEW: Track words used across the ENTIRE shape to prevent duplicates across rows
   const globallyUsedGuesses = new Set();
 
-  // The target word itself is used for the All-Greens row, so it can't be a normal guess
   globallyUsedGuesses.add(targetWord);
 
   for (let r = 0; r < shapeArrays.length; r++) {
@@ -33,7 +31,6 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
       const guess = allWords[i];
       if (!guess || guess.length !== 5) continue;
 
-      // NEW: Skip this word if it was already used in a previous row (or is the target word)
       if (globallyUsedGuesses.has(guess)) continue;
 
       let statuses = [0, 0, 0, 0, 0];
@@ -159,7 +156,7 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
         statuses[4] === expected[4]
       ) {
         validForThisRow.push(guess);
-        globallyUsedGuesses.add(guess); // Mark as used globally
+        globallyUsedGuesses.add(guess);
         if (validForThisRow.length >= 3) break;
       }
     }
@@ -171,9 +168,9 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
   return { isValid: true, validGuessesPerRow };
 }
 
-export const generateAndDownloadShapeData = () => {
+export const generateAndLogShapeData = () => {
   console.log(
-    "%c[SHAPE DICTIONARY] Building mapping...",
+    "%c[SHAPE DICTIONARY] Building mapping... (This may take a moment)",
     "color: #ffd500; font-weight: bold;",
   );
 
@@ -196,17 +193,8 @@ export const generateAndDownloadShapeData = () => {
   }
 
   console.log(
-    "%c[SHAPE DICTIONARY] Build complete!",
+    "%c[SHAPE DICTIONARY] Build complete! Right-click the object below and select 'Copy object':",
     "color: #00e196; font-weight: bold;",
   );
-
-  const blob = new Blob([JSON.stringify(dict, null, 4)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "shapes.json";
-  a.click();
-  URL.revokeObjectURL(url);
+  console.log(dict);
 };

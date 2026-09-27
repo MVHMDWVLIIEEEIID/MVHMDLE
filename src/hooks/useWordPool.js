@@ -35,14 +35,33 @@ const BOSS_TYPES = Object.values(BOSS_REGISTRY);
 const SOLUTION_WORD_COUNT = 2315;
 
 export const SHAPE_KEYS = [
+  // Original 5
   "shape-t",
   "shape-u",
   "shape-x",
   "shape-square",
   "shape-diamond",
+  // First Expansion
+  "shape-hourglass",
+  "shape-plus",
+  "shape-zigzag",
+  "shape-arrow",
+  "shape-heart",
+  // The "Fun & Trolling" Expansion
+  "shape-finger", // Middle Finger
+  "shape-ladder", // Ladder
+  "shape-smile", // Smiley Face
+  "shape-alien", // Space Invader
+  "shape-sword", // Sword / Dagger
+  "shape-tree", // Pine Tree
+  "shape-cup", // Goblet / Cup
+  "shape-house", // House / Roof
+  "shape-snake", // Slithering Snake
+  "shape-check", // Checkmark
 ];
 
 export const SHAPES = {
+  // --- ORIGINAL 5 ---
   "shape-t": [
     ["G", "G", "G", "G", "G"],
     ["x", "x", "Y", "x", "x"],
@@ -82,6 +101,130 @@ export const SHAPES = {
     ["Y", "x", "x", "x", "Y"],
     ["x", "Y", "x", "Y", "x"],
     ["x", "x", "G", "x", "x"],
+  ],
+
+  // --- FIRST EXPANSION ---
+  "shape-hourglass": [
+    ["G", "G", "G", "G", "G"],
+    ["x", "G", "x", "G", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "Y", "x", "x"],
+    ["x", "Y", "x", "Y", "x"],
+    ["Y", "x", "x", "x", "Y"],
+  ],
+  "shape-plus": [
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["G", "G", "G", "G", "G"],
+    ["x", "x", "Y", "x", "x"],
+    ["x", "x", "Y", "x", "x"],
+    ["x", "x", "Y", "x", "x"],
+  ],
+  "shape-zigzag": [
+    ["G", "x", "x", "x", "x"],
+    ["x", "G", "x", "x", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "x", "Y", "x"],
+    ["x", "x", "x", "x", "Y"],
+    ["G", "G", "G", "G", "G"],
+  ],
+  "shape-arrow": [
+    ["x", "x", "G", "x", "x"],
+    ["x", "G", "G", "G", "x"],
+    ["G", "x", "G", "x", "G"],
+    ["x", "x", "Y", "x", "x"],
+    ["x", "x", "Y", "x", "x"],
+    ["x", "x", "Y", "x", "x"],
+  ],
+  "shape-heart": [
+    ["x", "G", "x", "G", "x"],
+    ["G", "G", "G", "G", "G"],
+    ["G", "x", "x", "x", "G"],
+    ["Y", "x", "x", "x", "Y"],
+    ["x", "Y", "x", "Y", "x"],
+    ["x", "x", "Y", "x", "x"],
+  ],
+
+  // --- NEW: THE FUN & TROLLING EXPANSION ---
+  "shape-finger": [
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "G", "G", "G", "x"],
+    ["G", "G", "G", "G", "G"],
+    ["x", "Y", "Y", "Y", "x"],
+    ["x", "x", "Y", "x", "x"],
+  ],
+  "shape-ladder": [
+    ["G", "x", "x", "x", "G"],
+    ["G", "G", "G", "G", "G"],
+    ["Y", "x", "x", "x", "Y"],
+    ["x", "G", "G", "G", "x"],
+    ["G", "x", "x", "x", "G"],
+    ["G", "G", "G", "G", "G"],
+  ],
+  "shape-smile": [
+    ["x", "G", "x", "G", "x"],
+    ["x", "x", "x", "x", "x"],
+    ["Y", "x", "x", "x", "Y"],
+    ["x", "Y", "x", "Y", "x"],
+    ["x", "x", "Y", "x", "x"],
+    ["G", "G", "G", "G", "G"],
+  ],
+  "shape-alien": [
+    ["G", "x", "x", "x", "G"],
+    ["x", "G", "G", "G", "x"],
+    ["G", "G", "G", "G", "G"],
+    ["Y", "x", "Y", "x", "Y"],
+    ["x", "Y", "x", "Y", "x"],
+    ["G", "x", "x", "x", "G"],
+  ],
+  "shape-sword": [
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "G", "G", "G", "x"],
+    ["x", "x", "Y", "x", "x"],
+    ["G", "G", "G", "G", "G"],
+  ],
+  "shape-tree": [
+    ["x", "x", "G", "x", "x"],
+    ["x", "G", "G", "G", "x"],
+    ["G", "G", "G", "G", "G"],
+    ["x", "x", "Y", "x", "x"],
+    ["x", "x", "Y", "x", "x"],
+    ["x", "Y", "Y", "Y", "x"],
+  ],
+  "shape-cup": [
+    ["G", "x", "G", "x", "G"],
+    ["G", "x", "x", "x", "G"],
+    ["x", "G", "x", "G", "x"],
+    ["x", "G", "G", "G", "x"],
+    ["x", "x", "Y", "x", "x"],
+    ["G", "G", "G", "G", "G"],
+  ],
+  "shape-house": [
+    ["x", "x", "G", "x", "x"],
+    ["x", "G", "x", "G", "x"],
+    ["G", "G", "G", "G", "G"],
+    ["Y", "x", "x", "x", "Y"],
+    ["Y", "x", "x", "x", "Y"],
+    ["G", "G", "G", "G", "G"],
+  ],
+  "shape-snake": [
+    ["G", "G", "x", "x", "x"],
+    ["x", "G", "G", "x", "x"],
+    ["x", "x", "G", "G", "x"],
+    ["x", "x", "x", "Y", "Y"],
+    ["x", "x", "Y", "Y", "x"],
+    ["G", "G", "G", "G", "G"],
+  ],
+  "shape-check": [
+    ["x", "x", "x", "x", "G"],
+    ["x", "x", "x", "G", "x"],
+    ["G", "x", "G", "x", "x"],
+    ["x", "G", "x", "x", "x"],
+    ["x", "Y", "x", "x", "x"],
+    ["G", "G", "G", "G", "G"],
   ],
 };
 
