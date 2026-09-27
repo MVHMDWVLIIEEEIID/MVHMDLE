@@ -1,11 +1,12 @@
 // hooks/useWordPool.js
 import { useCallback, useEffect, useMemo } from "react";
 import data from "../data/words.json";
+import shapeData from "../data/shapes.json";
 import useSecureState from "./useSecureState";
 
 export const DEV_SETTINGS = {
-  FORCE_BOSS_ID: "shape-boss", // Forced to only spawn the Shape Boss
-  EVERY_ROUND_IS_BOSS: true, // Forces boss rounds immediately
+  FORCE_BOSS_ID: "shape-boss",
+  EVERY_ROUND_IS_BOSS: true,
 };
 
 export const BOSS_REGISTRY = {
@@ -84,17 +85,13 @@ export const SHAPES = {
   ],
 };
 
-// Extremely fast verification for finding valid target words checking the entire database.
-// Now returns { isValid: boolean, validGuessesPerRow: string[][] }
-function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
-  if (!targetWord || targetWord.length !== 5) return { isValid: false };
-
+// On-the-fly validator to generate the cheat sheet for the console log
+function getCheatSheetForWord(targetWord, shapeArrays, allWords) {
   const validGuessesPerRow = [];
 
   for (let r = 0; r < shapeArrays.length; r++) {
     const expected = shapeArrays[r];
 
-    // Skip checking database if the row requires 5 greens
     const isAllGreens =
       expected[0] === 2 &&
       expected[1] === 2 &&
@@ -112,6 +109,7 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
     for (let i = 0; i < allWords.length; i++) {
       const guess = allWords[i];
       if (!guess || guess.length !== 5) continue;
+
       let statuses = [0, 0, 0, 0, 0];
       let t0 = targetWord[0],
         t1 = targetWord[1],
@@ -145,7 +143,6 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
         t4 = null;
       }
 
-      // Short circuit optimization
       if (expected[0] === 2 && statuses[0] !== 2) continue;
       if (expected[1] === 2 && statuses[1] !== 2) continue;
       if (expected[2] === 2 && statuses[2] !== 2) continue;
@@ -235,16 +232,15 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
         statuses[3] === expected[3] &&
         statuses[4] === expected[4]
       ) {
-        validForThisRow.push(guess);
+        if (!validForThisRow.includes(guess)) {
+          validForThisRow.push(guess);
+        }
         if (validForThisRow.length >= 3) break;
       }
     }
-
-    if (validForThisRow.length < 3) return { isValid: false };
     validGuessesPerRow.push(validForThisRow);
   }
-
-  return { isValid: true, validGuessesPerRow };
+  return validGuessesPerRow;
 }
 
 export default function useWordPool(mode) {
@@ -299,26 +295,43 @@ export default function useWordPool(mode) {
     [],
   );
 
-  // Encrypted Cycle Storage for Shape Boss
-  const [shapeCycle, setShapeCycle] = useSecureState(
-    `wordle-shape-cycle-${mode}`,
-    null,
+  // Simplified Shape States
+  const [shapeBag, setShapeBag] = useSecureState(
+    `wordle-shape-bag-${mode}`,
+    [],
   );
   const [shapeBannedWords, setShapeBannedWords] = useSecureState(
     `wordle-shape-banned-${mode}`,
     [],
   );
 
-  // ALWAYS LOG THE ACTIVE CYCLE DATA ON MOUNT OR UPDATE
+  // === NEW EFFECT: Logs on refresh AND on new cycle ===
   useEffect(() => {
-    if (shapeCycle && shapeCycle.debugLog) {
+    if (isBossGame && bossCategory === "shape" && random !== null && bossType) {
+      const chosenWord = solutionWords[random];
+      if (!chosenWord) return;
+
+      const shapeArrays = SHAPES[bossType].map((row) =>
+        row.map((c) => (c === "G" ? 2 : c === "Y" ? 1 : 0)),
+      );
+
+      const rowProofs = getCheatSheetForWord(chosenWord, shapeArrays, data);
+
       console.log(
-        `%c[SHAPE CYCLE PROOFS]`,
+        `%c[SHAPE BOSS ACTIVE] Shape: ${bossType} | Target: ${chosenWord}`,
         "color: #00e196; font-weight: bold; font-size: 14px;",
       );
-      console.log(shapeCycle.debugLog);
+      console.log({
+        shape: bossType,
+        targetWord: chosenWord,
+        cheatSheet: rowProofs.map((guesses, i) => ({
+          row: i + 1,
+          shapeConstraint: SHAPES[bossType][i],
+          answers: guesses,
+        })),
+      });
     }
-  }, [shapeCycle?.debugLog]);
+  }, [isBossGame, bossCategory, bossType, random, solutionWords]);
 
   const pickRandom = (pool) =>
     pool?.length ? pool[Math.floor(Math.random() * pool.length)] : null;
@@ -335,11 +348,8 @@ export default function useWordPool(mode) {
   };
 
   const getEligible = useCallback(
-    (pool) => {
-      return pool.filter(
-        (idx) => !bannedOpeningWords.includes(solutionWords[idx]),
-      );
-    },
+    (pool) =>
+      pool.filter((idx) => !bannedOpeningWords.includes(solutionWords[idx])),
     [bannedOpeningWords, solutionWords],
   );
 
@@ -405,7 +415,7 @@ export default function useWordPool(mode) {
           bossType,
           category: bossCategory,
           wordCount: bossWordCount,
-          maxTurns: maxTurns,
+          maxTurns,
         };
 
     let nextPlayedBossTypes = playedBossTypes;
@@ -423,95 +433,32 @@ export default function useWordPool(mode) {
     let nextRandomIndices = randomIndices;
 
     if (typeInfo.isBoss && typeInfo.category === "shape") {
-      let currentCycle = shapeCycle;
-      let currentBanned = [...shapeBannedWords];
-
+      let currentBag = [...shapeBag];
       if (advanceLevel) {
-        if (
-          !currentCycle ||
-          currentCycle.currentIndex >= currentCycle.shapes.length
-        ) {
-          const newShapes = [...SHAPE_KEYS].sort(() => Math.random() - 0.5);
-          const newWords = [];
-
-          // Debug Object for Console Storage
-          const cycleDebugLog = {};
-
-          for (const shapeKey of newShapes) {
-            const shapeArrays = SHAPES[shapeKey].map((row) =>
-              row.map((c) => (c === "G" ? 2 : c === "Y" ? 1 : 0)),
-            );
-            let foundIndex = -1;
-
-            const shuffledIndices = [...availableIndices].sort(
-              () => Math.random() - 0.5,
-            );
-
-            for (const idx of shuffledIndices) {
-              const candidateWord = solutionWords[idx];
-              if (currentBanned.includes(candidateWord)) continue;
-
-              const validation = isWordValidForShapeFast(
-                candidateWord,
-                shapeArrays,
-                data,
-              );
-
-              if (validation.isValid) {
-                foundIndex = idx;
-                currentBanned.push(candidateWord);
-
-                // Add to our debug object for this shape
-                cycleDebugLog[shapeKey] = {
-                  targetWord: candidateWord,
-                  rowProofs: validation.validGuessesPerRow.map(
-                    (guesses, i) => ({
-                      row: i + 1,
-                      shapeConstraint: SHAPES[shapeKey][i],
-                      confirmedGuesses: guesses,
-                    }),
-                  ),
-                };
-
-                break;
-              }
-            }
-
-            if (foundIndex === -1) {
-              foundIndex =
-                shuffledIndices.length > 0
-                  ? shuffledIndices[0]
-                  : Math.floor(Math.random() * SOLUTION_WORD_COUNT);
-            }
-            newWords.push(foundIndex);
-          }
-
-          currentCycle = {
-            shapes: newShapes,
-            words: newWords,
-            currentIndex: 0,
-            debugLog: cycleDebugLog, // Storing in state so it persists
-          };
-          setShapeBannedWords(currentBanned);
+        if (currentBag.length === 0) {
+          currentBag = [...SHAPE_KEYS].sort(() => Math.random() - 0.5);
         }
-
-        finalBossType = currentCycle.shapes[currentCycle.currentIndex];
-        nextRandom = currentCycle.words[currentCycle.currentIndex];
-
-        currentCycle = {
-          ...currentCycle,
-          currentIndex: currentCycle.currentIndex + 1,
-        };
-        setShapeCycle(currentCycle);
+        finalBossType = currentBag.shift();
+        setShapeBag(currentBag);
       } else {
-        if (currentCycle && currentCycle.currentIndex > 0) {
-          const idx = currentCycle.currentIndex - 1;
-          finalBossType = currentCycle.shapes[idx];
-          nextRandom = currentCycle.words[idx];
-        } else {
-          finalBossType = bossType;
-        }
+        finalBossType = bossType;
       }
+
+      const validIndices = shapeData[finalBossType] || [];
+      const eligible = validIndices.filter(
+        (idx) => !shapeBannedWords.includes(solutionWords[idx]),
+      );
+
+      let chosenIndex;
+      if (eligible.length === 0) {
+        chosenIndex = pickRandom(validIndices);
+      } else {
+        chosenIndex = pickRandom(eligible);
+      }
+
+      nextRandom = chosenIndex;
+      const chosenWord = solutionWords[chosenIndex];
+      setShapeBannedWords((prev) => [...prev, chosenWord]);
     } else {
       const eligible = getEligible(availableIndices);
 
@@ -562,11 +509,12 @@ export default function useWordPool(mode) {
     const freshPool = getAllSolutionIndices();
     const typeInfo = getGameTypeInfo(0, []);
     const firstIndex = pickRandom(freshPool);
+
     setGameCount(0);
     setPlayedBossTypes([]);
     setBannedOpeningWords([]);
     setAvailableIndices(freshPool);
-    setShapeCycle(null);
+    setShapeBag([]);
     setShapeBannedWords([]);
     setIsBossGame(typeInfo.isBoss);
     setBossType(typeInfo.bossType);
