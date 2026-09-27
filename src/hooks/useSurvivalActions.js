@@ -3,7 +3,7 @@ import { useRef } from "react";
 import { handleConfetti, launchBeatGameConfetti } from "../utils/confettiUtils";
 import { calculateWinRewards } from "../utils/economyManager";
 import { executeHintMechanic } from "../utils/hintMechanics";
-import { SHAPES } from "./useWordPool"; // <-- NEW IMPORT NEEDED FOR SHARE GRID
+import { SHAPES } from "./useWordPool";
 
 export default function useSurvivalActions({
   game,
@@ -201,7 +201,6 @@ export default function useSurvivalActions({
     }
   };
 
-  // --- FULLY REPAIRED SHARE LOGIC ---
   async function shareGame() {
     document.activeElement.blur();
     window.focus();
@@ -214,13 +213,11 @@ export default function useSurvivalActions({
         const shapeDef = SHAPES[game.bossType];
         const grid = shapeDef
           .map((rowArr, rowIndex) => {
-            // If the player successfully submitted this row
             if (rowIndex < game.guesses.length) {
               return rowArr
                 .map((c) => (c === "G" ? "🟩" : c === "Y" ? "🟨" : "⬛"))
                 .join("");
             } else {
-              // Unreached rows
               return "⬛⬛⬛⬛⬛";
             }
           })
@@ -268,8 +265,10 @@ export default function useSurvivalActions({
       });
 
       const maxRows = Math.max(0, ...gridsByWord.map((rows) => rows.length));
+
+      // FIXED: Fills empty solved spaces with 5 black blocks instead of empty text spacing
       const allGrids = Array.from({ length: maxRows }, (_, rowIdx) =>
-        gridsByWord.map((rows) => rows[rowIdx] || "          ").join("   "),
+        gridsByWord.map((rows) => rows[rowIdx] || "⬛⬛⬛⬛⬛").join("   "),
       ).join("\n");
 
       const streakText =
@@ -287,7 +286,6 @@ export default function useSurvivalActions({
       const grid = game.guesses
         .map((guess) => {
           const splitSolution = game.targetWord.toLowerCase().split("");
-          // Guesses could be strings (survival) or objects (multi/wordle500 inside wrapper)
           const splitGuess =
             typeof guess === "string"
               ? guess.toLowerCase().split("")

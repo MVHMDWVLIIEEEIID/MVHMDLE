@@ -125,7 +125,7 @@ export default function SurvivalGameModals({
             <div className="w-full flex justify-center mt-3">
               <p className="text-gameRed text-[11px] font-black uppercase tracking-wider">
                 {stats.lastReward.breakdown.heartAdded
-                  ? "+1 Heart Added"
+                  ? "+1 Heart Added For Beating Entire Bosses Cycle"
                   : "+$50,000 Hearts Full Bonus"}
               </p>
             </div>

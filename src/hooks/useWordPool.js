@@ -5,8 +5,8 @@ import shapeData from "../data/shapes.json";
 import useSecureState from "./useSecureState";
 
 export const DEV_SETTINGS = {
-  FORCE_BOSS_ID: "shape-boss",
-  EVERY_ROUND_IS_BOSS: true,
+  FORCE_BOSS_ID: null,
+  EVERY_ROUND_IS_BOSS: false,
 };
 
 export const BOSS_REGISTRY = {
