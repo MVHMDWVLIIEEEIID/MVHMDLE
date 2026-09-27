@@ -85,6 +85,109 @@ export const SHAPES = {
   ],
 };
 
+// --- GLOBAL HELPERS (Hoisted so the Bootstrapper can use them) ---
+
+const pickRandom = (pool) =>
+  pool?.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+
+const pickDistinct = (count, pool = []) => {
+  const picked = [];
+  const primary = [...pool];
+  while (picked.length < count && primary.length > 0) {
+    picked.push(
+      primary.splice(Math.floor(Math.random() * primary.length), 1)[0],
+    );
+  }
+  return picked;
+};
+
+const getGameTypeInfo = (count, played) => {
+  const isBossRound = DEV_SETTINGS.EVERY_ROUND_IS_BOSS || (count + 1) % 5 === 0;
+
+  if (!isBossRound)
+    return {
+      isBoss: false,
+      bossType: null,
+      category: null,
+      wordCount: 1,
+      maxTurns: 6,
+    };
+
+  let boss;
+  if (DEV_SETTINGS.FORCE_BOSS_ID && BOSS_REGISTRY[DEV_SETTINGS.FORCE_BOSS_ID]) {
+    boss = BOSS_REGISTRY[DEV_SETTINGS.FORCE_BOSS_ID];
+  } else {
+    const validPlayed = played.filter((id) => BOSS_REGISTRY[id]);
+    const available = BOSS_TYPES.filter((b) => !validPlayed.includes(b.id));
+    const pool = available.length > 0 ? available : BOSS_TYPES;
+    boss = pickRandom(pool);
+  }
+
+  return {
+    isBoss: true,
+    bossType: boss.id,
+    category: boss.category,
+    wordCount: boss.wordCount,
+    maxTurns: boss.maxTurns,
+  };
+};
+
+// --- BOOTSTRAPPER: Secures the first load if LocalStorage is empty ---
+let cachedInitialSetup = null;
+
+const getInitialSetup = (forceNew = false) => {
+  if (cachedInitialSetup && !forceNew) return cachedInitialSetup;
+
+  const typeInfo = getGameTypeInfo(0, []);
+
+  let finalBossType = typeInfo.bossType;
+  let finalRandom = null;
+  let finalRandomIndices = [];
+  let initialBag = [];
+  let initialBanned = [];
+
+  if (typeInfo.isBoss) {
+    if (typeInfo.category === "shape") {
+      initialBag = [...SHAPE_KEYS].sort(() => Math.random() - 0.5);
+      finalBossType = initialBag.shift();
+
+      const validIndices = shapeData[finalBossType] || [];
+      finalRandom = pickRandom(validIndices);
+
+      if (finalRandom !== null) {
+        initialBanned = [data[finalRandom]];
+      }
+    } else if (typeInfo.category === "multi") {
+      const freshPool = Array.from(
+        { length: SOLUTION_WORD_COUNT },
+        (_, idx) => idx,
+      );
+      finalRandomIndices = pickDistinct(typeInfo.wordCount, freshPool);
+    } else if (finalBossType === "wordle500") {
+      const eligible500 = Array.from({ length: 500 }, (_, idx) => idx);
+      finalRandom = pickRandom(eligible500);
+    } else {
+      finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT);
+    }
+  } else {
+    finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT);
+  }
+
+  cachedInitialSetup = {
+    isBoss: typeInfo.isBoss,
+    bossType: finalBossType,
+    category: typeInfo.category,
+    wordCount: typeInfo.wordCount,
+    maxTurns: typeInfo.maxTurns,
+    random: finalRandom,
+    randomIndices: finalRandomIndices,
+    shapeBag: initialBag,
+    shapeBannedWords: initialBanned,
+  };
+
+  return cachedInitialSetup;
+};
+
 // On-the-fly validator to generate the cheat sheet for the console log
 function getCheatSheetForWord(targetWord, shapeArrays, allWords) {
   const validGuessesPerRow = [];
@@ -263,53 +366,59 @@ export default function useWordPool(mode) {
     () => Array.from({ length: SOLUTION_WORD_COUNT }, (_, idx) => idx),
     [],
   );
+
   const [availableIndices, setAvailableIndices] = useSecureState(
     `wordle-available-solution-indices-${mode}`,
     getAllSolutionIndices(),
   );
 
+  // ALL fallbacks now pull safely from the same synchronized bootstrapper
   const [isBossGame, setIsBossGame] = useSecureState(
     `wordle-is-boss-${mode}`,
-    false,
+    () => getInitialSetup().isBoss,
   );
   const [bossType, setBossType] = useSecureState(
     `wordle-boss-type-${mode}`,
-    null,
+    () => getInitialSetup().bossType,
   );
   const [bossCategory, setBossCategory] = useSecureState(
     `wordle-boss-category-${mode}`,
-    null,
+    () => getInitialSetup().category,
   );
   const [bossWordCount, setBossWordCount] = useSecureState(
     `wordle-boss-word-count-${mode}`,
-    1,
+    () => getInitialSetup().wordCount,
   );
-  const [maxTurns, setMaxTurns] = useSecureState(`wordle-max-turns-${mode}`, 6);
+  const [maxTurns, setMaxTurns] = useSecureState(
+    `wordle-max-turns-${mode}`,
+    () => getInitialSetup().maxTurns,
+  );
 
   const [random, setRandom] = useSecureState(
     `wordle-solution-index-${mode}`,
-    () => Math.floor(Math.random() * SOLUTION_WORD_COUNT),
+    () => getInitialSetup().random,
   );
   const [randomIndices, setRandomIndices] = useSecureState(
     `wordle-solution-indices-${mode}`,
-    [],
+    () => getInitialSetup().randomIndices,
   );
 
-  // Simplified Shape States
   const [shapeBag, setShapeBag] = useSecureState(
     `wordle-shape-bag-${mode}`,
-    [],
+    () => getInitialSetup().shapeBag,
   );
   const [shapeBannedWords, setShapeBannedWords] = useSecureState(
     `wordle-shape-banned-${mode}`,
-    [],
+    () => getInitialSetup().shapeBannedWords,
   );
 
-  // === NEW EFFECT: Logs on refresh AND on new cycle ===
+  // === EFFECT: Logs on refresh AND on new cycle ===
   useEffect(() => {
     if (isBossGame && bossCategory === "shape" && random !== null && bossType) {
       const chosenWord = solutionWords[random];
-      if (!chosenWord) return;
+
+      // Safety check: Prevent crash if bossType happens to be an invalid/generic key
+      if (!chosenWord || !SHAPES[bossType]) return;
 
       const shapeArrays = SHAPES[bossType].map((row) =>
         row.map((c) => (c === "G" ? 2 : c === "Y" ? 1 : 0)),
@@ -317,10 +426,6 @@ export default function useWordPool(mode) {
 
       const rowProofs = getCheatSheetForWord(chosenWord, shapeArrays, data);
 
-      console.log(
-        `%c[SHAPE BOSS ACTIVE] Shape: ${bossType} | Target: ${chosenWord}`,
-        "color: #00e196; font-weight: bold; font-size: 14px;",
-      );
       console.log({
         shape: bossType,
         targetWord: chosenWord,
@@ -333,67 +438,11 @@ export default function useWordPool(mode) {
     }
   }, [isBossGame, bossCategory, bossType, random, solutionWords]);
 
-  const pickRandom = (pool) =>
-    pool?.length ? pool[Math.floor(Math.random() * pool.length)] : null;
-
-  const pickDistinct = (count, pool = []) => {
-    const picked = [];
-    const primary = [...pool];
-    while (picked.length < count && primary.length > 0) {
-      picked.push(
-        primary.splice(Math.floor(Math.random() * primary.length), 1)[0],
-      );
-    }
-    return picked;
-  };
-
   const getEligible = useCallback(
     (pool) =>
       pool.filter((idx) => !bannedOpeningWords.includes(solutionWords[idx])),
     [bannedOpeningWords, solutionWords],
   );
-
-  const getGameTypeInfo = (count, played) => {
-    const isBossRound =
-      DEV_SETTINGS.EVERY_ROUND_IS_BOSS || (count + 1) % 5 === 0;
-
-    if (!isBossRound)
-      return {
-        isBoss: false,
-        bossType: null,
-        category: null,
-        wordCount: 1,
-        maxTurns: 6,
-      };
-
-    let boss;
-    if (
-      DEV_SETTINGS.FORCE_BOSS_ID &&
-      BOSS_REGISTRY[DEV_SETTINGS.FORCE_BOSS_ID]
-    ) {
-      boss = BOSS_REGISTRY[DEV_SETTINGS.FORCE_BOSS_ID];
-    } else {
-      const validPlayed = played.filter((id) => BOSS_REGISTRY[id]);
-      const available = BOSS_TYPES.filter((b) => !validPlayed.includes(b.id));
-      const pool = available.length > 0 ? available : BOSS_TYPES;
-      boss = pickRandom(pool);
-    }
-
-    return {
-      isBoss: true,
-      bossType: boss.id,
-      category: boss.category,
-      wordCount: boss.wordCount,
-      maxTurns: boss.maxTurns,
-    };
-  };
-
-  const targetWords = useMemo(() => {
-    if (isBossGame && bossCategory === "multi")
-      return randomIndices.map((idx) => solutionWords[idx]);
-    if (random === null || random === undefined) return [];
-    return [solutionWords[random]];
-  }, [isBossGame, bossCategory, randomIndices, random, solutionWords]);
 
   const removeSolvedTargets = useCallback(
     (indicesToRemove) => {
@@ -403,6 +452,13 @@ export default function useWordPool(mode) {
     },
     [setAvailableIndices],
   );
+
+  const targetWords = useMemo(() => {
+    if (isBossGame && bossCategory === "multi")
+      return randomIndices.map((idx) => solutionWords[idx]);
+    if (random === null || random === undefined) return [];
+    return [solutionWords[random]];
+  }, [isBossGame, bossCategory, randomIndices, random, solutionWords]);
 
   const generateNextGame = (advanceLevel = true) => {
     if (availableIndices.length === 0) return false;
@@ -506,23 +562,23 @@ export default function useWordPool(mode) {
   };
 
   const resetPoolData = () => {
-    const freshPool = getAllSolutionIndices();
-    const typeInfo = getGameTypeInfo(0, []);
-    const firstIndex = pickRandom(freshPool);
+    // Force a fresh synchronized bootstrapper state
+    const setup = getInitialSetup(true);
 
     setGameCount(0);
     setPlayedBossTypes([]);
     setBannedOpeningWords([]);
-    setAvailableIndices(freshPool);
-    setShapeBag([]);
-    setShapeBannedWords([]);
-    setIsBossGame(typeInfo.isBoss);
-    setBossType(typeInfo.bossType);
-    setBossCategory(typeInfo.category);
-    setBossWordCount(typeInfo.wordCount);
-    setRandom(firstIndex);
-    setRandomIndices([]);
-    setMaxTurns(typeInfo.maxTurns);
+    setAvailableIndices(getAllSolutionIndices());
+
+    setShapeBag(setup.shapeBag);
+    setShapeBannedWords(setup.shapeBannedWords);
+    setIsBossGame(setup.isBoss);
+    setBossType(setup.bossType);
+    setBossCategory(setup.category);
+    setBossWordCount(setup.wordCount);
+    setRandom(setup.random);
+    setRandomIndices(setup.randomIndices);
+    setMaxTurns(setup.maxTurns);
   };
 
   return {
