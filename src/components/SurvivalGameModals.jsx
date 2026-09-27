@@ -1,3 +1,4 @@
+// components/SurvivalGameModals.jsx
 import React from "react";
 import Modal from "./Modal";
 
@@ -56,7 +57,9 @@ export default function SurvivalGameModals({
       subtitle: stats.isBossGame
         ? stats.bossType === "wordle500"
           ? "Boss: Wordle500"
-          : `Boss: ${stats.bossWordCount} words`
+          : stats.bossType?.startsWith("shape-")
+            ? "Boss: Shapeword"
+            : `Boss: ${stats.bossWordCount} words`
         : "The word was",
       highlight: stats.isBossGame
         ? renderBossWordsInline(stats.targetWords)
@@ -170,7 +173,7 @@ export default function SurvivalGameModals({
       title: "Game Over",
       status: "error",
       subtitle: stats.isBossGame
-        ? `${stats.bossType === "wordle500" ? "Wordle500 Boss" : stats.bossWordCount === 4 ? "4-Words Boss" : "2-Words Boss"} Was :`
+        ? `${stats.bossType === "wordle500" ? "Wordle500 Boss" : stats.bossType?.startsWith("shape-") ? "Shapeword Boss" : stats.bossWordCount === 4 ? "4-Words Boss" : "2-Words Boss"} Was :`
         : "The word was",
       highlight: stats.isBossGame
         ? renderBossWordsInline(stats.targetWords)

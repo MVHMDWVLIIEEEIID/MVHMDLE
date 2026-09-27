@@ -1,7 +1,9 @@
+// hooks/useSurvivalActions.js
 import { useRef } from "react";
 import { handleConfetti, launchBeatGameConfetti } from "../utils/confettiUtils";
-import { calculateWinRewards } from "../utils/economyManager"; // [REFACTORED]
-import { executeHintMechanic } from "../utils/hintMechanics"; // [REFACTORED]
+import { calculateWinRewards } from "../utils/economyManager";
+import { executeHintMechanic } from "../utils/hintMechanics";
+import { SHAPES } from "./useWordPool"; // <-- NEW IMPORT NEEDED FOR SHARE GRID
 
 export default function useSurvivalActions({
   game,
@@ -76,6 +78,7 @@ export default function useSurvivalActions({
     document.activeElement.blur();
     window.focus();
     const now = Date.now();
+
     if (result === "won" || result === "lost") {
       modalReadyAtRef.current = now + RESULT_ANIMATION_MS;
     }
@@ -85,7 +88,6 @@ export default function useSurvivalActions({
         const solvedWords = game.isBossGame ? game.bossWordCount : 1;
         progress.addWin(solvedWords);
 
-        // [REFACTORED] Economy logic extracted
         const rewards = calculateWinRewards({
           game,
           progress,
@@ -108,10 +110,11 @@ export default function useSurvivalActions({
           total: rewards.grandTotal,
           breakdown: rewards.breakdown,
         });
-
         progress.setStreak((prev) => prev + 1);
+
         setIsModalOpen([true, "won"]);
         handleConfetti();
+
         progress.setHintHistory((prev) => [
           ...prev,
           {
@@ -123,9 +126,11 @@ export default function useSurvivalActions({
       } else if (result === "lost") {
         setStreakBeforeLastLoss(progress.streak);
         progress.addLoss();
+
         const newHearts = Math.max(0, progress.hearts - 1);
         progress.setHearts(newHearts);
         progress.setStreak(0);
+
         progress.setHintHistory((prev) => [
           ...prev,
           {
@@ -153,8 +158,8 @@ export default function useSurvivalActions({
     window.focus();
 
     if (progress.currency < cost) return addToast("Not enough cash!", "error");
-    const usedCount = progress.hintsUsedInRound[name] || 0;
 
+    const usedCount = progress.hintsUsedInRound[name] || 0;
     if (name === "Hide a Letter" && usedCount >= 5)
       return addToast("Max usage reached!", "error");
     if (
@@ -163,7 +168,6 @@ export default function useSurvivalActions({
     )
       return addToast("Already used this round!", "error");
 
-    // [REFACTORED] Hint Execution logic extracted
     const { success, logMsg } = executeHintMechanic(
       name,
       game,
@@ -190,7 +194,6 @@ export default function useSurvivalActions({
           { name, msg: logMsg, spent: cost, time: Date.now() },
         ]);
       }
-
       if (name === "Beat The Game") {
         progress.setRunCompleted(true);
         setIsModalOpen([false, "playing"]);
@@ -198,13 +201,46 @@ export default function useSurvivalActions({
     }
   };
 
+  // --- FULLY REPAIRED SHARE LOGIC ---
   async function shareGame() {
     document.activeElement.blur();
     window.focus();
+
     if (game.guesses.length === 0) return;
 
-    // logic of sharing ... (unchanged)
     if (game.isBossGame) {
+      if (game.bossCategory === "shape") {
+        // --- SHAPE BOSS SHARE ---
+        const shapeDef = SHAPES[game.bossType];
+        const grid = shapeDef
+          .map((rowArr, rowIndex) => {
+            // If the player successfully submitted this row
+            if (rowIndex < game.guesses.length) {
+              return rowArr
+                .map((c) => (c === "G" ? "🟩" : c === "Y" ? "🟨" : "⬛"))
+                .join("");
+            } else {
+              // Unreached rows
+              return "⬛⬛⬛⬛⬛";
+            }
+          })
+          .join("\n");
+
+        const streakText =
+          progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
+        const score = isModalOpen[1] === "won" ? "WIN" : "FAIL";
+        const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) SHAPE BOSS - ${score}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
+
+        try {
+          await navigator.clipboard.writeText(shareText);
+          addToast("Copied!", "success");
+        } catch (err) {
+          addToast("Failed to copy", "error");
+        }
+        return;
+      }
+
+      // --- MULTI-WORD BOSS SHARE ---
       const gridsByWord = game.targetWords.map((word, wordIdx) => {
         const wordGuesses = game.guesses.filter((g) => g.wordIndex === wordIdx);
         return wordGuesses.map((guessObj) => {
@@ -218,9 +254,8 @@ export default function useSurvivalActions({
               splitSolution[i] = null;
             }
           });
-
           splitGuess.forEach((char, i) => {
-            if (statuses[i] !== "🟩") {
+            if (statuses[i] === "⬛") {
               const idx = splitSolution.indexOf(char);
               if (idx !== -1) {
                 statuses[i] = "🟨";
@@ -234,18 +269,29 @@ export default function useSurvivalActions({
 
       const maxRows = Math.max(0, ...gridsByWord.map((rows) => rows.length));
       const allGrids = Array.from({ length: maxRows }, (_, rowIdx) =>
-        gridsByWord.map((rows) => rows[rowIdx] || "⬛⬛⬛⬛⬛").join("   "),
+        gridsByWord.map((rows) => rows[rowIdx] || "          ").join("   "),
       ).join("\n");
 
       const streakText =
         progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
-      const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) BOSS (${game.bossWordCount} words)\n\n${allGrids}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()} 💰`;
-      await navigator.clipboard.writeText(shareText);
+      const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) BOSS (${game.bossWordCount} words)\n\n${allGrids}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
+
+      try {
+        await navigator.clipboard.writeText(shareText);
+        addToast("Copied!", "success");
+      } catch (err) {
+        addToast("Failed to copy", "error");
+      }
     } else {
+      // --- STANDARD GAME SHARE ---
       const grid = game.guesses
         .map((guess) => {
           const splitSolution = game.targetWord.toLowerCase().split("");
-          const splitGuess = guess.toLowerCase().split("");
+          // Guesses could be strings (survival) or objects (multi/wordle500 inside wrapper)
+          const splitGuess =
+            typeof guess === "string"
+              ? guess.toLowerCase().split("")
+              : guess.word.toLowerCase().split("");
           const statuses = Array(5).fill("⬛");
 
           splitGuess.forEach((char, i) => {
@@ -254,9 +300,8 @@ export default function useSurvivalActions({
               splitSolution[i] = null;
             }
           });
-
           splitGuess.forEach((char, i) => {
-            if (statuses[i] !== "⬛") {
+            if (statuses[i] === "⬛") {
               const idx = splitSolution.indexOf(char);
               if (idx !== -1) {
                 statuses[i] = "🟨";
@@ -269,10 +314,17 @@ export default function useSurvivalActions({
         .join("\n");
 
       const score = isModalOpen[1] === "won" ? game.guesses.length : "X";
-      const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) ${score}/${game.maxTurns}\n\n${grid}\n\nStreak: ${progress.streak}${progress.streak > 3 ? " 🔥" : ""}\nTotal: $${progress.currency.toLocaleString()} 💰`;
-      await navigator.clipboard.writeText(shareText);
+      const streakText =
+        progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
+      const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) ${score}/${game.maxTurns}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
+
+      try {
+        await navigator.clipboard.writeText(shareText);
+        addToast("Copied!", "success");
+      } catch (err) {
+        addToast("Failed to copy", "error");
+      }
     }
-    addToast("Copied!", "success");
   }
 
   return {
