@@ -5,7 +5,10 @@ import {
   DEV_SETTINGS,
   BOSS_REGISTRY,
   BOSS_TYPES,
+  MINI_BOSS_REGISTRY,
+  MINI_BOSS_TYPES,
   SOLUTION_WORD_COUNT,
+  HARD_SOLUTION_WORD_COUNT,
   SHAPE_KEYS,
 } from "./bossConfig";
 
@@ -23,30 +26,58 @@ export const pickDistinct = (count, pool = []) => {
   return picked;
 };
 
-export const getGameTypeInfo = (count, played) => {
-  const isBossRound = DEV_SETTINGS.EVERY_ROUND_IS_BOSS || (count + 1) % 5 === 0;
+export const getGameTypeInfo = (
+  count,
+  playedBosses = [],
+  playedMiniBosses = [],
+) => {
+  const cyclePos = (count + 1) % 5;
+  const isBossRound = DEV_SETTINGS.EVERY_ROUND_IS_BOSS || cyclePos === 0;
+  const isMiniBossRound = cyclePos === 3 && !DEV_SETTINGS.EVERY_ROUND_IS_BOSS;
+  const isHardNormalRound = cyclePos === 4 && !DEV_SETTINGS.EVERY_ROUND_IS_BOSS;
 
-  if (!isBossRound)
+  if (!isBossRound && !isMiniBossRound) {
     return {
       isBoss: false,
+      isMiniBoss: false,
+      isHardNormal: isHardNormalRound,
       bossType: null,
       category: null,
       wordCount: 1,
       maxTurns: 6,
     };
+  }
 
   let boss;
+  let isMini = false;
+
   if (DEV_SETTINGS.FORCE_BOSS_ID && BOSS_REGISTRY[DEV_SETTINGS.FORCE_BOSS_ID]) {
     boss = BOSS_REGISTRY[DEV_SETTINGS.FORCE_BOSS_ID];
-  } else {
-    const validPlayed = played.filter((id) => BOSS_REGISTRY[id]);
+  } else if (
+    DEV_SETTINGS.FORCE_BOSS_ID &&
+    MINI_BOSS_REGISTRY[DEV_SETTINGS.FORCE_BOSS_ID]
+  ) {
+    boss = MINI_BOSS_REGISTRY[DEV_SETTINGS.FORCE_BOSS_ID];
+    isMini = true;
+  } else if (isBossRound) {
+    const validPlayed = playedBosses.filter((id) => BOSS_REGISTRY[id]);
     const available = BOSS_TYPES.filter((b) => !validPlayed.includes(b.id));
     const pool = available.length > 0 ? available : BOSS_TYPES;
     boss = pickRandom(pool);
+  } else if (isMiniBossRound) {
+    const validPlayed = playedMiniBosses.filter((id) => MINI_BOSS_REGISTRY[id]);
+    const available = MINI_BOSS_TYPES.filter(
+      (b) => !validPlayed.includes(b.id),
+    );
+    const pool = available.length > 0 ? available : MINI_BOSS_TYPES;
+    boss = pickRandom(pool);
+    isMini = true;
   }
 
   return {
-    isBoss: true,
+    isBoss: true, // Triggers the boss UI view
+    isMiniBoss: isMini,
+    isHardNormal: false,
     bossType: boss.id,
     category: boss.category,
     wordCount: boss.wordCount,
@@ -55,12 +86,10 @@ export const getGameTypeInfo = (count, played) => {
 };
 
 let cachedInitialSetup = null;
-
 export const getInitialSetup = (forceNew = false) => {
   if (cachedInitialSetup && !forceNew) return cachedInitialSetup;
 
-  const typeInfo = getGameTypeInfo(0, []);
-
+  const typeInfo = getGameTypeInfo(0, [], []);
   let finalBossType = typeInfo.bossType;
   let finalRandom = null;
   let finalRandomIndices = [];
@@ -71,10 +100,8 @@ export const getInitialSetup = (forceNew = false) => {
     if (typeInfo.category === "shape") {
       initialBag = [...SHAPE_KEYS].sort(() => Math.random() - 0.5);
       finalBossType = initialBag.shift();
-
       const validIndices = shapeData[finalBossType] || [];
       finalRandom = pickRandom(validIndices);
-
       if (finalRandom !== null) {
         initialBanned = [data[finalRandom]];
       }
@@ -91,11 +118,14 @@ export const getInitialSetup = (forceNew = false) => {
       finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT);
     }
   } else {
+    // Normal game on turn 0
     finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT);
   }
 
   cachedInitialSetup = {
     isBoss: typeInfo.isBoss,
+    isMiniBoss: typeInfo.isMiniBoss,
+    isHardNormal: typeInfo.isHardNormal,
     bossType: finalBossType,
     category: typeInfo.category,
     wordCount: typeInfo.wordCount,

@@ -1,9 +1,18 @@
 // utils/bossConfig.js
-
 export const DEV_SETTINGS = {
   FORCE_BOSS_ID: null,
   EVERY_ROUND_IS_BOSS: false,
 };
+
+export const MINI_BOSS_REGISTRY = {
+  "two-word": {
+    id: "two-word",
+    category: "multi",
+    wordCount: 2,
+    maxTurns: 7,
+  },
+};
+export const MINI_BOSS_TYPES = Object.values(MINI_BOSS_REGISTRY);
 
 export const BOSS_REGISTRY = {
   wordle500: {
@@ -11,12 +20,6 @@ export const BOSS_REGISTRY = {
     category: "special",
     wordCount: 1,
     maxTurns: 8,
-  },
-  "two-word": {
-    id: "two-word",
-    category: "multi",
-    wordCount: 2,
-    maxTurns: 7,
   },
   "four-word": {
     id: "four-word",
@@ -33,7 +36,9 @@ export const BOSS_REGISTRY = {
 };
 
 export const BOSS_TYPES = Object.values(BOSS_REGISTRY);
+
 export const SOLUTION_WORD_COUNT = 2315;
+export const HARD_SOLUTION_WORD_COUNT = 798;
 
 export const SHAPE_KEYS = [
   "shape-t",
@@ -44,13 +49,11 @@ export const SHAPE_KEYS = [
   "shape-arrow",
   "shape-heart",
   "shape-finger",
-  "shape-ladder",
   "shape-smile",
   "shape-alien",
   "shape-sword",
   "shape-tree",
   "shape-cup",
-  "shape-house",
   "shape-snake",
   "shape-check",
   "shape-star",
@@ -81,6 +84,8 @@ export const SHAPE_KEYS = [
   "shape-flask",
   "shape-axe",
   "shape-cactus",
+  "shape-car",
+  "shape-guitar",
 ];
 
 export const SHAPES = {
@@ -148,14 +153,6 @@ export const SHAPES = {
     ["x", "Y", "Y", "Y", "x"],
     ["x", "x", "Y", "x", "x"],
   ],
-  "shape-ladder": [
-    ["G", "x", "x", "x", "G"],
-    ["G", "G", "G", "G", "G"],
-    ["Y", "x", "x", "x", "Y"],
-    ["x", "G", "G", "G", "x"],
-    ["G", "x", "x", "x", "G"],
-    ["G", "G", "G", "G", "G"],
-  ],
   "shape-smile": [
     ["x", "G", "x", "G", "x"],
     ["x", "x", "x", "x", "x"],
@@ -194,14 +191,6 @@ export const SHAPES = {
     ["x", "G", "x", "G", "x"],
     ["x", "G", "G", "G", "x"],
     ["x", "x", "Y", "x", "x"],
-    ["G", "G", "G", "G", "G"],
-  ],
-  "shape-house": [
-    ["x", "x", "G", "x", "x"],
-    ["x", "G", "x", "G", "x"],
-    ["G", "G", "G", "G", "G"],
-    ["Y", "x", "x", "x", "Y"],
-    ["Y", "x", "x", "x", "Y"],
     ["G", "G", "G", "G", "G"],
   ],
   "shape-snake": [
@@ -443,5 +432,21 @@ export const SHAPES = {
     ["G", "Y", "G", "x", "x"],
     ["x", "x", "G", "x", "x"],
     ["x", "Y", "G", "Y", "x"],
+  ],
+  "shape-car": [
+    ["x", "x", "x", "x", "x"],
+    ["x", "G", "G", "G", "x"],
+    ["G", "x", "Y", "x", "G"],
+    ["G", "G", "G", "G", "G"],
+    ["x", "G", "x", "G", "x"],
+    ["x", "Y", "x", "Y", "x"],
+  ],
+  "shape-guitar": [
+    ["x", "x", "G", "x", "x"],
+    ["x", "x", "Y", "x", "x"],
+    ["x", "x", "G", "x", "x"],
+    ["x", "G", "G", "G", "x"],
+    ["G", "x", "Y", "x", "G"],
+    ["x", "G", "G", "G", "x"],
   ],
 };

@@ -1,10 +1,13 @@
+// hooks/useWordPool.js
 import { useCallback, useEffect, useMemo } from "react";
 import data from "../data/words.json";
 import shapeData from "../data/shapes.json";
 import useSecureState from "./useSecureState";
 import {
   BOSS_TYPES,
+  MINI_BOSS_TYPES,
   SOLUTION_WORD_COUNT,
+  HARD_SOLUTION_WORD_COUNT,
   SHAPE_KEYS,
   SHAPES,
   DEV_SETTINGS,
@@ -28,6 +31,10 @@ export default function useWordPool(mode) {
     `wordle-played-boss-types-${mode}`,
     [],
   );
+  const [playedMiniBossTypes, setPlayedMiniBossTypes] = useSecureState(
+    `wordle-played-miniboss-types-${mode}`,
+    [],
+  );
   const [bannedOpeningWords, setBannedOpeningWords] = useSecureState(
     `${mode}-banned-opening-words`,
     [],
@@ -46,6 +53,15 @@ export default function useWordPool(mode) {
     `wordle-is-boss-${mode}`,
     () => getInitialSetup().isBoss,
   );
+  const [isMiniBossGame, setIsMiniBossGame] = useSecureState(
+    `wordle-is-miniboss-${mode}`,
+    () => getInitialSetup().isMiniBoss,
+  );
+  const [isHardNormalGame, setIsHardNormalGame] = useSecureState(
+    `wordle-is-hard-normal-${mode}`,
+    () => getInitialSetup().isHardNormal,
+  );
+
   const [bossType, setBossType] = useSecureState(
     `wordle-boss-type-${mode}`,
     () => getInitialSetup().bossType,
@@ -87,7 +103,6 @@ export default function useWordPool(mode) {
       const shapeArrays = SHAPES[bossType].map((row) =>
         row.map((c) => (c === "G" ? 2 : c === "Y" ? 1 : 0)),
       );
-
       const rowProofs = getCheatSheetForWord(chosenWord, shapeArrays, data);
 
       if (import.meta.env.DEV) {
@@ -132,13 +147,14 @@ export default function useWordPool(mode) {
 
   const generateNextGame = (advanceLevel = true) => {
     if (availableIndices.length === 0) return false;
-
     const nextGameCount = advanceLevel ? gameCount + 1 : gameCount;
 
     const typeInfo = advanceLevel
-      ? getGameTypeInfo(nextGameCount, playedBossTypes)
+      ? getGameTypeInfo(nextGameCount, playedBossTypes, playedMiniBossTypes)
       : {
           isBoss: isBossGame,
+          isMiniBoss: isMiniBossGame,
+          isHardNormal: isHardNormalGame,
           bossType,
           category: bossCategory,
           wordCount: bossWordCount,
@@ -146,13 +162,22 @@ export default function useWordPool(mode) {
         };
 
     let nextPlayedBossTypes = playedBossTypes;
+    let nextPlayedMiniBossTypes = playedMiniBossTypes;
 
     if (advanceLevel && typeInfo.isBoss && !DEV_SETTINGS.FORCE_BOSS_ID) {
-      nextPlayedBossTypes = BOSS_TYPES.some(
-        (b) => !playedBossTypes.includes(b.id),
-      )
-        ? [...playedBossTypes, typeInfo.bossType]
-        : [typeInfo.bossType];
+      if (typeInfo.isMiniBoss) {
+        nextPlayedMiniBossTypes = MINI_BOSS_TYPES.some(
+          (b) => !playedMiniBossTypes.includes(b.id),
+        )
+          ? [...playedMiniBossTypes, typeInfo.bossType]
+          : [typeInfo.bossType];
+      } else {
+        nextPlayedBossTypes = BOSS_TYPES.some(
+          (b) => !playedBossTypes.includes(b.id),
+        )
+          ? [...playedBossTypes, typeInfo.bossType]
+          : [typeInfo.bossType];
+      }
     }
 
     let finalBossType = typeInfo.bossType;
@@ -188,6 +213,7 @@ export default function useWordPool(mode) {
       setShapeBannedWords((prev) => [...prev, chosenWord]);
     } else {
       const eligible = getEligible(availableIndices);
+
       if (
         typeInfo.isBoss &&
         typeInfo.category === "multi" &&
@@ -202,8 +228,19 @@ export default function useWordPool(mode) {
         nextRandom = pickRandom(eligible500);
         nextRandomIndices = [];
       } else {
-        nextRandom = pickRandom(eligible);
+        // Hard Normal Clamp
+        if (typeInfo.isHardNormal) {
+          const hardEligible = eligible.filter(
+            (idx) => idx < HARD_SOLUTION_WORD_COUNT,
+          );
+          nextRandom = pickRandom(
+            hardEligible.length > 0 ? hardEligible : eligible,
+          );
+        } else {
+          nextRandom = pickRandom(eligible);
+        }
         nextRandomIndices = [];
+
         if (
           !advanceLevel &&
           typeInfo.isBoss &&
@@ -219,14 +256,16 @@ export default function useWordPool(mode) {
 
     setGameCount(nextGameCount);
     setPlayedBossTypes(nextPlayedBossTypes);
+    setPlayedMiniBossTypes(nextPlayedMiniBossTypes);
     setIsBossGame(typeInfo.isBoss);
+    setIsMiniBossGame(typeInfo.isMiniBoss);
+    setIsHardNormalGame(typeInfo.isHardNormal);
     setBossType(finalBossType);
     setBossCategory(typeInfo.category);
     setBossWordCount(typeInfo.wordCount);
     setRandom(nextRandom);
     setRandomIndices(nextRandomIndices);
     setMaxTurns(advanceLevel ? typeInfo.maxTurns : maxTurns);
-
     return true;
   };
 
@@ -234,11 +273,14 @@ export default function useWordPool(mode) {
     const setup = getInitialSetup(true);
     setGameCount(0);
     setPlayedBossTypes([]);
+    setPlayedMiniBossTypes([]);
     setBannedOpeningWords([]);
     setAvailableIndices(getAllSolutionIndices());
     setShapeBag(setup.shapeBag);
     setShapeBannedWords(setup.shapeBannedWords);
     setIsBossGame(setup.isBoss);
+    setIsMiniBossGame(setup.isMiniBoss);
+    setIsHardNormalGame(setup.isHardNormal);
     setBossType(setup.bossType);
     setBossCategory(setup.category);
     setBossWordCount(setup.wordCount);
@@ -250,6 +292,8 @@ export default function useWordPool(mode) {
   return {
     gameCount,
     isBossGame,
+    isMiniBossGame,
+    isHardNormalGame,
     bossType,
     bossCategory,
     bossWordCount,
@@ -263,7 +307,9 @@ export default function useWordPool(mode) {
     bannedOpeningWords,
     setBannedOpeningWords,
     playedBossTypes,
+    playedMiniBossTypes,
     totalBossTypes: BOSS_TYPES.length,
+    totalMiniBossTypes: MINI_BOSS_TYPES.length,
     removeSolvedTargets,
     generateNextGame,
     resetPoolData,

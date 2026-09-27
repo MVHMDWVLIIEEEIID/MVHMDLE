@@ -374,6 +374,8 @@ export default function useSurvivalGame(mode) {
     undoLastGuess,
     addExtraRow,
     isBossGame: pool.isBossGame,
+    isMiniBossGame: pool.isMiniBossGame, // <--- Passed down
+    isHardNormalGame: pool.isHardNormalGame, // <--- Passed down
     bossWordCount: pool.bossWordCount,
     bossType: pool.bossType,
     bossCategory: pool.bossCategory,
@@ -382,5 +384,7 @@ export default function useSurvivalGame(mode) {
     bannedRows,
     playedBossTypes: pool.playedBossTypes,
     totalBossTypes: pool.totalBossTypes,
+    playedMiniBossTypes: pool.playedMiniBossTypes,
+    totalMiniBossTypes: pool.totalMiniBossTypes,
   };
 }
