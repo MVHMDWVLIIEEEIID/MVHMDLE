@@ -1,3 +1,4 @@
+// components/WordGrid.jsx
 import React from "react";
 import { getGuessStatuses } from "../utils/gameUtils";
 
@@ -15,7 +16,8 @@ export default function WordGrid({
   hideEmptyRowsAfterWin = false,
   bannedRows = 0,
   bannedFlash = false,
-  isShapeMode = false, // <--- Preserving the shape mode isolation
+  isShapeMode = false,
+  isBombMode = false,
 }) {
   const items = [];
   const flipDelay = sizeMode === "normal" ? 150 : 100;
@@ -24,8 +26,7 @@ export default function WordGrid({
     (g) => g && targetWord && g.toLowerCase() === targetWord.toLowerCase(),
   );
 
-  // Nullify solvedRowIndex if it's Shape Mode so the grid doesn't artificially lock
-  const isGridSolved = !isShapeMode && solvedRowIndex !== -1;
+  const isGridSolved = !isShapeMode && !isBombMode && solvedRowIndex !== -1;
 
   for (let i = 0; i < rowCount; i++) {
     if (hideEmptyRowsAfterWin && isGridSolved && i > solvedRowIndex) {
@@ -35,12 +36,10 @@ export default function WordGrid({
     const isBannedRow = i < bannedRows;
     const isPrevRow = i < turn || (gameState === "won" && i === turn);
     const isCurrentRow = i === turn && gameState === "playing" && !isGridSolved;
-
     const rowWord = guesses[i] || "";
     const rowHasGuess = Boolean(rowWord);
     const isPendingRevealRow = i === pendingFlipTurn && rowHasGuess;
     const shouldFlip = i === lastSubmittedTurn && rowHasGuess;
-
     const shouldShowStatuses = isPrevRow && rowHasGuess && !isPendingRevealRow;
 
     let rowLetters = Array(5).fill("");
@@ -49,9 +48,12 @@ export default function WordGrid({
     if (isPrevRow && rowHasGuess) {
       rowLetters = rowWord.split("");
     }
-
     if (shouldShowStatuses) {
-      rowStatuses = getGuessStatuses(rowWord, targetWord);
+      if (isBombMode) {
+        rowStatuses = Array(5).fill("bg-gameGreen");
+      } else {
+        rowStatuses = getGuessStatuses(rowWord, targetWord);
+      }
     } else if (isCurrentRow) {
       rowLetters = currentGuess.split("");
     }
@@ -61,6 +63,7 @@ export default function WordGrid({
     for (let j = 0; j < 5; j++) {
       const char = rowLetters[j];
       const isNextTile = isCurrentRow && j === currentGuess.length;
+
       let colorClass = "bg-gameLight border-gameLight text-gameDark";
 
       if (shouldShowStatuses) {
@@ -72,17 +75,15 @@ export default function WordGrid({
       }
 
       let tileWidthClass = "w-11";
-      let tileHeight = isCurrentRow ? "h-11" : "h-11";
+      let tileHeight = "h-11";
       let fontSize = "text-2xl";
       let tileMargin = "m-0.5";
 
-      // [FIX]: Added "isPrevRow" to the 100% opacity group.
-      // Now only the unplayed future rows will drop to 60%.
       const opacityClass =
         isPrevRow ||
         isCurrentRow ||
         isSolvedRow ||
-        (isShapeMode && gameState === "won")
+        ((isShapeMode || isBombMode) && gameState === "won")
           ? "opacity-100"
           : "opacity-60";
 
@@ -104,7 +105,15 @@ export default function WordGrid({
           className={`text-center ${tileWidthClass} ${tileHeight} ${tileMargin} ${fontSize} pointer-events-none font-bold uppercase border-2 transition-[height,font-size,background-color,border-color,color] duration-300 ease-out outline-none rounded aspect-square
             ${opacityClass}
             ${shouldFlip ? "animate-flip" : ""}
-            ${shake && isCurrentRow ? "animate-shake border-red-500!" : isNextTile ? "border-gameBlue!" : isBannedRow && !shouldShowStatuses && bannedFlash ? "border-gameRed" : "border-transparent"}
+            ${
+              shake && isCurrentRow
+                ? "animate-shake border-red-500!"
+                : isNextTile
+                  ? "border-gameBlue!"
+                  : isBannedRow && !shouldShowStatuses && bannedFlash
+                    ? "border-gameRed"
+                    : "border-transparent"
+            }
             ${colorClass}`}
           style={
             shouldFlip

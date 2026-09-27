@@ -1,3 +1,4 @@
+// components/BossGameView.jsx
 import { useEffect, useState } from "react";
 import BossTiles from "./BossTiles";
 import Keyboard from "./Keyboard";
@@ -5,6 +6,7 @@ import SurvivalWordle500Wrapper from "./SurvivalWordle500Wrapper";
 import GameBoardLayout from "./GameBoardLayout";
 import Tiles from "./Tiles";
 import { ShapeLeftPanel, ShapeRightPanel } from "./ShapeBossPanels";
+import { BombLeftPanel, BombRightPanel } from "./BombBossPanels";
 
 export default function BossGameView({
   game,
@@ -18,9 +20,9 @@ export default function BossGameView({
 }) {
   const isWordle500Boss = game.bossType === "wordle500";
   const isShapeBoss = game.bossCategory === "shape";
+  const isBombBoss = game.bossCategory === "bomb";
   const multiWordCount = game.bossWordCount || game.targetWords?.length || 0;
 
-  // Initialize unified state from localStorage so refreshing works flawlessly
   const [wordle500State, setWordle500State] = useState(() => {
     try {
       const savedColors =
@@ -36,10 +38,10 @@ export default function BossGameView({
   });
 
   useEffect(() => {
-    if (!isWordle500Boss && !isShapeBoss && multiWordCount > 1) {
+    if (!isWordle500Boss && !isShapeBoss && !isBombBoss && multiWordCount > 1) {
       setBossKeyboardView("all");
     }
-  }, [gameResetKey, multiWordCount, isWordle500Boss, isShapeBoss]);
+  }, [gameResetKey, multiWordCount, isWordle500Boss, isShapeBoss, isBombBoss]);
 
   useEffect(() => {
     const handleStatus = (e) => setWordle500State(e.detail);
@@ -50,29 +52,22 @@ export default function BossGameView({
 
   const showClearButton = wordle500State.hasColors;
 
-  // Track the highest manual color applied to each letter for the Wordle500 keyboard
   let wordle500LetterColors = {};
   if (isWordle500Boss && game.guesses && wordle500State.manualColors) {
     game.guesses.forEach((guessObj, rIdx) => {
       const guessStr =
         typeof guessObj === "string" ? guessObj : guessObj?.word || "";
-
-      // If this is the winning guess, all of its letters are automatically green
       const isWinningGuess =
         game.gameState === "won" && guessStr === game.targetWord;
 
       for (let cIdx = 0; cIdx < 5; cIdx++) {
         const char = guessStr[cIdx];
         if (!char) continue;
-
         let color = wordle500State.manualColors[rIdx]?.[cIdx];
-
         if (isWinningGuess) {
           color = "green";
         }
-
         const currentHighest = wordle500LetterColors[char];
-
         if (color === "green") {
           wordle500LetterColors[char] = "green";
         } else if (color === "yellow" && currentHighest !== "green") {
@@ -84,7 +79,9 @@ export default function BossGameView({
     });
   }
 
-  const displayLetters = isShapeBoss
+  const isUncoloredKeyboard = isShapeBoss || isBombBoss;
+
+  const displayLetters = isUncoloredKeyboard
     ? Object.fromEntries(
         Object.keys(game.letters).map((key) => [
           key,
@@ -111,7 +108,6 @@ export default function BossGameView({
                 finalColorClass = "bg-gameGrey border-gameGrey text-gameDark";
               }
             }
-
             return [
               key,
               {
@@ -125,15 +121,31 @@ export default function BossGameView({
 
   return (
     <GameBoardLayout
-      boardContainerClass={isShapeBoss ? "w-96" : "flex-1"}
+      boardContainerClass={isUncoloredKeyboard ? "w-96" : "flex-1"}
       leftPanel={
-        isShapeBoss ? <ShapeLeftPanel bossType={game.bossType} /> : null
+        isShapeBoss ? (
+          <ShapeLeftPanel key={`sl-${gameResetKey}`} bossType={game.bossType} />
+        ) : isBombBoss ? (
+          <BombLeftPanel
+            key={`bl-${gameResetKey}`}
+            currentPhrase={game.bombPhrases?.[game.turn]}
+          />
+        ) : null
       }
       rightPanel={
         isShapeBoss ? (
           <ShapeRightPanel
+            key={`sr-${gameResetKey}`}
             targetWord={game.targetWord}
             mistakes={game.shapeMistakes}
+          />
+        ) : isBombBoss ? (
+          <BombRightPanel
+            key={`br-${gameResetKey}`}
+            gameState={game.gameState}
+            bombTimeLeft={game.bombTimeLeft}
+            setBombTimeLeft={game.setBombTimeLeft}
+            onTimeUp={() => game.triggerBombTimeUp(handleGameOver)}
           />
         ) : null
       }
@@ -166,7 +178,7 @@ export default function BossGameView({
             onGameOver={handleGameOver}
             addToast={addToast}
           />
-        ) : isShapeBoss ? (
+        ) : isShapeBoss || isBombBoss ? (
           <Tiles
             key={gameResetKey}
             guesses={game.guesses}
@@ -174,7 +186,8 @@ export default function BossGameView({
             targetWord={game.targetWord}
             gameState={game.gameState}
             bannedRows={game.bannedRows}
-            isShapeMode={true}
+            isShapeMode={isShapeBoss}
+            isBombMode={isBombBoss}
             onGuessSubmit={(
               g,
               _wordIdx,
@@ -195,7 +208,9 @@ export default function BossGameView({
                 () => {
                   triggerShake?.();
                   addToast(
-                    `Shape mismatch! Mistakes left: ${game.shapeMistakes - 1}`,
+                    isBombBoss
+                      ? "Phrase missing!"
+                      : `Shape mismatch! Mistakes left: ${game.shapeMistakes - 1}`,
                     "error",
                   );
                 },
@@ -285,9 +300,9 @@ export default function BossGameView({
             letters={displayLetters}
             lastChanged={game.lastChanged}
             lineColorsByLetter={
-              isWordle500Boss || isShapeBoss ? {} : bossKeyboardLineColors
+              isUncoloredKeyboard ? {} : bossKeyboardLineColors
             }
-            bossWordCount={isWordle500Boss || isShapeBoss ? 0 : multiWordCount}
+            bossWordCount={isUncoloredKeyboard ? 0 : multiWordCount}
             selectedView={bossKeyboardView}
             onSelectedViewChange={setBossKeyboardView}
           />

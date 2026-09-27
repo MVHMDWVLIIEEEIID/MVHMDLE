@@ -1,18 +1,15 @@
 // utils/shapeBuilder.js
-import { SHAPES, SHAPE_KEYS } from "./bossConfig";
+import { SHAPES, SHAPE_KEYS, BOMB_PHRASES } from "./bossConfig";
 import data from "../data/words.json";
 
 function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
   if (!targetWord || targetWord.length !== 5) return { isValid: false };
-
   const validGuessesPerRow = [];
   const globallyUsedGuesses = new Set();
-
   globallyUsedGuesses.add(targetWord);
 
   for (let r = 0; r < shapeArrays.length; r++) {
     const expected = shapeArrays[r];
-
     const isAllGreens =
       expected[0] === 2 &&
       expected[1] === 2 &&
@@ -30,7 +27,6 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
     for (let i = 0; i < allWords.length; i++) {
       const guess = allWords[i];
       if (!guess || guess.length !== 5) continue;
-
       if (globallyUsedGuesses.has(guess)) continue;
 
       let statuses = [0, 0, 0, 0, 0];
@@ -39,6 +35,7 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
         t2 = targetWord[2],
         t3 = targetWord[3],
         t4 = targetWord[4];
+
       let g0 = guess[0],
         g1 = guess[1],
         g2 = guess[2],
@@ -87,6 +84,7 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
           t4 = null;
         }
       }
+
       if (statuses[1] !== 2) {
         if (g1 === t0) {
           statuses[1] = 1;
@@ -102,6 +100,7 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
           t4 = null;
         }
       }
+
       if (statuses[2] !== 2) {
         if (g2 === t0) {
           statuses[2] = 1;
@@ -117,6 +116,7 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
           t4 = null;
         }
       }
+
       if (statuses[3] !== 2) {
         if (g3 === t0) {
           statuses[3] = 1;
@@ -132,6 +132,7 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
           t4 = null;
         }
       }
+
       if (statuses[4] !== 2) {
         if (g4 === t0) {
           statuses[4] = 1;
@@ -164,7 +165,6 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
     if (validForThisRow.length < 3) return { isValid: false };
     validGuessesPerRow.push(validForThisRow);
   }
-
   return { isValid: true, validGuessesPerRow };
 }
 
@@ -199,6 +199,50 @@ export const generateAndLogShapeData = () => {
   console.log(dict);
 };
 
+export const generateAndLogBombPhrases = () => {
+  console.log(
+    "%c[BOMB PHRASES] Validating phrases for minimum solvability...",
+    "color: #ffd500; font-weight: bold;",
+  );
+
+  const invalid = [];
+  const valid = [];
+
+  // Clamp the search exclusively to the first 2315 solution words
+  const solutionWords = data.slice(0, 2315);
+
+  BOMB_PHRASES.forEach((phrase) => {
+    // String.includes() checks if the exact consecutive string exists in the word
+    const matches = solutionWords.filter((w) => w.includes(phrase));
+
+    // Check if the phrase is present in at least 2 unique words
+    if (matches.length < 2) {
+      invalid.push({ phrase, count: matches.length, matches });
+    } else {
+      valid.push(phrase);
+    }
+  });
+
+  if (invalid.length > 0) {
+    console.log(
+      "%c[BOMB PHRASES] Found unsolvable or hard phrases (Removed from final array):",
+      "color: #da032a; font-weight: bold;",
+      invalid,
+    );
+  } else {
+    console.log(
+      "%c[BOMB PHRASES] All phrases are perfectly solvable!",
+      "color: #00e196; font-weight: bold;",
+    );
+  }
+
+  console.log(
+    `%c[BOMB PHRASES] Validated ${valid.length} phrases! Right-click the array below and select 'Copy object' to paste into bossConfig.js:`,
+    "color: #00e196; font-weight: bold;",
+  );
+  console.log(valid);
+};
+
 export const generateAndLogUniqueWords = () => {
   console.log(
     "%c[WORDS DICTIONARY] Formatting words and removing duplicates... (This may take a moment)",
@@ -207,9 +251,9 @@ export const generateAndLogUniqueWords = () => {
   const uniqueWords = [];
   const seen = new Set();
   let removedCount = 0;
+
   for (let i = 0; i < data.length; i++) {
     const word = data[i];
-    // If the word hasn't been seen yet, add it to our clean array.
     if (!seen.has(word)) {
       seen.add(word);
       uniqueWords.push(word);
@@ -217,6 +261,7 @@ export const generateAndLogUniqueWords = () => {
       removedCount++;
     }
   }
+
   console.log(
     `%c[WORDS DICTIONARY] Format complete! Removed ${removedCount} duplicates. Right-click the array below and select 'Copy object':`,
     "color: #00e196; font-weight: bold;",
@@ -229,24 +274,16 @@ export const generateAndLogUniqueWords = () => {
   );
 
   const hardWords = [];
-  // Target the first SOLUTION_WORD_COUNT (2315)
   const solutionWords = uniqueWords.slice(0, 2315);
 
   for (let i = 0; i < solutionWords.length; i++) {
     const word = solutionWords[i];
-
-    // 1. Starting with vowels
     const startsWithVowel = /^[aeiou]/.test(word);
-    // 2. Have 'y' not at the end
     const yNotAtEnd = word.slice(0, -1).includes("y");
-    // 3. Contains j, x, q, z letters
     const containsJQXZ = /[jqxz]/.test(word);
-    // 4. Repeated letters not adjacent
     const nonAdjacentRepeats = /([a-z]).+\1/.test(word);
-    // 5. No vowels
     const noVowels = !/[aeiou]/.test(word);
 
-    // If word matches any hard condition, push just the string
     if (
       startsWithVowel ||
       yNotAtEnd ||

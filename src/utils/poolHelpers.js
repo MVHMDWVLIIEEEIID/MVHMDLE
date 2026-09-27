@@ -10,6 +10,7 @@ import {
   SOLUTION_WORD_COUNT,
   HARD_SOLUTION_WORD_COUNT,
   SHAPE_KEYS,
+  BOMB_PHRASES,
 } from "./bossConfig";
 
 export const pickRandom = (pool) =>
@@ -75,7 +76,7 @@ export const getGameTypeInfo = (
   }
 
   return {
-    isBoss: true, // Triggers the boss UI view
+    isBoss: true,
     isMiniBoss: isMini,
     isHardNormal: false,
     bossType: boss.id,
@@ -95,6 +96,7 @@ export const getInitialSetup = (forceNew = false) => {
   let finalRandomIndices = [];
   let initialBag = [];
   let initialBanned = [];
+  let initialBombPhrases = [];
 
   if (typeInfo.isBoss) {
     if (typeInfo.category === "shape") {
@@ -111,6 +113,9 @@ export const getInitialSetup = (forceNew = false) => {
         (_, idx) => idx,
       );
       finalRandomIndices = pickDistinct(typeInfo.wordCount, freshPool);
+    } else if (typeInfo.category === "bomb") {
+      initialBombPhrases = pickDistinct(typeInfo.maxTurns, BOMB_PHRASES);
+      finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy target for bomb
     } else if (finalBossType === "wordle500") {
       const eligible500 = Array.from({ length: 500 }, (_, idx) => idx);
       finalRandom = pickRandom(eligible500);
@@ -118,7 +123,6 @@ export const getInitialSetup = (forceNew = false) => {
       finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT);
     }
   } else {
-    // Normal game on turn 0
     finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT);
   }
 
@@ -134,6 +138,7 @@ export const getInitialSetup = (forceNew = false) => {
     randomIndices: finalRandomIndices,
     shapeBag: initialBag,
     shapeBannedWords: initialBanned,
+    bombPhrases: initialBombPhrases,
   };
 
   return cachedInitialSetup;

@@ -1,3 +1,4 @@
+// components/Tiles.jsx
 import { useState, useCallback } from "react";
 import useGameInput from "../hooks/useGameInput";
 import WordGrid from "./WordGrid";
@@ -12,7 +13,8 @@ export default function Tiles({
   addToast,
   rowCount = 6,
   bannedRows = 0,
-  isShapeMode = false, // <--- [NEW]
+  isShapeMode = false,
+  isBombMode = false,
 }) {
   const [shake, setShake] = useState(false);
   const [bannedFlash, setBannedFlash] = useState(false);
@@ -75,7 +77,8 @@ export default function Tiles({
       sizeMode="normal"
       bannedRows={bannedRows}
       bannedFlash={bannedFlash}
-      isShapeMode={isShapeMode} // <--- [NEW]
+      isShapeMode={isShapeMode}
+      isBombMode={isBombMode}
     />
   );
 }

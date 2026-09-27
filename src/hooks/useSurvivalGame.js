@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+// hooks/useSurvivalGame.js
+import { useState, useEffect, useCallback } from "react";
 import useSecureState from "./useSecureState";
 import { getGuessStatuses } from "../utils/gameUtils";
 import useWordPool from "./useWordPool";
@@ -45,10 +46,16 @@ export default function useSurvivalGame(mode) {
 
   const [guesses, setGuesses] = useSecureState(TILES_GUESSES_KEY, []);
   const [turn, setTurn] = useSecureState(TILES_TURN_KEY, 0);
+
   const [shapeMistakes, setShapeMistakes] = useSecureState(
     `${mode}-shape-mistakes`,
     2,
   );
+  const [bombTimeLeft, setBombTimeLeft] = useSecureState(
+    `${mode}-bomb-time-left`,
+    60,
+  );
+
   const [letters, setLetters] = useSecureState(
     LETTERS_KEY,
     getInitialLetters(),
@@ -67,7 +74,8 @@ export default function useSurvivalGame(mode) {
     : 1;
 
   const isShapeBoss = pool.bossCategory === "shape";
-  const bannedRows = isShapeBoss ? 0 : openingGuessCount + 1;
+  const isBombBoss = pool.bossCategory === "bomb";
+  const bannedRows = isShapeBoss || isBombBoss ? 0 : openingGuessCount + 1;
 
   const [gameState, setGameState] = useSecureState(GAME_STATE_KEY, () => {
     if (pool.bossCategory === "shape") {
@@ -75,7 +83,10 @@ export default function useSurvivalGame(mode) {
       if (shapeMistakes < 0) return "lost";
       return "playing";
     }
-
+    if (pool.bossCategory === "bomb") {
+      if (turn >= pool.maxTurns) return "won";
+      return "playing";
+    }
     if (pool.bossCategory === "multi") {
       if (guesses.length > 0 && Array.isArray(guesses[0])) {
         const allWordsGuessed = pool.targetWords.every((word, idx) =>
@@ -98,14 +109,26 @@ export default function useSurvivalGame(mode) {
     return "playing";
   });
 
+  const triggerBombTimeUp = useCallback(
+    (onGameOverCallback) => {
+      if (gameState !== "playing") return;
+      setGameState("lost");
+      if (onGameOverCallback) onGameOverCallback("lost", pool.maxTurns);
+    },
+    [gameState, pool.maxTurns, setGameState],
+  );
+
   useEffect(() => {
     if (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
       return;
-
     if (import.meta.env.DEV) {
       if (pool.bossCategory === "multi") {
         console.log(
           `[DEBUG][${mode}] target words (${pool.bossWordCount}): ${pool.targetWords.join(", ")}`,
+        );
+      } else if (pool.bossCategory === "bomb") {
+        console.log(
+          `[DEBUG][${mode}] target phrases: ${pool.bombPhrases.join(", ")}`,
         );
       } else if (pool.targetWord) {
         console.log(`[DEBUG][${mode}] target word: ${pool.targetWord}`);
@@ -117,6 +140,7 @@ export default function useSurvivalGame(mode) {
     pool.bossWordCount,
     pool.targetWord,
     pool.targetWords,
+    pool.bombPhrases,
   ]);
 
   const changeColor = (newColor, letterKey) => {
@@ -126,7 +150,6 @@ export default function useSurvivalGame(mode) {
       if (!current) return prev;
 
       const currentColor = current.color;
-
       if (currentColor.includes("bg-gameGreen")) return prev;
       if (
         currentColor.includes("bg-gameYellow") &&
@@ -171,7 +194,7 @@ export default function useSurvivalGame(mode) {
       return false;
     }
 
-    if (!isShapeBoss) {
+    if (!isShapeBoss && !isBombBoss) {
       if (
         turn < bannedRows &&
         pool.bannedOpeningWords.includes(normalizedGuess)
@@ -187,13 +210,33 @@ export default function useSurvivalGame(mode) {
       }
     }
 
+    if (pool.bossCategory === "bomb") {
+      const requiredPhrase = pool.bombPhrases[turn];
+      if (!requiredPhrase) return false;
+
+      if (!normalizedGuess.includes(requiredPhrase)) {
+        if (onMistake) onMistake();
+        return false;
+      }
+
+      const newGuesses = [...guesses, guess];
+      setGuesses(newGuesses);
+
+      if (newGuesses.length >= pool.maxTurns) {
+        setGameState("won");
+        onGameOver("won", newGuesses.length);
+      } else {
+        setTurn(turn + 1);
+      }
+      return true;
+    }
+
     if (pool.bossCategory === "shape") {
       const requiredRow = SHAPES[pool.bossType]?.[turn];
       if (!requiredRow) return false;
 
       const statuses = getGuessStatuses(guess, pool.targetWord);
       let matches = true;
-
       for (let i = 0; i < 5; i++) {
         let expected = "bg-gameGrey";
         if (requiredRow[i] === "G") expected = "bg-gameGreen";
@@ -275,6 +318,7 @@ export default function useSurvivalGame(mode) {
           newlySolved.push(pool.randomIndices[i]);
         }
       }
+
       pool.removeSolvedTargets(newlySolved);
 
       if (allWordsGuessed) {
@@ -291,8 +335,8 @@ export default function useSurvivalGame(mode) {
     } else {
       const newGuesses = [...guesses, guess];
       setGuesses(newGuesses);
-
       const statuses = getGuessStatuses(guess, pool.targetWord);
+
       guess.split("").forEach((char, i) => {
         setTimeout(() => changeColor(statuses[i], char), i * 150 + 300);
       });
@@ -310,7 +354,6 @@ export default function useSurvivalGame(mode) {
         }
       }
     }
-
     return true;
   };
 
@@ -323,6 +366,7 @@ export default function useSurvivalGame(mode) {
     setTurn(0);
     setGameState("playing");
     setShapeMistakes(2);
+    setBombTimeLeft(60);
   };
 
   const resetGame = () => {
@@ -358,6 +402,7 @@ export default function useSurvivalGame(mode) {
   return {
     targetWord: pool.targetWord,
     targetWords: pool.targetWords,
+    bombPhrases: pool.bombPhrases,
     guesses,
     turn,
     maxTurns: pool.maxTurns,
@@ -365,6 +410,8 @@ export default function useSurvivalGame(mode) {
     letters,
     lastChanged,
     shapeMistakes,
+    bombTimeLeft,
+    setBombTimeLeft,
     changeColor,
     submitGuess,
     resetGame,
@@ -373,9 +420,10 @@ export default function useSurvivalGame(mode) {
     retryBoss: retryCurrentGame,
     undoLastGuess,
     addExtraRow,
+    triggerBombTimeUp,
     isBossGame: pool.isBossGame,
-    isMiniBossGame: pool.isMiniBossGame, // <--- Passed down
-    isHardNormalGame: pool.isHardNormalGame, // <--- Passed down
+    isMiniBossGame: pool.isMiniBossGame,
+    isHardNormalGame: pool.isHardNormalGame,
     bossWordCount: pool.bossWordCount,
     bossType: pool.bossType,
     bossCategory: pool.bossCategory,

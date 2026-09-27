@@ -10,6 +10,7 @@ import {
   HARD_SOLUTION_WORD_COUNT,
   SHAPE_KEYS,
   SHAPES,
+  BOMB_PHRASES,
   DEV_SETTINGS,
 } from "../utils/bossConfig";
 import { getCheatSheetForWord } from "../utils/shapeValidator";
@@ -93,6 +94,10 @@ export default function useWordPool(mode) {
   const [shapeBannedWords, setShapeBannedWords] = useSecureState(
     `wordle-shape-banned-${mode}`,
     () => getInitialSetup().shapeBannedWords,
+  );
+  const [bombPhrases, setBombPhrases] = useSecureState(
+    `wordle-bomb-phrases-${mode}`,
+    () => getInitialSetup().bombPhrases,
   );
 
   useEffect(() => {
@@ -183,6 +188,7 @@ export default function useWordPool(mode) {
     let finalBossType = typeInfo.bossType;
     let nextRandom = random;
     let nextRandomIndices = randomIndices;
+    let nextBombPhrases = bombPhrases;
 
     if (typeInfo.isBoss && typeInfo.category === "shape") {
       let currentBag = [...shapeBag];
@@ -221,6 +227,9 @@ export default function useWordPool(mode) {
       ) {
         nextRandomIndices = pickDistinct(typeInfo.wordCount, eligible);
         nextRandom = null;
+      } else if (typeInfo.isBoss && typeInfo.category === "bomb") {
+        nextBombPhrases = pickDistinct(typeInfo.maxTurns, BOMB_PHRASES);
+        nextRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy Target
       } else if (finalBossType === "wordle500") {
         const eligible500 = getEligible(
           availableIndices.filter((idx) => idx < 500),
@@ -246,7 +255,8 @@ export default function useWordPool(mode) {
           typeInfo.isBoss &&
           typeInfo.wordCount === 1 &&
           finalBossType !== "wordle500" &&
-          typeInfo.category !== "shape"
+          typeInfo.category !== "shape" &&
+          typeInfo.category !== "bomb"
         ) {
           typeInfo.isBoss = false;
           typeInfo.category = null;
@@ -266,6 +276,7 @@ export default function useWordPool(mode) {
     setRandom(nextRandom);
     setRandomIndices(nextRandomIndices);
     setMaxTurns(advanceLevel ? typeInfo.maxTurns : maxTurns);
+    setBombPhrases(nextBombPhrases);
     return true;
   };
 
@@ -278,6 +289,7 @@ export default function useWordPool(mode) {
     setAvailableIndices(getAllSolutionIndices());
     setShapeBag(setup.shapeBag);
     setShapeBannedWords(setup.shapeBannedWords);
+    setBombPhrases(setup.bombPhrases);
     setIsBossGame(setup.isBoss);
     setIsMiniBossGame(setup.isMiniBoss);
     setIsHardNormalGame(setup.isHardNormal);
@@ -303,6 +315,7 @@ export default function useWordPool(mode) {
     targetWords,
     random,
     randomIndices,
+    bombPhrases,
     availableSolutionCount: availableIndices.length,
     bannedOpeningWords,
     setBannedOpeningWords,

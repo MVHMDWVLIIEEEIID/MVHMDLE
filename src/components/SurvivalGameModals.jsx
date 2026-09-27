@@ -13,6 +13,8 @@ export default function SurvivalGameModals({
   const [showModal, modalType] = isOpen;
   const renderBossWordsInline = (words = []) => words.join(" , ");
 
+  const isBomb = stats.bossCategory === "bomb";
+
   // Default Base Config
   let config = { isOpen: showModal, onClose: onClose };
 
@@ -59,13 +61,21 @@ export default function SurvivalGameModals({
           ? "Boss: Wordle500"
           : stats.bossType?.startsWith("shape-")
             ? "Boss: Shapeword"
-            : `Boss: ${stats.bossWordCount} words`
+            : isBomb
+              ? "Boss: Bomb Defused"
+              : `Boss: ${stats.bossWordCount} words`
         : "The word was",
       highlight: stats.isBossGame
-        ? renderBossWordsInline(stats.targetWords)
+        ? isBomb
+          ? stats.bombPhrases.join(" - ")
+          : renderBossWordsInline(stats.targetWords)
         : stats.targetWord,
       highlightType: stats.isBossGame ? "boss" : "normal",
-      wordsForDef: stats.isBossGame ? stats.targetWords : [stats.targetWord],
+      wordsForDef: stats.isBossGame
+        ? isBomb
+          ? []
+          : stats.targetWords
+        : [stats.targetWord],
       customBody: stats.lastReward && (
         <>
           <div className="flex gap-4 w-full">
@@ -77,6 +87,7 @@ export default function SurvivalGameModals({
                 Streak
               </span>
             </div>
+
             <div className="bg-white/5 border border-gameGreen/20 rounded-2xl flex-1 p-4">
               <div className="flex justify-between items-center border-b border-white/10 pb-2 mb-3">
                 <span className="text-xs font-bold text-white/40 uppercase">
@@ -86,11 +97,13 @@ export default function SurvivalGameModals({
                   +${stats.lastReward.total.toLocaleString()}
                 </span>
               </div>
+
               <div className="space-y-1.5">
                 <div className="flex justify-between text-[10px] font-mono text-white/60">
                   <span>Win Bonus</span>
                   <span>+{stats.lastReward.breakdown.base}</span>
                 </div>
+
                 {stats.isBossGame ? (
                   <div className="flex justify-between text-[10px] font-mono text-white/60">
                     <span>Boss Defeat Streak</span>
@@ -114,6 +127,7 @@ export default function SurvivalGameModals({
                     <span>+{stats.lastReward.breakdown.speed}</span>
                   </div>
                 )}
+
                 <div className="flex justify-between text-[10px] font-mono text-white/60">
                   <span>Streak Bonus</span>
                   <span>+{stats.lastReward.breakdown.streak}</span>
@@ -121,6 +135,7 @@ export default function SurvivalGameModals({
               </div>
             </div>
           </div>
+
           {stats.isBossGame && stats.isCycleComplete && (
             <div className="w-full flex justify-center mt-3">
               <p className="text-gameRed text-[11px] font-black uppercase tracking-wider">
@@ -144,7 +159,9 @@ export default function SurvivalGameModals({
       status: "warning",
       subtitle: stats.isBossGame ? "Boss Attempt Failed:" : "Attempt Failed:",
       highlight: stats.isBossGame
-        ? renderBossWordsInline(stats.targetWords)
+        ? isBomb
+          ? stats.bombPhrases.join(" - ")
+          : renderBossWordsInline(stats.targetWords)
         : stats.targetWord,
       highlightType: stats.isBossGame ? "boss" : "normal",
       heartsData: {
@@ -152,7 +169,11 @@ export default function SurvivalGameModals({
         broken: 1,
         empty: Math.max(0, 5 - (stats?.hearts || 0) - 1),
       },
-      wordsForDef: stats.isBossGame ? stats.targetWords : [stats.targetWord],
+      wordsForDef: stats.isBossGame
+        ? isBomb
+          ? []
+          : stats.targetWords
+        : [stats.targetWord],
       statCards: [
         {
           value: stats.streakBeforeLastLoss ?? stats.streak,
@@ -173,13 +194,19 @@ export default function SurvivalGameModals({
       title: "Game Over",
       status: "error",
       subtitle: stats.isBossGame
-        ? `${stats.bossType === "wordle500" ? "Wordle500 Boss" : stats.bossType?.startsWith("shape-") ? "Shapeword Boss" : stats.bossWordCount === 4 ? "4-Words Boss" : "2-Words Boss"} Was :`
+        ? `${stats.bossType === "wordle500" ? "Wordle500 Boss" : stats.bossType?.startsWith("shape-") ? "Shapeword Boss" : isBomb ? "Bomb Exploded" : stats.bossWordCount === 4 ? "4-Words Boss" : "2-Words Boss"} Was :`
         : "The word was",
       highlight: stats.isBossGame
-        ? renderBossWordsInline(stats.targetWords)
+        ? isBomb
+          ? stats.bombPhrases.join(" - ")
+          : renderBossWordsInline(stats.targetWords)
         : stats.targetWord,
       highlightType: stats.isBossGame ? "boss" : "normal",
-      wordsForDef: stats.isBossGame ? stats.targetWords : [stats.targetWord],
+      wordsForDef: stats.isBossGame
+        ? isBomb
+          ? []
+          : stats.targetWords
+        : [stats.targetWord],
       statCards: [
         {
           value: stats.gamesPlayed,

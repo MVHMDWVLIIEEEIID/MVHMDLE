@@ -1,10 +1,13 @@
+// pages/Survival.jsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { secureStorage } from "../utils/secureStorage";
 import {
   generateAndLogShapeData,
   generateAndLogUniqueWords,
+  generateAndLogBombPhrases,
 } from "../utils/shapeBuilder";
+
 // Components
 import Header from "../components/Header";
 import Toast from "../components/Toast";
@@ -13,7 +16,7 @@ import SurvivalVictoryStats from "../components/SurvivalVictoryStats";
 import SurvivalGameModals from "../components/SurvivalGameModals";
 import StandardGameView from "../components/StandardGameView";
 import BossGameView from "../components/BossGameView";
-import ShapeDictionaryModal from "../components/ShapeDictionaryModal"; // <-- Add this import
+import ShapeDictionaryModal from "../components/ShapeDictionaryModal";
 
 // Hooks
 import useSurvivalGame from "../hooks/useSurvivalGame";
@@ -25,16 +28,16 @@ import useToast from "../hooks/useToast";
 export default function Survival({ mode = "survival" }) {
   const navigate = useNavigate();
   const { toasts, addToast } = useToast();
+
   const [gameResetKey, setGameResetKey] = useState(0);
   const [streakBeforeLastLoss, setStreakBeforeLastLoss] = useState(0);
   const modalReadyAtRef = useRef(0);
 
   const GUIDE_SEEN_KEY = `wordle-survival-guide-seen-${mode}`;
-
   const [isGuideOpen, setIsGuideOpen] = useState(
     () => !secureStorage.getItem(GUIDE_SEEN_KEY, false),
   );
-  const [isShapeModalOpen, setIsShapeModalOpen] = useState(false); // <-- Add this state
+  const [isShapeModalOpen, setIsShapeModalOpen] = useState(false);
 
   const game = useSurvivalGame(mode);
   const progress = useSurvivalProgress(mode);
@@ -77,7 +80,6 @@ export default function Survival({ mode = "survival" }) {
         window.dispatchEvent(new CustomEvent("sys-particles"));
       }
     };
-
     window.addEventListener("sys-fx-11", handleSysEvent);
     return () => window.removeEventListener("sys-fx-11", handleSysEvent);
   }, [
@@ -104,6 +106,7 @@ export default function Survival({ mode = "survival" }) {
   return (
     <div className="flex flex-col h-screen relative overflow-hidden bg-gameDark text-white">
       <Toast toasts={toasts} />
+
       <div className="flex-1 center flex-col">
         <Header
           mode="SURVIVAL CHALLENGE"
@@ -113,7 +116,7 @@ export default function Survival({ mode = "survival" }) {
         />
       </div>
 
-      {game.isBossGame ? (
+      {game.isBossGame || game.isMiniBossGame ? (
         <BossGameView
           game={game}
           progress={progress}
@@ -160,11 +163,21 @@ export default function Survival({ mode = "survival" }) {
           >
             Wipe Data
           </button>
+
+          <button
+            onClick={() => {
+              generateAndLogBombPhrases();
+            }}
+            className="absolute bottom-16 right-4 bg-gameRed/20 hover:bg-gameRed text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameRed/30 transition-all z-50 uppercase tracking-widest"
+          >
+            Log Bomb Phrases
+          </button>
+
           <button
             onClick={() => {
               generateAndLogShapeData();
             }}
-            className="absolute bottom-16 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
+            className="absolute bottom-28 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
           >
             Log Shapes JSON
           </button>
@@ -173,32 +186,32 @@ export default function Survival({ mode = "survival" }) {
             onClick={() => {
               generateAndLogUniqueWords();
             }}
-            className="absolute bottom-28 right-4 bg-gameBlue/20 hover:bg-gameBlue text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameBlue/30 transition-all z-50 uppercase tracking-widest"
+            className="absolute bottom-40 right-4 bg-gameBlue/20 hover:bg-gameBlue text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameBlue/30 transition-all z-50 uppercase tracking-widest"
           >
             Log Words JSON
           </button>
 
-          {/* NEW BUTTON */}
           <button
             onClick={() => {
               setIsShapeModalOpen(true);
               document.activeElement.blur();
               window.focus();
             }}
-            className="absolute bottom-40 right-4 bg-gameYellow/20 hover:bg-gameYellow text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameYellow/30 transition-all z-50 uppercase tracking-widest"
+            className="absolute bottom-52 right-4 bg-gameYellow/20 hover:bg-gameYellow text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameYellow/30 transition-all z-50 uppercase tracking-widest"
           >
             Shapes Dict
           </button>
+
           <button
             onClick={() => {
               progress.setCurrency((prev) => prev + 1000000);
               addToast("Added $1,000,000!", "success");
             }}
-            className="absolute bottom-52 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
+            className="absolute bottom-64 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
           >
             +1M Cash
           </button>
-          {/* NEW MODAL RENDERED ONLY IN DEV */}
+
           <ShapeDictionaryModal
             isOpen={isShapeModalOpen}
             onClose={() => {
@@ -221,7 +234,8 @@ export default function Survival({ mode = "survival" }) {
           const modalType = isModalOpen[1];
           if (modalType === "game-over") return handleFullReset();
           if (modalType === "lost-heart") {
-            if (game.isBossGame) return handleRetryBoss();
+            if (game.isBossGame || game.isMiniBossGame)
+              return handleRetryBoss();
             return handleResetWrapper(false);
           }
           return handleResetWrapper();
@@ -237,7 +251,9 @@ export default function Survival({ mode = "survival" }) {
           lastReward: progress.lastReward,
           targetWord: game.targetWord,
           targetWords: game.targetWords,
-          isBossGame: game.isBossGame,
+          bombPhrases: game.bombPhrases,
+          isBossGame: game.isBossGame || game.isMiniBossGame,
+          bossCategory: game.bossCategory,
           bossType: game.bossType,
           bossWordCount: game.bossWordCount,
           boss2Count: progress.boss2Count,
