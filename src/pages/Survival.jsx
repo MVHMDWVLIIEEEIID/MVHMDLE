@@ -189,7 +189,15 @@ export default function Survival({ mode = "survival" }) {
           >
             Shapes Dict
           </button>
-
+          <button
+            onClick={() => {
+              progress.setCurrency((prev) => prev + 1000000);
+              addToast("Added $1,000,000!", "success");
+            }}
+            className="absolute bottom-52 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
+          >
+            +1M Cash
+          </button>
           {/* NEW MODAL RENDERED ONLY IN DEV */}
           <ShapeDictionaryModal
             isOpen={isShapeModalOpen}

@@ -204,11 +204,9 @@ export const generateAndLogUniqueWords = () => {
     "%c[WORDS DICTIONARY] Formatting words and removing duplicates... (This may take a moment)",
     "color: #ffd500; font-weight: bold;",
   );
-
   const uniqueWords = [];
   const seen = new Set();
   let removedCount = 0;
-
   for (let i = 0; i < data.length; i++) {
     const word = data[i];
     // If the word hasn't been seen yet, add it to our clean array.
@@ -219,10 +217,50 @@ export const generateAndLogUniqueWords = () => {
       removedCount++;
     }
   }
-
   console.log(
     `%c[WORDS DICTIONARY] Format complete! Removed ${removedCount} duplicates. Right-click the array below and select 'Copy object':`,
     "color: #00e196; font-weight: bold;",
   );
   console.log(uniqueWords);
+
+  console.log(
+    "%c[HARD WORDS DICTIONARY] Analyzing first 2315 words for hard difficulty traits...",
+    "color: #ffd500; font-weight: bold;",
+  );
+
+  const hardWords = [];
+  // Target the first SOLUTION_WORD_COUNT (2315)
+  const solutionWords = uniqueWords.slice(0, 2315);
+
+  for (let i = 0; i < solutionWords.length; i++) {
+    const word = solutionWords[i];
+
+    // 1. Starting with vowels
+    const startsWithVowel = /^[aeiou]/.test(word);
+    // 2. Have 'y' not at the end
+    const yNotAtEnd = word.slice(0, -1).includes("y");
+    // 3. Contains j, x, q, z letters
+    const containsJQXZ = /[jqxz]/.test(word);
+    // 4. Repeated letters not adjacent
+    const nonAdjacentRepeats = /([a-z]).+\1/.test(word);
+    // 5. No vowels
+    const noVowels = !/[aeiou]/.test(word);
+
+    // If word matches any hard condition, push just the string
+    if (
+      startsWithVowel ||
+      yNotAtEnd ||
+      containsJQXZ ||
+      nonAdjacentRepeats ||
+      noVowels
+    ) {
+      hardWords.push(word);
+    }
+  }
+
+  console.log(
+    `%c[HARD WORDS DICTIONARY] Found ${hardWords.length} hard words! Right-click the array below and select 'Copy object':`,
+    "color: #00e196; font-weight: bold;",
+  );
+  console.log(hardWords);
 };
