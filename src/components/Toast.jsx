@@ -28,7 +28,7 @@ export default function Toast({ toasts }) {
               ${t.type === "success" ? "alert-success bg-green-500/95 text-white border-none" : ""}
               ${t.type === "error" ? "alert-error bg-red-500/95 text-white border-none" : ""}
               ${t.type === "info" ? "alert-info bg-blue-500/95 text-white border-none" : ""}
-              ${t.type === "special" ? "bg-blue-400 text-white border-none shadow-[0_0_15px_rgba(96,165,250,0.5)]" : ""}
+              ${t.type === "special" ? "bg-red-500 text-white border-none shadow-[0_0_15px_rgba(239,68,68,0.5)]" : ""}
             `}
           >
             {/* Clean Success Checkmark */}
@@ -85,7 +85,7 @@ export default function Toast({ toasts }) {
               </svg>
             )}
 
-            {/* Special Floating Heart Trigger */}
+            {/* Special Floating Heart Trigger (Now Red) */}
             {t.type === "special" && (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
