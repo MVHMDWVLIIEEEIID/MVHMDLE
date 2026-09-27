@@ -11,6 +11,7 @@ import SurvivalVictoryStats from "../components/SurvivalVictoryStats";
 import SurvivalGameModals from "../components/SurvivalGameModals";
 import StandardGameView from "../components/StandardGameView";
 import BossGameView from "../components/BossGameView";
+import ShapeDictionaryModal from "../components/ShapeDictionaryModal"; // <-- Add this import
 
 // Hooks
 import useSurvivalGame from "../hooks/useSurvivalGame";
@@ -31,6 +32,7 @@ export default function Survival({ mode = "survival" }) {
   const [isGuideOpen, setIsGuideOpen] = useState(
     () => !secureStorage.getItem(GUIDE_SEEN_KEY, false),
   );
+  const [isShapeModalOpen, setIsShapeModalOpen] = useState(false); // <-- Add this state
 
   const game = useSurvivalGame(mode);
   const progress = useSurvivalProgress(mode);
@@ -164,6 +166,28 @@ export default function Survival({ mode = "survival" }) {
           >
             Log JSON
           </button>
+
+          {/* NEW BUTTON */}
+          <button
+            onClick={() => {
+              setIsShapeModalOpen(true);
+              document.activeElement.blur();
+              window.focus();
+            }}
+            className="absolute bottom-28 right-4 bg-gameYellow/20 hover:bg-gameYellow text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameYellow/30 transition-all z-50 uppercase tracking-widest"
+          >
+            Shapes Dict
+          </button>
+
+          {/* NEW MODAL RENDERED ONLY IN DEV */}
+          <ShapeDictionaryModal
+            isOpen={isShapeModalOpen}
+            onClose={() => {
+              setIsShapeModalOpen(false);
+              document.activeElement.blur();
+              window.focus();
+            }}
+          />
         </>
       )}
 
