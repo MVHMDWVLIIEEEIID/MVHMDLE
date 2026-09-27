@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Wordle500Board from "./Wordle500Board";
 import useGameInput from "../hooks/useGameInput";
 import {
@@ -36,6 +36,18 @@ export default function SurvivalWordle500Wrapper({
   const [shake, setShake] = useState(false);
   const [bannedFlash, setBannedFlash] = useState(false);
   const shakeTimeoutRef = useRef(null);
+
+  const hasColors = useMemo(() => {
+    return manualColors.some((row) =>
+      row.some((color) => color !== "gray" && color !== "locked-red"),
+    );
+  }, [manualColors]);
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("wordle500-colors-status", { detail: hasColors }),
+    );
+  }, [hasColors]);
 
   const triggerShake = useCallback(() => {
     if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
@@ -116,25 +128,39 @@ export default function SurvivalWordle500Wrapper({
     addToast,
   });
 
-  const changeManualColor = (
-    rowIndex,
-    letterIndex,
-    applyToAll = false,
-    forceReset = false,
-  ) => {
-    if (game.gameState !== "playing") return;
+  const changeManualColor = useCallback(
+    (
+      rowIndex,
+      letterIndex,
+      applyToAll = false,
+      forceReset = false,
+      clearAllBoard = false,
+    ) => {
+      if (game.gameState !== "playing") return;
+      setManualColors((prev) =>
+        getUpdatedManualColors(
+          rowIndex,
+          letterIndex,
+          applyToAll,
+          forceReset,
+          prev,
+          game.guesses,
+          clearAllBoard,
+        ),
+      );
+    },
+    [game.gameState, game.guesses],
+  );
 
-    setManualColors((prev) =>
-      getUpdatedManualColors(
-        rowIndex,
-        letterIndex,
-        applyToAll,
-        forceReset,
-        prev,
-        game.guesses,
-      ),
-    );
-  };
+  useEffect(() => {
+    const handleClear = () => {
+      if (game.gameState === "playing") {
+        changeManualColor(0, 0, false, false, true);
+      }
+    };
+    window.addEventListener("clear-wordle500", handleClear);
+    return () => window.removeEventListener("clear-wordle500", handleClear);
+  }, [changeManualColor, game.gameState]);
 
   const unifiedGameObj = {
     ...game,

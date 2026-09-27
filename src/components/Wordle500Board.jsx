@@ -27,6 +27,7 @@ const countColors = {
 
 export default function Wordle500Board({ game }) {
   const [revealingSubmissionId, setRevealingSubmissionId] = useState(null);
+
   const [revealedCountColors, setRevealedCountColors] = useState(() =>
     game.lastSubmittedId
       ? Object.fromEntries(
@@ -82,7 +83,6 @@ export default function Wordle500Board({ game }) {
     };
   }, [game.lastSubmittedId]);
 
-  // Determine if the game was just won and the final count boxes are currently animating
   const lastGuess = game.guesses[game.guesses.length - 1];
   const isWinningAnimation =
     lastGuess === game.targetWord &&
@@ -95,12 +95,13 @@ export default function Wordle500Board({ game }) {
     const guess =
       game.guesses[rowIndex] ||
       (rowIndex === game.guesses.length ? game.currentGuess : "");
+
     const isSubmitted = rowIndex < game.guesses.length;
+
     const actualColors = isSubmitted
       ? getLetterStatuses(guess, game.targetWord)
       : [];
-      
-    // Use actual colors only if the game is over AND the win animation has finished
+
     const colors = showActualColors
       ? actualColors
       : game.manualColors[rowIndex];
@@ -121,6 +122,7 @@ export default function Wordle500Board({ game }) {
 
     const isCurrentRow =
       rowIndex === game.guesses.length && game.gameState === "playing";
+
     const isUncoloredRow = isCurrentRow || isResizingRow;
 
     return (
@@ -148,16 +150,33 @@ export default function Wordle500Board({ game }) {
                 aria-label={`${letter || "empty"} letter ${letterIndex + 1}, ${color}`}
                 onClick={(e) => {
                   e.currentTarget.blur();
-                  // Left click: cycle colors (forceReset = false)
-                  game.changeManualColor(rowIndex, letterIndex, e.shiftKey, false);
+                  // Left click: cycle colors. Shift + Left Click applies to all matching letters.
+                  game.changeManualColor(
+                    rowIndex,
+                    letterIndex,
+                    e.shiftKey,
+                    false,
+                    false,
+                  );
                 }}
                 onContextMenu={(e) => {
-                  // This specific line kills the default browser menu on tiles
-                  e.preventDefault(); 
-                  if (!clickable) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+
+                  if (!clickable) return false;
+
                   e.currentTarget.blur();
-                  // Right click: reset to gray (forceReset = true)
-                  game.changeManualColor(rowIndex, letterIndex, e.shiftKey, true);
+
+                  const isClearAll = e.ctrlKey || e.metaKey;
+                  // Right click: reset to gray. Alt + Right click applies to all matching letters.
+                  game.changeManualColor(
+                    rowIndex,
+                    letterIndex,
+                    e.altKey,
+                    true,
+                    isClearAll,
+                  );
+                  return false;
                 }}
                 className={`flex h-10 w-10 m-[1.5px] items-center justify-center rounded border-2 text-2xl font-bold uppercase outline-none transition-colors duration-300 ease-out ${
                   isUncoloredRow
@@ -216,9 +235,13 @@ export default function Wordle500Board({ game }) {
   });
 
   return (
-    <div 
+    <div
       className="flex flex-col gap-px"
-      onContextMenu={(e) => e.preventDefault()}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }}
     >
       {rows}
     </div>

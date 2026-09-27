@@ -22,12 +22,14 @@ const getTarget = () => {
 export const getLetterStatuses = (guess, target) => {
   const remaining = target.split("");
   const statuses = Array(5).fill("red");
+
   guess.split("").forEach((letter, index) => {
     if (letter === remaining[index]) {
       statuses[index] = "green";
       remaining[index] = null;
     }
   });
+
   guess.split("").forEach((letter, index) => {
     if (statuses[index] === "green") return;
     const matchIndex = remaining.indexOf(letter);
@@ -36,6 +38,7 @@ export const getLetterStatuses = (guess, target) => {
       remaining[matchIndex] = null;
     }
   });
+
   return statuses;
 };
 
@@ -47,8 +50,6 @@ export const getStatusCounts = (guess, target) => {
     red: statuses.filter((status) => status === "red").length,
   };
 };
-
-// --- SHARED WORDLE500 LOGIC HELPERS ---
 
 export const getUpdatedSubmitColors = (
   guessToSubmit,
@@ -66,7 +67,6 @@ export const getUpdatedSubmitColors = (
 
     newColors = newColors.map((rowColors, rIdx) => {
       const oldGuessObj = guesses[rIdx];
-      // Normalizes strings (standalone) and objects (survival)
       const oldGuessStr =
         typeof oldGuessObj === "string" ? oldGuessObj : oldGuessObj?.word || "";
 
@@ -80,6 +80,7 @@ export const getUpdatedSubmitColors = (
       });
     });
   }
+
   return [...newColors, currentRowColors];
 };
 
@@ -90,10 +91,24 @@ export const getUpdatedManualColors = (
   forceReset,
   currentColors,
   guesses,
+  clearAllBoard = false,
 ) => {
   const newColors = currentColors.map((row) => [...row]);
-  const current = newColors[rowIndex]?.[letterIndex];
 
+  if (clearAllBoard) {
+    for (let r = 0; r < newColors.length; r++) {
+      if (newColors[r]) {
+        for (let c = 0; c < 5; c++) {
+          if (newColors[r][c] !== "locked-red") {
+            newColors[r][c] = "gray";
+          }
+        }
+      }
+    }
+    return newColors;
+  }
+
+  const current = newColors[rowIndex]?.[letterIndex];
   if (!current || current === "locked-red") return currentColors;
 
   const nextColor = forceReset
@@ -127,10 +142,9 @@ export const getUpdatedManualColors = (
   } else {
     newColors[rowIndex][letterIndex] = nextColor;
   }
+
   return newColors;
 };
-
-// --- HOOK ---
 
 export default function useWordle500Game() {
   const dailyTarget = useMemo(() => getTarget(), []);
@@ -176,7 +190,9 @@ export default function useWordle500Game() {
   const submitGuess = () => {
     if (state.gameState !== "playing" || currentGuess.length !== 5)
       return false;
+
     const guess = currentGuess.toLowerCase();
+
     if (state.guesses.includes(guess)) return false;
     if (!data.includes(guess)) return false;
 
@@ -211,9 +227,9 @@ export default function useWordle500Game() {
     letterIndex,
     applyToAll = false,
     forceReset = false,
+    clearAllBoard = false,
   ) => {
     if (state.gameState !== "playing") return;
-
     setState((previous) => ({
       ...previous,
       manualColors: getUpdatedManualColors(
@@ -223,6 +239,7 @@ export default function useWordle500Game() {
         forceReset,
         previous.manualColors,
         previous.guesses,
+        clearAllBoard,
       ),
     }));
   };
