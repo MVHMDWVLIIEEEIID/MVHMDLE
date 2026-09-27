@@ -1,5 +1,5 @@
 import React from "react";
-import { SHAPES } from "../hooks/useSurvivalGame";
+import { SHAPES } from "../hooks/useWordPool"; // Updated import
 
 export function ShapeLeftPanel({ bossType }) {
   const shapeDef = SHAPES[bossType] || SHAPES["shape-t"];

@@ -1,50 +1,7 @@
 import { useState, useEffect } from "react";
 import useSecureState from "./useSecureState";
 import { getGuessStatuses } from "../utils/gameUtils";
-import useWordPool from "./useWordPool";
-
-export const SHAPES = {
-  "shape-t": [
-    ["G", "G", "G", "G", "G"],
-    ["x", "x", "Y", "x", "x"],
-    ["x", "x", "G", "x", "x"],
-    ["x", "x", "Y", "Y", "x"],
-    ["x", "x", "G", "x", "x"],
-    ["x", "Y", "G", "x", "x"],
-  ],
-  "shape-u": [
-    ["G", "x", "x", "x", "G"],
-    ["G", "x", "x", "x", "G"],
-    ["Y", "x", "x", "x", "Y"],
-    ["Y", "x", "x", "x", "Y"],
-    ["G", "G", "x", "G", "G"],
-    ["G", "G", "G", "G", "G"],
-  ],
-  "shape-x": [
-    ["G", "x", "x", "x", "G"],
-    ["x", "G", "x", "G", "x"],
-    ["x", "x", "G", "x", "x"],
-    ["x", "Y", "x", "Y", "x"],
-    ["Y", "x", "x", "x", "Y"],
-    ["G", "x", "x", "x", "G"],
-  ],
-  "shape-square": [
-    ["G", "G", "G", "G", "G"],
-    ["G", "x", "x", "x", "G"],
-    ["Y", "x", "x", "x", "Y"],
-    ["Y", "x", "x", "x", "Y"],
-    ["G", "x", "x", "x", "G"],
-    ["G", "G", "G", "G", "G"],
-  ],
-  "shape-diamond": [
-    ["x", "x", "G", "x", "x"],
-    ["x", "G", "x", "G", "x"],
-    ["G", "x", "x", "x", "G"],
-    ["Y", "x", "x", "x", "Y"],
-    ["x", "Y", "x", "Y", "x"],
-    ["x", "x", "G", "x", "x"],
-  ],
-};
+import useWordPool, { SHAPES } from "./useWordPool"; // Updated import
 
 const getInitialLetters = () => ({
   q: { color: " bg-gameLight ", row: 1 },
