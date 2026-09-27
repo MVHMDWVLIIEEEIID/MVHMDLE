@@ -83,6 +83,11 @@ export default function useWordPool(mode) {
     () => getInitialSetup().shapeBannedWords,
   );
 
+  const [bonusClaimed, setBonusClaimed] = useSecureState(
+    `wordle-bonus-claim-${mode}`,
+    false,
+  );
+
   useEffect(() => {
     if (isBossGame && bossCategory === "shape" && random !== null && bossType) {
       const chosenWord = solutionWords[random];

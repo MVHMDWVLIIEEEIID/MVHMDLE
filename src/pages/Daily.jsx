@@ -9,6 +9,7 @@ import Toast from "../components/Toast";
 import useToast from "../hooks/useToast";
 import { handleConfetti } from "../utils/confettiUtils";
 import GameBoardLayout from "../components/GameBoardLayout"; // [REFACTORED]
+import useSecureState from "../hooks/useSecureState";
 
 export default function Daily({ mode = "daily" }) {
   const navigate = useNavigate();
@@ -20,6 +21,25 @@ export default function Daily({ mode = "daily" }) {
     if (game.gameState === "lost") return [true, "lost"];
     return [false, "playing"];
   });
+
+  const [bonusClaimed, setBonusClaimed] = useSecureState(
+    `wordle-bonus-daily-${mode}`,
+    false,
+  );
+
+  useEffect(() => {
+    const handleSysEvent = (e) => {
+      if (!bonusClaimed) {
+        e.detail.handled = true;
+        setBonusClaimed(true);
+
+        addToast(atob("SGVhcnQgcmVkZWVtZWQ="), "special");
+        window.dispatchEvent(new CustomEvent("sys-particles"));
+      }
+    };
+    window.addEventListener("sys-fx-11", handleSysEvent);
+    return () => window.removeEventListener("sys-fx-11", handleSysEvent);
+  }, [bonusClaimed, setBonusClaimed, addToast]);
 
   useEffect(() => {
     if (game.gameState === "playing") {

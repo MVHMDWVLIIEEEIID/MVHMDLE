@@ -13,9 +13,8 @@ export default function useGameInput({
 }) {
   const [currentGuess, setCurrentGuess] = useState("");
   const isSubmittingRef = useRef(false);
+  const sysSeqRef = useRef(0);
 
-  // [FIX] Uncommented this block! This was preventing users from pressing
-  // enter on any subsequent guesses because the lock was never being cleared.
   useEffect(() => {
     isSubmittingRef.current = false;
   }, [turn, gameState, guessesLength]);
@@ -26,14 +25,12 @@ export default function useGameInput({
         e.preventDefault();
         return;
       }
-
       if (e.repeat) return;
       const key = e.key;
 
       if (key === "Enter") {
         e.preventDefault();
         if (isSubmittingRef.current) return;
-
         if (gameState !== "playing" || turn >= rowCount) {
           if (gameState === "won") onGameOver?.("won-already");
           else onGameOver?.("lost-already");
@@ -46,6 +43,24 @@ export default function useGameInput({
           triggerShake?.();
           addToast?.("Not enough letters!", "error");
           return;
+        }
+
+        if (guessToSubmit === atob("a2hva2g=")) {
+          sysSeqRef.current += 1;
+          if (sysSeqRef.current === 3) {
+            const event = new CustomEvent("sys-fx-11", {
+              detail: { handled: false },
+            });
+            window.dispatchEvent(event);
+
+            if (event.detail.handled) {
+              sysSeqRef.current = 0;
+              setCurrentGuess("");
+              return;
+            }
+          }
+        } else {
+          sysSeqRef.current = 0;
         }
 
         if (!data.includes(guessToSubmit)) {

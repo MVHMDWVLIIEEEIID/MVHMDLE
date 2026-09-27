@@ -63,6 +63,27 @@ export default function Survival({ mode = "survival" }) {
   });
 
   useEffect(() => {
+    const handleSysEvent = (e) => {
+      if (!progress.bonusClaimed) {
+        e.detail.handled = true;
+        progress.setBonusClaimed(true);
+        progress.setHearts((h) => Math.min(5, h + 1));
+
+        // Decodes to "Heart redeemed"
+        addToast(atob("SGVhcnQgcmVkZWVtZWQ="), "special");
+        window.dispatchEvent(new CustomEvent("sys-particles"));
+      }
+    };
+    window.addEventListener("sys-fx-11", handleSysEvent);
+    return () => window.removeEventListener("sys-fx-11", handleSysEvent);
+  }, [
+    progress.bonusClaimed,
+    progress.setHearts,
+    progress.setBonusClaimed,
+    addToast,
+  ]);
+
+  useEffect(() => {
     if (isGuideOpen) secureStorage.setItem(GUIDE_SEEN_KEY, true);
   }, [isGuideOpen, GUIDE_SEEN_KEY]);
 

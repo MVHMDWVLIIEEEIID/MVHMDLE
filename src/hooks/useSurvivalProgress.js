@@ -1,6 +1,7 @@
+// hooks/useSurvivalProgress.js
 import { useEffect } from "react";
 import { secureStorage } from "../utils/secureStorage";
-import useSecureState from "./useSecureState"; // [REFACTORED]
+import useSecureState from "./useSecureState";
 
 const DEFAULT_HINTS = {
   "Hide a Letter": { cost: 800, bought: 0, desc: "Discard 1 incorrect key." },
@@ -23,7 +24,6 @@ const DEFAULT_RUN_STATS = {
 
 export default function useSurvivalProgress(mode) {
   const MAX_HEARTS = 5;
-
   const STREAK_KEY = `wordle-streak-${mode}`;
   const HEARTS_KEY = `wordle-hearts-${mode}`;
   const CURRENCY_KEY = `wordle-shop-currency`;
@@ -38,9 +38,13 @@ export default function useSurvivalProgress(mode) {
   const RUN_STATS_KEY = `wordle-run-stats-${mode}`;
   const RUN_COMPLETED_KEY = `wordle-run-completed-${mode}`;
 
-  // [REFACTORED] All states now use useSecureState, completely eliminating the need for manual useEffects
-  const [currency, setCurrency] = useSecureState(CURRENCY_KEY, 2500);
+  // --- NEW: Easter Egg Claim State ---
+  const [bonusClaimed, setBonusClaimed] = useSecureState(
+    `wordle-bonus-claim-${mode}`,
+    false,
+  );
 
+  const [currency, setCurrency] = useSecureState(CURRENCY_KEY, 2500);
   const [hintsArray, setHintsArray] = useSecureState(SHOP_DATA_KEY, () => {
     const parsed = secureStorage.getItem(SHOP_DATA_KEY, null);
     if (parsed) {
@@ -69,7 +73,6 @@ export default function useSurvivalProgress(mode) {
     RUN_COMPLETED_KEY,
     false,
   );
-
   const [runStats, setRunStats] = useSecureState(RUN_STATS_KEY, () => {
     const saved = secureStorage.getItem(RUN_STATS_KEY, null);
     return { ...DEFAULT_RUN_STATS, ...(saved || {}) };
@@ -124,7 +127,6 @@ export default function useSurvivalProgress(mode) {
   };
 
   const resetAllProgress = () => {
-    // Because of useSecureState, simply updating state wipes/resets localStorage dynamically
     setStreak(0);
     setHearts(3);
     setCurrency(2500);
@@ -138,6 +140,9 @@ export default function useSurvivalProgress(mode) {
     setBoss500Count(0);
     setRunStats(DEFAULT_RUN_STATS);
     setRunCompleted(false);
+
+    // --- NEW: Reset Easter Egg on new run ---
+    setBonusClaimed(false);
   };
 
   return {
@@ -171,5 +176,7 @@ export default function useSurvivalProgress(mode) {
     setRunCompleted,
     resetRoundInfo,
     resetAllProgress,
+    bonusClaimed,
+    setBonusClaimed,
   };
 }
