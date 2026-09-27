@@ -1,8 +1,8 @@
-// pages/Survival.jsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { secureStorage } from "../utils/secureStorage";
 import { generateAndLogShapeData } from "../utils/shapeBuilder";
+
 // Components
 import Header from "../components/Header";
 import Toast from "../components/Toast";
@@ -27,6 +27,7 @@ export default function Survival({ mode = "survival" }) {
   const modalReadyAtRef = useRef(0);
 
   const GUIDE_SEEN_KEY = `wordle-survival-guide-seen-${mode}`;
+
   const [isGuideOpen, setIsGuideOpen] = useState(
     () => !secureStorage.getItem(GUIDE_SEEN_KEY, false),
   );
@@ -68,12 +69,11 @@ export default function Survival({ mode = "survival" }) {
         e.detail.handled = true;
         progress.setBonusClaimed(true);
         progress.setHearts((h) => Math.min(5, h + 1));
-
-        // Decodes to "Heart redeemed"
         addToast(atob("SGVhcnQgcmVkZWVtZWQ="), "special");
         window.dispatchEvent(new CustomEvent("sys-particles"));
       }
     };
+
     window.addEventListener("sys-fx-11", handleSysEvent);
     return () => window.removeEventListener("sys-fx-11", handleSysEvent);
   }, [
@@ -100,7 +100,6 @@ export default function Survival({ mode = "survival" }) {
   return (
     <div className="flex flex-col h-screen relative overflow-hidden bg-gameDark text-white">
       <Toast toasts={toasts} />
-
       <div className="flex-1 center flex-col">
         <Header
           mode="SURVIVAL CHALLENGE"
@@ -145,25 +144,28 @@ export default function Survival({ mode = "survival" }) {
         Guide
       </button>
 
-      {/* RIGHT: Wipe Data Debug Button */}
-      <button
-        onClick={() => {
-          localStorage.clear();
-          window.location.reload();
-        }}
-        className="absolute bottom-4 right-4 bg-gameRed/20 hover:bg-gameRed text-white/50 hover:text-white text-[10px] font-bold py-2 px-3 rounded-lg border border-gameRed/30 transition-all z-50 uppercase tracking-widest"
-      >
-        Wipe Data
-      </button>
-
-      <button
-        onClick={() => {
-          generateAndLogShapeData();
-        }}
-        className="absolute bottom-16 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
-      >
-        Log JSON
-      </button>
+      {/* RIGHT: Debug Buttons (Only visible in Development) */}
+      {import.meta.env.DEV && (
+        <>
+          <button
+            onClick={() => {
+              localStorage.clear();
+              window.location.reload();
+            }}
+            className="absolute bottom-4 right-4 bg-gameRed/20 hover:bg-gameRed text-white/50 hover:text-white text-[10px] font-bold py-2 px-3 rounded-lg border border-gameRed/30 transition-all z-50 uppercase tracking-widest"
+          >
+            Wipe Data
+          </button>
+          <button
+            onClick={() => {
+              generateAndLogShapeData();
+            }}
+            className="absolute bottom-16 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
+          >
+            Log JSON
+          </button>
+        </>
+      )}
 
       <SurvivalGameModals
         isOpen={isModalOpen}

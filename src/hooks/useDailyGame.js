@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import data from "../data/words.json";
 import { secureStorage } from "../utils/secureStorage";
-import { getGuessStatuses } from "../utils/gameUtils"; // [REFACTORED]
+import { getGuessStatuses } from "../utils/gameUtils";
 
 const getInitialLetters = () => ({
   q: { color: " bg-gameLight ", row: 1 },
@@ -60,7 +60,9 @@ export default function useDailyGame(mode = "daily") {
 
   useEffect(() => {
     if (!targetWord) return;
-    console.log(`[DEBUG][${mode}] target word: ${targetWord}`);
+    if (import.meta.env.DEV) {
+      console.log(`[DEBUG][${mode}] target word: ${targetWord}`);
+    }
   }, [mode, targetWord, todayString]);
 
   const [guesses, setGuesses] = useState(() => {
@@ -90,8 +92,8 @@ export default function useDailyGame(mode = "daily") {
   const [streak, setStreak] = useState(() => {
     const savedDate = secureStorage.getItem(LAST_PLAYED_KEY, null);
     const savedStreak = secureStorage.getItem(STREAK_KEY, 0);
-
     if (savedDate === todayString) return savedStreak;
+
     if (savedDate) {
       const lastDate = new Date(savedDate);
       const currentToday = new Date();
@@ -127,6 +129,7 @@ export default function useDailyGame(mode = "daily") {
         nextMidnight.getTime() - now.getTime() + 50,
       );
     };
+
     scheduleNextDay();
     return () => clearTimeout(timerId);
   }, []);
@@ -134,6 +137,7 @@ export default function useDailyGame(mode = "daily") {
   useEffect(() => {
     const savedDate = secureStorage.getItem(LAST_PLAYED_KEY, null);
     const savedStreak = secureStorage.getItem(STREAK_KEY, 0);
+
     if (savedDate === todayString) {
       setGuesses(secureStorage.getItem(GUESSES_KEY, []));
       setGameState(secureStorage.getItem(GAME_STATE_KEY, "playing"));
@@ -141,6 +145,7 @@ export default function useDailyGame(mode = "daily") {
       setStreak(savedStreak);
       return;
     }
+
     setGuesses([]);
     setGameState("playing");
     setLetters(getInitialLetters());
@@ -154,6 +159,7 @@ export default function useDailyGame(mode = "daily") {
     const dayDiff = Math.floor(
       (currentToday - lastDate) / (1000 * 60 * 60 * 24),
     );
+
     if (dayDiff > 1) {
       setStreak(0);
     }
@@ -187,6 +193,7 @@ export default function useDailyGame(mode = "daily") {
     setLetters((prev) => {
       const current = prev[key];
       if (!current) return prev;
+
       const currentColor = current.color;
 
       if (currentColor.includes("bg-gameGreen")) return prev;
@@ -214,7 +221,6 @@ export default function useDailyGame(mode = "daily") {
     const newGuesses = [...guesses, guess];
     setGuesses(newGuesses);
 
-    // [REFACTORED] Using the shared utility
     const statuses = getGuessStatuses(guess, targetWord);
 
     guess.split("").forEach((char, i) => {

@@ -8,8 +8,7 @@ import useDailyGame from "../hooks/useDailyGame";
 import Toast from "../components/Toast";
 import useToast from "../hooks/useToast";
 import { handleConfetti } from "../utils/confettiUtils";
-import GameBoardLayout from "../components/GameBoardLayout"; // [REFACTORED]
-import useSecureState from "../hooks/useSecureState";
+import GameBoardLayout from "../components/GameBoardLayout";
 
 export default function Daily({ mode = "daily" }) {
   const navigate = useNavigate();
@@ -21,25 +20,6 @@ export default function Daily({ mode = "daily" }) {
     if (game.gameState === "lost") return [true, "lost"];
     return [false, "playing"];
   });
-
-  const [bonusClaimed, setBonusClaimed] = useSecureState(
-    `wordle-bonus-daily-${mode}`,
-    false,
-  );
-
-  useEffect(() => {
-    const handleSysEvent = (e) => {
-      if (!bonusClaimed) {
-        e.detail.handled = true;
-        setBonusClaimed(true);
-
-        addToast(atob("SGVhcnQgcmVkZWVtZWQ="), "special");
-        window.dispatchEvent(new CustomEvent("sys-particles"));
-      }
-    };
-    window.addEventListener("sys-fx-11", handleSysEvent);
-    return () => window.removeEventListener("sys-fx-11", handleSysEvent);
-  }, [bonusClaimed, setBonusClaimed, addToast]);
 
   useEffect(() => {
     if (game.gameState === "playing") {
@@ -60,6 +40,7 @@ export default function Daily({ mode = "daily" }) {
 
   const handleShare = async () => {
     if (game.guesses.length === 0) return;
+
     const grid = game.guesses
       .map((guess) => {
         const splitSolution = game.targetWord.toLowerCase().split("");
@@ -74,7 +55,7 @@ export default function Daily({ mode = "daily" }) {
         });
 
         splitGuess.forEach((char, i) => {
-          if (statuses[i] !== "⬛") {
+          if (statuses[i] !== "🟩") {
             const idx = splitSolution.indexOf(char);
             if (idx !== -1) {
               statuses[i] = "🟨";
@@ -82,6 +63,7 @@ export default function Daily({ mode = "daily" }) {
             }
           }
         });
+
         return statuses.join("");
       })
       .join("\n");
@@ -100,7 +82,6 @@ export default function Daily({ mode = "daily" }) {
   return (
     <div className="flex flex-col h-screen relative overflow-hidden bg-gameDark text-white">
       <Toast toasts={toasts} />
-
       <div className="flex-1 center flex-col">
         <Header
           mode="DAILY CHALLENGE"
@@ -109,7 +90,6 @@ export default function Daily({ mode = "daily" }) {
         />
       </div>
 
-      {/* [REFACTORED] استخدام القالب الموحد بدون بانلات جانبية */}
       <GameBoardLayout
         boardContainerClass="w-96"
         board={

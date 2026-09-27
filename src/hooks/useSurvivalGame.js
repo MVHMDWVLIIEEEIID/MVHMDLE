@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import useSecureState from "./useSecureState";
 import { getGuessStatuses } from "../utils/gameUtils";
-import useWordPool from "./useWordPool"; // Updated import
+import useWordPool from "./useWordPool";
 import { SHAPES } from "../utils/bossConfig";
 
 const getInitialLetters = () => ({
@@ -49,7 +49,6 @@ export default function useSurvivalGame(mode) {
     `${mode}-shape-mistakes`,
     2,
   );
-
   const [letters, setLetters] = useSecureState(
     LETTERS_KEY,
     getInitialLetters(),
@@ -102,12 +101,15 @@ export default function useSurvivalGame(mode) {
   useEffect(() => {
     if (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
       return;
-    if (pool.bossCategory === "multi") {
-      console.log(
-        `[DEBUG][${mode}] target words (${pool.bossWordCount}): ${pool.targetWords.join(", ")}`,
-      );
-    } else if (pool.targetWord) {
-      console.log(`[DEBUG][${mode}] target word: ${pool.targetWord}`);
+
+    if (import.meta.env.DEV) {
+      if (pool.bossCategory === "multi") {
+        console.log(
+          `[DEBUG][${mode}] target words (${pool.bossWordCount}): ${pool.targetWords.join(", ")}`,
+        );
+      } else if (pool.targetWord) {
+        console.log(`[DEBUG][${mode}] target word: ${pool.targetWord}`);
+      }
     }
   }, [
     mode,
@@ -122,6 +124,7 @@ export default function useSurvivalGame(mode) {
     setLetters((prev) => {
       const current = prev[key];
       if (!current) return prev;
+
       const currentColor = current.color;
 
       if (currentColor.includes("bg-gameGreen")) return prev;
@@ -150,6 +153,7 @@ export default function useSurvivalGame(mode) {
     onMistake,
   ) => {
     if (gameState !== "playing") return false;
+
     if (
       !pool.targetWord &&
       (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
@@ -175,7 +179,6 @@ export default function useSurvivalGame(mode) {
         if (onBannedWord) onBannedWord();
         return false;
       }
-
       if (
         turn < openingGuessCount &&
         !pool.bannedOpeningWords.includes(normalizedGuess)
@@ -272,7 +275,6 @@ export default function useSurvivalGame(mode) {
           newlySolved.push(pool.randomIndices[i]);
         }
       }
-
       pool.removeSolvedTargets(newlySolved);
 
       if (allWordsGuessed) {

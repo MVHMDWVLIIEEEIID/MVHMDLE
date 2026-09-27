@@ -1,4 +1,3 @@
-// hooks/useWordPool.js
 import { useCallback, useEffect, useMemo } from "react";
 import data from "../data/words.json";
 import shapeData from "../data/shapes.json";
@@ -38,7 +37,6 @@ export default function useWordPool(mode) {
     () => Array.from({ length: SOLUTION_WORD_COUNT }, (_, idx) => idx),
     [],
   );
-
   const [availableIndices, setAvailableIndices] = useSecureState(
     `wordle-available-solution-indices-${mode}`,
     getAllSolutionIndices(),
@@ -64,7 +62,6 @@ export default function useWordPool(mode) {
     `wordle-max-turns-${mode}`,
     () => getInitialSetup().maxTurns,
   );
-
   const [random, setRandom] = useSecureState(
     `wordle-solution-index-${mode}`,
     () => getInitialSetup().random,
@@ -73,7 +70,6 @@ export default function useWordPool(mode) {
     `wordle-solution-indices-${mode}`,
     () => getInitialSetup().randomIndices,
   );
-
   const [shapeBag, setShapeBag] = useSecureState(
     `wordle-shape-bag-${mode}`,
     () => getInitialSetup().shapeBag,
@@ -83,15 +79,9 @@ export default function useWordPool(mode) {
     () => getInitialSetup().shapeBannedWords,
   );
 
-  const [bonusClaimed, setBonusClaimed] = useSecureState(
-    `wordle-bonus-claim-${mode}`,
-    false,
-  );
-
   useEffect(() => {
     if (isBossGame && bossCategory === "shape" && random !== null && bossType) {
       const chosenWord = solutionWords[random];
-
       if (!chosenWord || !SHAPES[bossType]) return;
 
       const shapeArrays = SHAPES[bossType].map((row) =>
@@ -100,19 +90,21 @@ export default function useWordPool(mode) {
 
       const rowProofs = getCheatSheetForWord(chosenWord, shapeArrays, data);
 
-      console.log(
-        `%c[SHAPE BOSS ACTIVE] Shape: ${bossType} | Target: ${chosenWord}`,
-        "color: #00e196; font-weight: bold; font-size: 14px;",
-      );
-      console.log({
-        shape: bossType,
-        targetWord: chosenWord,
-        cheatSheet: rowProofs.map((guesses, i) => ({
-          row: i + 1,
-          shapeConstraint: SHAPES[bossType][i],
-          answers: guesses,
-        })),
-      });
+      if (import.meta.env.DEV) {
+        console.log(
+          `%c[SHAPE BOSS ACTIVE] Shape: ${bossType} | Target: ${chosenWord}`,
+          "color: #00e196; font-weight: bold; font-size: 14px;",
+        );
+        console.log({
+          shape: bossType,
+          targetWord: chosenWord,
+          cheatSheet: rowProofs.map((guesses, i) => ({
+            row: i + 1,
+            shapeConstraint: SHAPES[bossType][i],
+            answers: guesses,
+          })),
+        });
+      }
     }
   }, [isBossGame, bossCategory, bossType, random, solutionWords]);
 
@@ -142,6 +134,7 @@ export default function useWordPool(mode) {
     if (availableIndices.length === 0) return false;
 
     const nextGameCount = advanceLevel ? gameCount + 1 : gameCount;
+
     const typeInfo = advanceLevel
       ? getGameTypeInfo(nextGameCount, playedBossTypes)
       : {
@@ -195,7 +188,6 @@ export default function useWordPool(mode) {
       setShapeBannedWords((prev) => [...prev, chosenWord]);
     } else {
       const eligible = getEligible(availableIndices);
-
       if (
         typeInfo.isBoss &&
         typeInfo.category === "multi" &&
@@ -212,7 +204,6 @@ export default function useWordPool(mode) {
       } else {
         nextRandom = pickRandom(eligible);
         nextRandomIndices = [];
-
         if (
           !advanceLevel &&
           typeInfo.isBoss &&
@@ -241,12 +232,10 @@ export default function useWordPool(mode) {
 
   const resetPoolData = () => {
     const setup = getInitialSetup(true);
-
     setGameCount(0);
     setPlayedBossTypes([]);
     setBannedOpeningWords([]);
     setAvailableIndices(getAllSolutionIndices());
-
     setShapeBag(setup.shapeBag);
     setShapeBannedWords(setup.shapeBannedWords);
     setIsBossGame(setup.isBoss);
