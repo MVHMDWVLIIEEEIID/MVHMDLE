@@ -6,6 +6,11 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
   if (!targetWord || targetWord.length !== 5) return { isValid: false };
 
   const validGuessesPerRow = [];
+  // NEW: Track words used across the ENTIRE shape to prevent duplicates across rows
+  const globallyUsedGuesses = new Set();
+
+  // The target word itself is used for the All-Greens row, so it can't be a normal guess
+  globallyUsedGuesses.add(targetWord);
 
   for (let r = 0; r < shapeArrays.length; r++) {
     const expected = shapeArrays[r];
@@ -27,6 +32,9 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
     for (let i = 0; i < allWords.length; i++) {
       const guess = allWords[i];
       if (!guess || guess.length !== 5) continue;
+
+      // NEW: Skip this word if it was already used in a previous row (or is the target word)
+      if (globallyUsedGuesses.has(guess)) continue;
 
       let statuses = [0, 0, 0, 0, 0];
       let t0 = targetWord[0],
@@ -150,9 +158,8 @@ function isWordValidForShapeFast(targetWord, shapeArrays, allWords) {
         statuses[3] === expected[3] &&
         statuses[4] === expected[4]
       ) {
-        if (!validForThisRow.includes(guess)) {
-          validForThisRow.push(guess);
-        }
+        validForThisRow.push(guess);
+        globallyUsedGuesses.add(guess); // Mark as used globally
         if (validForThisRow.length >= 3) break;
       }
     }
@@ -193,7 +200,6 @@ export const generateAndDownloadShapeData = () => {
     "color: #00e196; font-weight: bold;",
   );
 
-  // Triggers browser download of the JSON file
   const blob = new Blob([JSON.stringify(dict, null, 4)], {
     type: "application/json",
   });

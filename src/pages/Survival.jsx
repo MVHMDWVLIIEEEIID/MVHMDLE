@@ -1,6 +1,8 @@
+// pages/Survival.jsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { secureStorage } from "../utils/secureStorage";
+import { generateAndDownloadShapeData } from "../utils/shapeBuilder";
 
 // Components
 import Header from "../components/Header";
@@ -16,12 +18,11 @@ import useSurvivalGame from "../hooks/useSurvivalGame";
 import useSurvivalProgress from "../hooks/useSurvivalProgress";
 import useBossMechanics from "../hooks/useBossMechanics";
 import useSurvivalActions from "../hooks/useSurvivalActions";
-import useToast from "../hooks/useToast"; // [REFACTORED]
+import useToast from "../hooks/useToast";
 
 export default function Survival({ mode = "survival" }) {
   const navigate = useNavigate();
-  const { toasts, addToast } = useToast(); // [REFACTORED] Uses shared hook
-
+  const { toasts, addToast } = useToast();
   const [gameResetKey, setGameResetKey] = useState(0);
   const [streakBeforeLastLoss, setStreakBeforeLastLoss] = useState(0);
   const modalReadyAtRef = useRef(0);
@@ -112,6 +113,7 @@ export default function Survival({ mode = "survival" }) {
         />
       )}
 
+      {/* LEFT: Guide Button */}
       <button
         onClick={() => {
           setIsGuideOpen(true);
@@ -121,6 +123,26 @@ export default function Survival({ mode = "survival" }) {
         className="absolute bottom-4 left-4 bg-gameBlue/20 hover:bg-gameBlue text-white/50 hover:text-white text-[10px] font-bold py-2 px-3 rounded-lg border border-gameBlue/30 transition-all z-50 uppercase tracking-widest"
       >
         Guide
+      </button>
+
+      {/* RIGHT: Wipe Data Debug Button */}
+      <button
+        onClick={() => {
+          localStorage.clear();
+          window.location.reload();
+        }}
+        className="absolute bottom-4 right-4 bg-gameRed/20 hover:bg-gameRed text-white/50 hover:text-white text-[10px] font-bold py-2 px-3 rounded-lg border border-gameRed/30 transition-all z-50 uppercase tracking-widest"
+      >
+        Wipe Data
+      </button>
+
+      <button
+        onClick={() => {
+          generateAndDownloadShapeData();
+        }}
+        className="absolute bottom-16 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
+      >
+        Get JSON
       </button>
 
       <SurvivalGameModals

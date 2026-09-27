@@ -191,6 +191,9 @@ const getInitialSetup = (forceNew = false) => {
 // On-the-fly validator to generate the cheat sheet for the console log
 function getCheatSheetForWord(targetWord, shapeArrays, allWords) {
   const validGuessesPerRow = [];
+  const globallyUsedGuesses = new Set();
+
+  globallyUsedGuesses.add(targetWord);
 
   for (let r = 0; r < shapeArrays.length; r++) {
     const expected = shapeArrays[r];
@@ -212,6 +215,8 @@ function getCheatSheetForWord(targetWord, shapeArrays, allWords) {
     for (let i = 0; i < allWords.length; i++) {
       const guess = allWords[i];
       if (!guess || guess.length !== 5) continue;
+
+      if (globallyUsedGuesses.has(guess)) continue;
 
       let statuses = [0, 0, 0, 0, 0];
       let t0 = targetWord[0],
@@ -335,9 +340,8 @@ function getCheatSheetForWord(targetWord, shapeArrays, allWords) {
         statuses[3] === expected[3] &&
         statuses[4] === expected[4]
       ) {
-        if (!validForThisRow.includes(guess)) {
-          validForThisRow.push(guess);
-        }
+        validForThisRow.push(guess);
+        globallyUsedGuesses.add(guess);
         if (validForThisRow.length >= 3) break;
       }
     }
