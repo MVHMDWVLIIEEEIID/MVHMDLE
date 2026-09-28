@@ -163,7 +163,7 @@ export default function Survival({ mode = "survival" }) {
           >
             Wipe Data
           </button>
-
+          
           <button
             onClick={() => {
               generateAndLogBombPhrases();
@@ -234,8 +234,7 @@ export default function Survival({ mode = "survival" }) {
           const modalType = isModalOpen[1];
           if (modalType === "game-over") return handleFullReset();
           if (modalType === "lost-heart") {
-            if (game.isBossGame || game.isMiniBossGame)
-              return handleRetryBoss();
+            if (game.isBossGame || game.isMiniBossGame) return handleRetryBoss();
             return handleResetWrapper(false);
           }
           return handleResetWrapper();
@@ -251,6 +250,7 @@ export default function Survival({ mode = "survival" }) {
           lastReward: progress.lastReward,
           targetWord: game.targetWord,
           targetWords: game.targetWords,
+          guesses: game.guesses,
           bombPhrases: game.bombPhrases,
           isBossGame: game.isBossGame || game.isMiniBossGame,
           bossCategory: game.bossCategory,

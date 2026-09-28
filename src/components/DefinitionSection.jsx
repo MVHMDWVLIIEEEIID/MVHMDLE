@@ -38,28 +38,38 @@ export default function DefinitionSection({ word, open = false }) {
 
   const fetchDefinitionIfNeeded = async () => {
     if (definitionRef.current || loadingRef.current || errorRef.current) return;
-
     setLoading(true);
+
     try {
       const targetWord = word.trim().toLowerCase();
+      // Merriam-Webster Collegiate Dictionary API
+      const API_KEY = "eace2fc3-0bb2-4258-87a3-717af272dfd5";
       const res = await fetch(
-        `https://api.datamuse.com/words?sp=${encodeURIComponent(targetWord)}&md=d&max=1`,
+        `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(targetWord)}?key=${API_KEY}`,
       );
 
       if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-
       const data = await res.json();
-      const rawDefs = data?.[0]?.defs;
 
-      if (!rawDefs || rawDefs.length === 0) {
+      // MW API returns an array of strings if it only has spelling suggestions, not a direct match
+      if (!data || data.length === 0 || typeof data[0] === "string") {
         setDefinition("No definition found for this word.");
         return;
       }
 
-      // Format response (Remove Part-of-Speech tag and capitalize)
-      const cleanDef = rawDefs[0].replace(/^[a-z]+\s+/, "");
+      // Grab the most common short definition
+      const shortDefs = data[0].shortdef;
+      if (!shortDefs || shortDefs.length === 0) {
+        setDefinition("No definition found for this word.");
+        return;
+      }
+
+      // Format response (Capitalize first letter, ensure it ends with a period)
+      const cleanDef = shortDefs[0];
       const formattedDef =
-        cleanDef.charAt(0).toUpperCase() + cleanDef.slice(1) + ".";
+        cleanDef.charAt(0).toUpperCase() +
+        cleanDef.slice(1) +
+        (cleanDef.endsWith(".") ? "" : ".");
 
       setDefinition(formattedDef);
     } catch (err) {

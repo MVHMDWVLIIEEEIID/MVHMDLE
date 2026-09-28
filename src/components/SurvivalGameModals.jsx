@@ -66,16 +66,11 @@ export default function SurvivalGameModals({
               : `Boss: ${stats.bossWordCount} words`
         : "The word was",
       highlight: stats.isBossGame
-        ? isBomb
-          ? stats.bombPhrases.join(" - ")
-          : renderBossWordsInline(stats.targetWords)
+        ? isBomb ? stats.bombPhrases.join(" - ") : renderBossWordsInline(stats.targetWords)
         : stats.targetWord,
       highlightType: stats.isBossGame ? "boss" : "normal",
-      wordsForDef: stats.isBossGame
-        ? isBomb
-          ? []
-          : stats.targetWords
-        : [stats.targetWord],
+      wordsForDef: stats.isBossGame ? (isBomb ? [] : stats.targetWords) : [stats.targetWord],
+      guessesData: stats.guesses,
       customBody: stats.lastReward && (
         <>
           <div className="flex gap-4 w-full">
@@ -159,9 +154,7 @@ export default function SurvivalGameModals({
       status: "warning",
       subtitle: stats.isBossGame ? "Boss Attempt Failed:" : "Attempt Failed:",
       highlight: stats.isBossGame
-        ? isBomb
-          ? stats.bombPhrases.join(" - ")
-          : renderBossWordsInline(stats.targetWords)
+        ? isBomb ? stats.bombPhrases.join(" - ") : renderBossWordsInline(stats.targetWords)
         : stats.targetWord,
       highlightType: stats.isBossGame ? "boss" : "normal",
       heartsData: {
@@ -169,11 +162,8 @@ export default function SurvivalGameModals({
         broken: 1,
         empty: Math.max(0, 5 - (stats?.hearts || 0) - 1),
       },
-      wordsForDef: stats.isBossGame
-        ? isBomb
-          ? []
-          : stats.targetWords
-        : [stats.targetWord],
+      wordsForDef: stats.isBossGame ? (isBomb ? [] : stats.targetWords) : [stats.targetWord],
+      guessesData: stats.guesses,
       statCards: [
         {
           value: stats.streakBeforeLastLoss ?? stats.streak,
@@ -197,16 +187,11 @@ export default function SurvivalGameModals({
         ? `${stats.bossType === "wordle500" ? "Wordle500 Boss" : stats.bossType?.startsWith("shape-") ? "Shapeword Boss" : isBomb ? "Bomb Exploded" : stats.bossWordCount === 4 ? "4-Words Boss" : "2-Words Boss"} Was :`
         : "The word was",
       highlight: stats.isBossGame
-        ? isBomb
-          ? stats.bombPhrases.join(" - ")
-          : renderBossWordsInline(stats.targetWords)
+        ? isBomb ? stats.bombPhrases.join(" - ") : renderBossWordsInline(stats.targetWords)
         : stats.targetWord,
       highlightType: stats.isBossGame ? "boss" : "normal",
-      wordsForDef: stats.isBossGame
-        ? isBomb
-          ? []
-          : stats.targetWords
-        : [stats.targetWord],
+      wordsForDef: stats.isBossGame ? (isBomb ? [] : stats.targetWords) : [stats.targetWord],
+      guessesData: stats.guesses,
       statCards: [
         {
           value: stats.gamesPlayed,

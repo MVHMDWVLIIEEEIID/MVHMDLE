@@ -1,3 +1,4 @@
+// pages/Daily.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Header from "../components/Header";
@@ -50,7 +51,7 @@ export default function Daily({ mode = "daily" }) {
         splitGuess.forEach((char, i) => {
           if (char === splitSolution[i]) {
             statuses[i] = "🟩";
-            splitSolution[i] = null;
+            splitSolution[i] = null; // Consume the letter
           }
         });
 
@@ -59,7 +60,7 @@ export default function Daily({ mode = "daily" }) {
             const idx = splitSolution.indexOf(char);
             if (idx !== -1) {
               statuses[i] = "🟨";
-              splitSolution[idx] = null;
+              splitSolution[idx] = null; // Consume the letter
             }
           }
         });
@@ -82,6 +83,7 @@ export default function Daily({ mode = "daily" }) {
   return (
     <div className="flex flex-col h-screen relative overflow-hidden bg-gameDark text-white">
       <Toast toasts={toasts} />
+
       <div className="flex-1 center flex-col">
         <Header
           mode="DAILY CHALLENGE"
@@ -123,6 +125,7 @@ export default function Daily({ mode = "daily" }) {
         stats={{
           targetWord: game.targetWord,
           streak: game.streak,
+          guesses: game.guesses,
         }}
       />
     </div>

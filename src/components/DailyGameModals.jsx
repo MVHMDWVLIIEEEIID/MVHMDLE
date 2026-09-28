@@ -1,7 +1,7 @@
+// components/DailyGameModals.jsx
 import React, { useState, useEffect } from "react";
 import Modal from "./Modal";
 
-// --- DaisyUI Countdown Component ---
 function ModalCountdown({ status }) {
   const getNextMidnight = () => {
     const date = new Date();
@@ -69,6 +69,7 @@ export default function DailyGameModals({ isOpen, onClose, onShare, stats }) {
       subtitle="The word was"
       highlight={stats.targetWord}
       wordsForDef={[stats.targetWord]}
+      guessesData={stats.guesses}
       statCards={[
         {
           value: isWon ? stats.streak : "0",
