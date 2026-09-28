@@ -13,7 +13,7 @@ export default function PracticeGameModals({
   const isWon = modalType === "won";
   const isBomb = stats.bossCategory === "bomb";
 
-  const renderBossWordsInline = (words = []) => words.join(" , ");
+  const renderBossWordsInline = (words = []) => words.join(", ");
 
   const config = {
     isOpen: showModal,
@@ -24,7 +24,8 @@ export default function PracticeGameModals({
     highlight: isBomb
       ? stats.bombPhrases.join(" - ")
       : renderBossWordsInline(stats.targetWords),
-    highlightType: stats.targetWords?.length > 1 ? "boss" : "normal",
+    // FIXED: Now properly classifies Bomb as a "boss" highlight type
+    highlightType: stats.targetWords?.length > 1 || isBomb ? "boss" : "normal",
     wordsForDef: isBomb ? [] : stats.targetWords,
     guessesData: stats.guesses,
     statCards: [

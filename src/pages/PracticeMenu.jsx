@@ -34,9 +34,9 @@ export default function PracticeMenu() {
       </div>
 
       {/* 2. Board Area: Exactly mimics GameBoardLayout's top half (flex-10) */}
-      <div className="flex-10 flex justify-center items-center overflow-y-auto clean-scroll px-8 py-8">
+      <div className="flex-14 flex justify-center items-center overflow-y-auto clean-scroll">
         <div className="max-w-5xl mx-auto flex flex-col items-center w-full">
-          <h2 className="text-3xl font-black uppercase text-gameLight/80 mb-8 text-center tracking-widest">
+          <h2 className="text-3xl font-black uppercase text-gameLight mb-8 text-center tracking-widest">
             Select A Boss
           </h2>
 
@@ -47,21 +47,18 @@ export default function PracticeMenu() {
                 onClick={() => handleSelectBoss(boss.id)}
                 className="flex flex-col items-center justify-center p-8 bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-gameLight/50 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] rounded-2xl transition-all duration-300 active:scale-95 group w-full sm:w-[calc(50%-1.5rem)] md:w-[calc(33.333%-1.5rem)] min-w-[220px]"
               >
-                <span className="text-sm font-bold text-white/50 uppercase tracking-widest mb-3 group-hover:text-gameLight transition-colors">
-                  {boss.category === "multi" ? "Multi-Word" : boss.category}
-                </span>
                 <h3 className="text-2xl font-black text-gameLight uppercase tracking-wider text-center group-hover:scale-105 transition-transform duration-300">
                   {/* Because the IDs are clean now (duodle, fourdle), we can print them directly */}
                   {boss.id}
                 </h3>
+                <span className="text-sm font-bold text-white/50 uppercase tracking-widest group-hover:text-gameLight transition-colors">
+                  {boss.category === "multi" ? "Multi-Word" : boss.category}
+                </span>
               </button>
             ))}
           </div>
         </div>
       </div>
-
-      {/* 3. Keyboard Area: Exactly mimics GameBoardLayout's bottom half (flex-5) to force identical flex math */}
-      <div className="flex-5 shrink-0 mb-4 pointer-events-none"></div>
 
       <PracticeShapeSelectorModal
         isOpen={isShapeModalOpen}

@@ -11,7 +11,10 @@ export default function SurvivalGameModals({
   stats,
 }) {
   const [showModal, modalType] = isOpen;
-  const renderBossWordsInline = (words = []) => words.join(" , ");
+
+  // FIXED: No space before comma
+  const renderBossWordsInline = (words = []) => words.join(", ");
+
   const isBomb = stats.bossCategory === "bomb";
 
   // Default Base Config
@@ -89,7 +92,6 @@ export default function SurvivalGameModals({
                 Streak
               </span>
             </div>
-
             <div className="bg-white/5 border border-gameGreen/20 rounded-2xl flex-1 p-4">
               <div className="flex justify-between items-center border-b border-white/10 pb-2 mb-3">
                 <span className="text-xs font-bold text-white/40 uppercase">
@@ -99,13 +101,11 @@ export default function SurvivalGameModals({
                   +${stats.lastReward.total.toLocaleString()}
                 </span>
               </div>
-
               <div className="space-y-1.5">
                 <div className="flex justify-between text-[10px] font-mono text-white/60">
                   <span>Win Bonus</span>
                   <span>+{stats.lastReward.breakdown.base}</span>
                 </div>
-
                 {stats.isBossGame ? (
                   <div className="flex justify-between text-[10px] font-mono text-white/60">
                     <span>Boss Defeat Streak</span>
@@ -129,7 +129,6 @@ export default function SurvivalGameModals({
                     <span>+{stats.lastReward.breakdown.speed}</span>
                   </div>
                 )}
-
                 <div className="flex justify-between text-[10px] font-mono text-white/60">
                   <span>Streak Bonus</span>
                   <span>+{stats.lastReward.breakdown.streak}</span>
@@ -137,7 +136,6 @@ export default function SurvivalGameModals({
               </div>
             </div>
           </div>
-
           {stats.isBossGame && stats.isCycleComplete && (
             <div className="w-full flex justify-center mt-3">
               <p className="text-gameRed text-[11px] font-black uppercase tracking-wider">

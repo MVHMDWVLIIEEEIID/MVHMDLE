@@ -65,14 +65,11 @@ const TargetTooltip = ({ word, theme, children }) => {
         const res = await fetch(
           `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(targetWord)}?key=${API_KEY}`,
         );
-
         if (!res.ok) {
           setDef("Definition unavailable.");
           return;
         }
-
         const result = await res.json();
-
         if (
           result &&
           result.length > 0 &&
@@ -128,7 +125,8 @@ const TargetTooltip = ({ word, theme, children }) => {
   return (
     <div
       ref={triggerRef}
-      className="inline-flex flex-col items-center mt-2 cursor-help"
+      // FIXED: Removed mt-2 and flex-col so it renders inline accurately without pushing words down
+      className="inline-flex items-center cursor-help"
       onMouseEnter={() => {
         updateCoords();
         setIsHovered(true);
@@ -136,12 +134,11 @@ const TargetTooltip = ({ word, theme, children }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       {children}
-
       {isHovered &&
         typeof document !== "undefined" &&
         createPortal(
           <div
-            className={`fixed px-5 py-3 pointer-events-none rounded-xl bg-[#0a0a0a] border-2 ${theme.border} ${theme.text} text-[11px] font-bold z-99999 w-max max-w-xs text-center leading-relaxed flex flex-col gap-1.5`}
+            className={`fixed px-5 py-3 pointer-events-none rounded-xl bg-[#0a0a0a] border-2 ${theme.border} ${theme.text} text-[11px] font-bold shadow-2xl z-[99999] w-max max-w-xs text-center leading-relaxed flex flex-col gap-1.5`}
             style={{
               top: coords.top - 8,
               left: coords.left,
@@ -193,7 +190,6 @@ export default function Modal({
   const allWordsToDefine = useMemo(() => {
     const safeWords = wordsForDef || [];
     const safeGuesses = guessesData || [];
-
     return Array.from(
       new Set([
         ...safeWords,
@@ -237,16 +233,22 @@ export default function Modal({
     success: {
       text: "text-gameGreen",
       border: "border-gameGreen/50",
+      shadow: "shadow-[0_0_40px_rgba(0,255,100,0.1)]",
+      drop: "drop-shadow-[0_0_15px_rgba(74,222,128,0.25)]",
       scrollColor: "var(--color-gameGreen)",
     },
     error: {
       text: "text-gameRed",
       border: "border-gameRed/50",
+      shadow: "shadow-[0_0_40px_rgba(255,50,50,0.1)]",
+      drop: "drop-shadow-[0_0_25px_rgba(239,68,68,0.4)]",
       scrollColor: "var(--color-gameRed)",
     },
     warning: {
       text: "text-gameYellow",
       border: "border-gameYellow/50",
+      shadow: "shadow-[0_0_40px_rgba(250,204,21,0.1)]",
+      drop: "drop-shadow-[0_0_20px_rgba(250,204,21,0.3)]",
       scrollColor: "var(--color-gameYellow)",
     },
   };
@@ -259,29 +261,32 @@ export default function Modal({
       return highlight;
 
     if (highlightType === "boss") {
-      const separator = highlight.includes(" , ")
-        ? " , "
-        : highlight.includes(" - ")
-          ? " - "
-          : ",";
-      const words = highlight.split(separator);
+      const isBomb = highlight.includes(" - ");
+      const splitChar = isBomb ? "-" : ",";
+      const words = highlight.split(splitChar);
 
       return (
         <div
-          className={`text-2xl font-black text-gameLight uppercase text-center mb-2 mt-2 flex flex-wrap justify-center items-center gap-2`}
+          // FIXED: Smaller font size for bombs so it strictly stays on one line
+          className={`${isBomb ? "text-xl tracking-widest" : "text-2xl"} font-black text-gameLight uppercase ${theme.drop} text-center mb-4 mt-2 flex justify-center items-center leading-none whitespace-nowrap`}
         >
-          <span>(</span>
+          <span className="mr-1">(</span>
           {words.map((w, i) => (
             <React.Fragment key={i}>
-              <TargetTooltip word={w.trim()} theme={theme}>
-                <span className="cursor-help hover:text-white transition-colors border-b border-dashed border-white/30 pb-0.5">
-                  {w.trim()}
-                </span>
-              </TargetTooltip>
-              {i < words.length - 1 && <span>{separator.trim()}</span>}
+              {/* FIXED: No tooltip wrapper for bombs */}
+              {isBomb ? (
+                <span className="mx-1.5">{w.trim()}</span>
+              ) : (
+                <TargetTooltip word={w.trim()} theme={theme}>
+                  <span className="cursor-help hover:text-white transition-colors border-b border-dashed border-white/30 pb-0.5 mx-1.5">
+                    {w.trim()}
+                  </span>
+                </TargetTooltip>
+              )}
+              {i < words.length - 1 && <span>{isBomb ? "-" : ","}</span>}
             </React.Fragment>
           ))}
-          <span>)</span>
+          <span className="ml-1">)</span>
         </div>
       );
     }
@@ -289,14 +294,13 @@ export default function Modal({
     return (
       <TargetTooltip word={highlight} theme={theme}>
         <p
-          className={`text-4xl font-black text-gameLight uppercase tracking-wider mb-2 cursor-help border-b border-dashed border-transparent hover:border-white/30 transition-colors pb-1`}
+          className={`text-4xl font-black text-gameLight uppercase tracking-wider ${theme.drop} mb-2 cursor-help border-b border-dashed border-transparent hover:border-white/30 transition-colors pb-1`}
         >
           "{highlight}"
         </p>
       </TargetTooltip>
     );
   };
-
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ease-out ${visibilityClass}`}
@@ -316,15 +320,13 @@ export default function Modal({
           display: none;
         }
       `}</style>
-
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
-
       <div
-        className={`relative bg-[#0a0a0a] border-2 rounded-3xl transition-[width] duration-500 ease-[cubic-bezier(0.2,1,0.3,1)] ${theme.border} ${modalTransform} ${isExpanded ? "w-200" : "w-md"}`}
+        className={`relative bg-[#0a0a0a] border-2 rounded-3xl transition-[width] duration-500 ease-[cubic-bezier(0.2,1,0.3,1)] ${theme.border} ${theme.shadow} ${modalTransform} ${isExpanded ? "w-[50rem]" : "w-[28rem]"}`}
       >
         {/* LEFT COLUMN: Main Stats */}
         <div
-          className={`w-md max-h-[85vh] p-8 flex flex-col items-center overflow-y-auto custom-modal-scroll relative z-10 transition-colors duration-500 ${isExpanded ? `border-r-2 ${theme.border}` : ""}`}
+          className={`w-[28rem] max-h-[85vh] p-8 flex flex-col items-center overflow-y-auto custom-modal-scroll relative z-10 transition-colors duration-500 ${isExpanded ? `border-r-2 ${theme.border}` : ""}`}
         >
           <div className="relative flex items-center justify-center mb-8 h-10 w-full shrink-0">
             <h2
@@ -352,7 +354,6 @@ export default function Modal({
               </svg>
             </button>
           </div>
-
           {subtitle && (
             <p
               className={`text-xs uppercase tracking-widest font-bold mb-2 shrink-0 ${status === "success" ? "text-gameGreen/50" : "text-white/40"}`}
@@ -360,7 +361,6 @@ export default function Modal({
               {subtitle}
             </p>
           )}
-
           {heartsData && (
             <div className="flex gap-2 mb-4 shrink-0">
               {[...Array(heartsData.active || 0)].map((_, i) => (
@@ -380,9 +380,7 @@ export default function Modal({
               ))}
             </div>
           )}
-
           {renderHighlight()}
-
           {statCards.length > 0 && (
             <div
               className={`grid gap-3 w-full mt-4 shrink-0 ${statCards.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}
@@ -390,7 +388,7 @@ export default function Modal({
               {statCards.map((card, idx) => (
                 <div
                   key={idx}
-                  className={`rounded-2xl flex flex-col items-center justify-center p-4 min-h-25 ${card.className || "bg-white/5 border border-white/10"}`}
+                  className={`rounded-2xl flex flex-col items-center justify-center p-4 min-h-[100px] ${card.className || "bg-white/5 border border-white/10"}`}
                 >
                   {card.component ? (
                     card.component
@@ -412,11 +410,9 @@ export default function Modal({
               ))}
             </div>
           )}
-
           {customBody && (
             <div className="w-full mt-2 shrink-0">{customBody}</div>
           )}
-
           {buttons.length > 0 && (
             <div className="flex gap-4 w-full mt-8 shrink-0">
               {buttons.map((btn, idx) => {
@@ -424,19 +420,19 @@ export default function Modal({
                   "w-full font-black py-4 rounded-2xl transition-all uppercase text-sm tracking-widest active:scale-95 ";
                 if (btn.variant === "success")
                   btnClass +=
-                    "bg-gameGreen text-gameDark hover:scale-105";
+                    "bg-gameGreen text-gameDark hover:scale-105 shadow-lg shadow-gameGreen/20";
                 else if (btn.variant === "danger")
                   btnClass +=
-                    "bg-gameRed text-gameDark hover:scale-105";
+                    "bg-gameRed text-gameDark hover:scale-105 shadow-lg shadow-gameRed/20";
                 else if (btn.variant === "warning")
                   btnClass +=
-                    "bg-gameYellow text-gameDark hover:scale-105";
+                    "bg-gameYellow text-gameDark hover:scale-105 shadow-lg shadow-gameYellow/20";
                 else if (btn.variant === "ghost")
                   btnClass +=
                     "bg-transparent text-white/30 hover:text-white border border-transparent py-2";
                 else
                   btnClass +=
-                    "bg-gameDark border-2 border-gameGreen text-gameGreen hover:scale-105 ";
+                    "bg-gameDark border-2 border-gameGreen text-gameGreen hover:scale-105 shadow-lg";
                 return (
                   <button key={idx} onClick={btn.onClick} className={btnClass}>
                     {btn.label}
@@ -446,18 +442,16 @@ export default function Modal({
             </div>
           )}
         </div>
-
         {/* RIGHT COLUMN: Dict Panel */}
         <div
-          className={`absolute top-0 right-0 bottom-0 overflow-hidden transition-[width] duration-500 ease-[cubic-bezier(0.2,1,0.3,1)] z-0 ${isExpanded ? "w-88" : "w-0"}`}
+          className={`absolute top-0 right-0 bottom-0 overflow-hidden transition-[width] duration-500 ease-[cubic-bezier(0.2,1,0.3,1)] z-0 ${isExpanded ? "w-[22rem]" : "w-0"}`}
         >
-          <div className="w-88 h-full py-6 pl-6">
+          <div className="w-[22rem] h-full py-6 pl-6">
             {hasOpenedOnce && (
               <DictionaryPanel words={allWordsToDefine} theme={theme} />
             )}
           </div>
         </div>
-
         {/* EXTERNAL ARROW TAB */}
         {allWordsToDefine.length > 0 && (
           <button

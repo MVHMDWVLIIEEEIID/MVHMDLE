@@ -1,5 +1,5 @@
 // pages/PracticeGame.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import Header from "../components/Header";
 import Toast from "../components/Toast";
@@ -30,19 +30,40 @@ export default function PracticeGame() {
     return [false, "playing"];
   });
 
+  const modalReadyAtRef = useRef(0);
+  const RESULT_ANIMATION_MS = 1500;
+
   const handleGameOver = (result) => {
     document.activeElement.blur();
     window.focus();
-    setTimeout(() => {
-      if (result === "won") {
-        setStreak((s) => s + 1);
-        setIsModalOpen([true, "won"]);
-        handleConfetti();
-      } else if (result === "lost") {
-        setStreak(0);
-        setIsModalOpen([true, "lost"]);
-      }
-    }, 1500);
+    const now = Date.now();
+
+    if (result === "won" || result === "lost") {
+      modalReadyAtRef.current = now + RESULT_ANIMATION_MS;
+    }
+
+    if (result === "won-already" && now >= modalReadyAtRef.current) {
+      setIsModalOpen([true, "won"]);
+      return;
+    }
+
+    if (result === "lost-already" && now >= modalReadyAtRef.current) {
+      setIsModalOpen([true, "lost"]);
+      return;
+    }
+
+    if (result === "won" || result === "lost") {
+      setTimeout(() => {
+        if (result === "won") {
+          setStreak((s) => s + 1);
+          setIsModalOpen([true, "won"]);
+          handleConfetti();
+        } else if (result === "lost") {
+          setStreak(0);
+          setIsModalOpen([true, "lost"]);
+        }
+      }, RESULT_ANIMATION_MS);
+    }
   };
 
   const handleNext = () => {
@@ -61,7 +82,7 @@ export default function PracticeGame() {
 
       <div className="flex-1 center flex-col shrink-0">
         <Header
-          mode={`PRACTICE: ${bossId.toUpperCase()}`}
+          mode={`PRACTICE: ${bossId.replace("-boss", "").toUpperCase()}`}
           streak={streak}
           hideHearts={true}
           onModeClick={handleQuit}

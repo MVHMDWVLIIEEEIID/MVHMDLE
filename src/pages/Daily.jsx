@@ -1,5 +1,5 @@
 // pages/Daily.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import Header from "../components/Header";
 import Keyboard from "../components/Keyboard";
@@ -22,6 +22,9 @@ export default function Daily({ mode = "daily" }) {
     return [false, "playing"];
   });
 
+  const modalReadyAtRef = useRef(0);
+  const RESULT_ANIMATION_MS = 1500;
+
   useEffect(() => {
     if (game.gameState === "playing") {
       setIsModalOpen([false, "playing"]);
@@ -29,19 +32,38 @@ export default function Daily({ mode = "daily" }) {
   }, [game.gameState, game.todayString]);
 
   const handleGameOver = (result) => {
-    setTimeout(() => {
-      if (result === "won") {
-        setIsModalOpen([true, "won"]);
-        handleConfetti();
-      } else if (result === "lost") {
-        setIsModalOpen([true, "lost"]);
-      }
-    }, 1500);
+    document.activeElement.blur();
+    window.focus();
+    const now = Date.now();
+
+    if (result === "won" || result === "lost") {
+      modalReadyAtRef.current = now + RESULT_ANIMATION_MS;
+    }
+
+    if (result === "won-already" && now >= modalReadyAtRef.current) {
+      setIsModalOpen([true, "won"]);
+      return;
+    }
+
+    if (result === "lost-already" && now >= modalReadyAtRef.current) {
+      setIsModalOpen([true, "lost"]);
+      return;
+    }
+
+    if (result === "won" || result === "lost") {
+      setTimeout(() => {
+        if (result === "won") {
+          setIsModalOpen([true, "won"]);
+          handleConfetti();
+        } else if (result === "lost") {
+          setIsModalOpen([true, "lost"]);
+        }
+      }, RESULT_ANIMATION_MS);
+    }
   };
 
   const handleShare = async () => {
     if (game.guesses.length === 0) return;
-
     const grid = game.guesses
       .map((guess) => {
         const splitSolution = game.targetWord.toLowerCase().split("");
@@ -51,7 +73,7 @@ export default function Daily({ mode = "daily" }) {
         splitGuess.forEach((char, i) => {
           if (char === splitSolution[i]) {
             statuses[i] = "🟩";
-            splitSolution[i] = null; // Consume the letter
+            splitSolution[i] = null;
           }
         });
 
@@ -60,7 +82,7 @@ export default function Daily({ mode = "daily" }) {
             const idx = splitSolution.indexOf(char);
             if (idx !== -1) {
               statuses[i] = "🟨";
-              splitSolution[idx] = null; // Consume the letter
+              splitSolution[idx] = null;
             }
           }
         });
@@ -83,7 +105,6 @@ export default function Daily({ mode = "daily" }) {
   return (
     <div className="flex flex-col h-screen relative overflow-hidden bg-gameDark text-white">
       <Toast toasts={toasts} />
-
       <div className="flex-1 center flex-col">
         <Header
           mode="DAILY CHALLENGE"
@@ -101,11 +122,7 @@ export default function Daily({ mode = "daily" }) {
             targetWord={game.targetWord}
             gameState={game.gameState}
             onGuessSubmit={(g) => game.submitGuess(g, handleGameOver)}
-            onGameOver={(res) => {
-              if (res === "won-already" || res === "lost-already") {
-                setIsModalOpen([true, game.gameState]);
-              }
-            }}
+            onGameOver={handleGameOver}
             addToast={addToast}
           />
         }
