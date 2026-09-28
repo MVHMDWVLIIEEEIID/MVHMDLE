@@ -141,7 +141,7 @@ const TargetTooltip = ({ word, theme, children }) => {
         typeof document !== "undefined" &&
         createPortal(
           <div
-            className={`fixed px-5 py-3 pointer-events-none rounded-xl bg-[#0a0a0a] border-2 ${theme.border} ${theme.text} text-[11px] font-bold shadow-2xl z-[99999] w-max max-w-xs text-center leading-relaxed flex flex-col gap-1.5`}
+            className={`fixed px-5 py-3 pointer-events-none rounded-xl bg-[#0a0a0a] border-2 ${theme.border} ${theme.text} text-[11px] font-bold z-99999 w-max max-w-xs text-center leading-relaxed flex flex-col gap-1.5`}
             style={{
               top: coords.top - 8,
               left: coords.left,
@@ -237,22 +237,16 @@ export default function Modal({
     success: {
       text: "text-gameGreen",
       border: "border-gameGreen/50",
-      shadow: "shadow-[0_0_40px_rgba(0,255,100,0.1)]",
-      drop: "drop-shadow-[0_0_15px_rgba(74,222,128,0.25)]",
       scrollColor: "var(--color-gameGreen)",
     },
     error: {
       text: "text-gameRed",
       border: "border-gameRed/50",
-      shadow: "shadow-[0_0_40px_rgba(255,50,50,0.1)]",
-      drop: "drop-shadow-[0_0_25px_rgba(239,68,68,0.4)]",
       scrollColor: "var(--color-gameRed)",
     },
     warning: {
       text: "text-gameYellow",
       border: "border-gameYellow/50",
-      shadow: "shadow-[0_0_40px_rgba(250,204,21,0.1)]",
-      drop: "drop-shadow-[0_0_20px_rgba(250,204,21,0.3)]",
       scrollColor: "var(--color-gameYellow)",
     },
   };
@@ -274,7 +268,7 @@ export default function Modal({
 
       return (
         <div
-          className={`text-2xl font-black text-gameLight uppercase ${theme.drop} text-center mb-2 mt-2 flex flex-wrap justify-center items-center gap-2`}
+          className={`text-2xl font-black text-gameLight uppercase text-center mb-2 mt-2 flex flex-wrap justify-center items-center gap-2`}
         >
           <span>(</span>
           {words.map((w, i) => (
@@ -295,7 +289,7 @@ export default function Modal({
     return (
       <TargetTooltip word={highlight} theme={theme}>
         <p
-          className={`text-4xl font-black text-gameLight uppercase tracking-wider ${theme.drop} mb-2 cursor-help border-b border-dashed border-transparent hover:border-white/30 transition-colors pb-1`}
+          className={`text-4xl font-black text-gameLight uppercase tracking-wider mb-2 cursor-help border-b border-dashed border-transparent hover:border-white/30 transition-colors pb-1`}
         >
           "{highlight}"
         </p>
@@ -326,11 +320,11 @@ export default function Modal({
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
 
       <div
-        className={`relative bg-[#0a0a0a] border-2 rounded-3xl transition-[width] duration-500 ease-[cubic-bezier(0.2,1,0.3,1)] ${theme.border} ${theme.shadow} ${modalTransform} ${isExpanded ? "w-[50rem]" : "w-[28rem]"}`}
+        className={`relative bg-[#0a0a0a] border-2 rounded-3xl transition-[width] duration-500 ease-[cubic-bezier(0.2,1,0.3,1)] ${theme.border} ${modalTransform} ${isExpanded ? "w-200" : "w-md"}`}
       >
         {/* LEFT COLUMN: Main Stats */}
         <div
-          className={`w-[28rem] max-h-[85vh] p-8 flex flex-col items-center overflow-y-auto custom-modal-scroll relative z-10 transition-colors duration-500 ${isExpanded ? `border-r-2 ${theme.border}` : ""}`}
+          className={`w-md max-h-[85vh] p-8 flex flex-col items-center overflow-y-auto custom-modal-scroll relative z-10 transition-colors duration-500 ${isExpanded ? `border-r-2 ${theme.border}` : ""}`}
         >
           <div className="relative flex items-center justify-center mb-8 h-10 w-full shrink-0">
             <h2
@@ -396,7 +390,7 @@ export default function Modal({
               {statCards.map((card, idx) => (
                 <div
                   key={idx}
-                  className={`rounded-2xl flex flex-col items-center justify-center p-4 min-h-[100px] ${card.className || "bg-white/5 border border-white/10"}`}
+                  className={`rounded-2xl flex flex-col items-center justify-center p-4 min-h-25 ${card.className || "bg-white/5 border border-white/10"}`}
                 >
                   {card.component ? (
                     card.component
@@ -430,19 +424,19 @@ export default function Modal({
                   "w-full font-black py-4 rounded-2xl transition-all uppercase text-sm tracking-widest active:scale-95 ";
                 if (btn.variant === "success")
                   btnClass +=
-                    "bg-gameGreen text-gameDark hover:scale-105 shadow-lg shadow-gameGreen/20";
+                    "bg-gameGreen text-gameDark hover:scale-105";
                 else if (btn.variant === "danger")
                   btnClass +=
-                    "bg-gameRed text-gameDark hover:scale-105 shadow-lg shadow-gameRed/20";
+                    "bg-gameRed text-gameDark hover:scale-105";
                 else if (btn.variant === "warning")
                   btnClass +=
-                    "bg-gameYellow text-gameDark hover:scale-105 shadow-lg shadow-gameYellow/20";
+                    "bg-gameYellow text-gameDark hover:scale-105";
                 else if (btn.variant === "ghost")
                   btnClass +=
                     "bg-transparent text-white/30 hover:text-white border border-transparent py-2";
                 else
                   btnClass +=
-                    "bg-gameDark border-2 border-gameGreen text-gameGreen hover:scale-105 shadow-lg";
+                    "bg-gameDark border-2 border-gameGreen text-gameGreen hover:scale-105 ";
                 return (
                   <button key={idx} onClick={btn.onClick} className={btnClass}>
                     {btn.label}
@@ -455,9 +449,9 @@ export default function Modal({
 
         {/* RIGHT COLUMN: Dict Panel */}
         <div
-          className={`absolute top-0 right-0 bottom-0 overflow-hidden transition-[width] duration-500 ease-[cubic-bezier(0.2,1,0.3,1)] z-0 ${isExpanded ? "w-[22rem]" : "w-0"}`}
+          className={`absolute top-0 right-0 bottom-0 overflow-hidden transition-[width] duration-500 ease-[cubic-bezier(0.2,1,0.3,1)] z-0 ${isExpanded ? "w-88" : "w-0"}`}
         >
-          <div className="w-[22rem] h-full py-6 pl-6">
+          <div className="w-88 h-full py-6 pl-6">
             {hasOpenedOnce && (
               <DictionaryPanel words={allWordsToDefine} theme={theme} />
             )}

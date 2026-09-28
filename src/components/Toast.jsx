@@ -18,17 +18,17 @@ export default function Toast({ toasts }) {
         }
       `}</style>
 
-      <div className="toast toast-bottom toast-end z-[9999] flex flex-col items-end gap-2 mb-4 mr-4 pointer-events-none">
+      <div className="toast toast-bottom toast-end z-9999 flex flex-col items-end gap-2 mb-4 mr-4 pointer-events-none">
         {toasts.map((t) => (
           <div
             key={t.id}
             className={`
-              alert shadow-lg flex flex-row items-center gap-2 p-3 rounded-lg 
+              alert  flex flex-row items-center gap-2 p-3 rounded-lg 
               animate-toast-lifecycle pointer-events-auto min-w-60
               ${t.type === "success" ? "alert-success bg-green-500/95 text-white border-none" : ""}
               ${t.type === "error" ? "alert-error bg-red-500/95 text-white border-none" : ""}
               ${t.type === "info" ? "alert-info bg-blue-500/95 text-white border-none" : ""}
-              ${t.type === "special" ? "bg-red-500 text-white border-none shadow-[0_0_15px_rgba(239,68,68,0.5)]" : ""}
+              ${t.type === "special" ? "bg-red-500 text-white border-none" : ""}
             `}
           >
             {/* Clean Success Checkmark */}

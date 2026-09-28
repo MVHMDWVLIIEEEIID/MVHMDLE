@@ -28,7 +28,7 @@ export default function SurvivalGuideCustomModal({ isOpen, onClose }) {
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
 
       <div
-        className={`relative w-full max-w-3xl rounded-3xl bg-[#0a0a0a] border-2 border-gameBlue/50 p-10 transition-colors duration-500 shadow-[0_0_40px_rgba(52,152,219,0.12)] ${modalTransform}`}
+        className={`relative w-full max-w-3xl rounded-3xl bg-[#0a0a0a] border-2 border-gameBlue/50 p-10 transition-colors duration-500 ${modalTransform}`}
       >
         <div className="relative flex items-center justify-center mb-8 h-10">
           <h2 className="text-4xl font-black tracking-tighter uppercase text-center text-gameBlue">

@@ -45,6 +45,7 @@ export default function useWordPool(mode) {
     () => Array.from({ length: SOLUTION_WORD_COUNT }, (_, idx) => idx),
     [],
   );
+
   const [availableIndices, setAvailableIndices] = useSecureState(
     `wordle-available-solution-indices-${mode}`,
     getAllSolutionIndices(),
@@ -62,7 +63,6 @@ export default function useWordPool(mode) {
     `wordle-is-hard-normal-${mode}`,
     () => getInitialSetup().isHardNormal,
   );
-
   const [bossType, setBossType] = useSecureState(
     `wordle-boss-type-${mode}`,
     () => getInitialSetup().bossType,
@@ -87,7 +87,6 @@ export default function useWordPool(mode) {
     `wordle-solution-indices-${mode}`,
     () => getInitialSetup().randomIndices,
   );
-
   const [shapeBag, setShapeBag] = useSecureState(
     `wordle-shape-bag-${mode}`,
     () => getInitialSetup().shapeBag,
@@ -96,7 +95,6 @@ export default function useWordPool(mode) {
     `wordle-shape-banned-${mode}`,
     () => getInitialSetup().shapeBannedWords,
   );
-
   const [bombEasyBag, setBombEasyBag] = useSecureState(
     `wordle-bomb-easy-bag-${mode}`,
     () => getInitialSetup().bombEasyBag,
@@ -199,7 +197,6 @@ export default function useWordPool(mode) {
     let nextRandom = random;
     let nextRandomIndices = randomIndices;
     let nextBombPhrases = bombPhrases;
-
     let currentBombEasyBag = [...bombEasyBag];
     let currentBombHardBag = [...bombHardBag];
 
@@ -226,19 +223,46 @@ export default function useWordPool(mode) {
       } else {
         chosenIndex = pickRandom(eligible);
       }
-
       nextRandom = chosenIndex;
       const chosenWord = solutionWords[chosenIndex];
       setShapeBannedWords((prev) => [...prev, chosenWord]);
     } else {
       const eligible = getEligible(availableIndices);
 
+      const hardEligible = eligible.filter(
+        (idx) => idx < HARD_SOLUTION_WORD_COUNT,
+      );
+      const easyEligible = eligible.filter(
+        (idx) => idx >= HARD_SOLUTION_WORD_COUNT,
+      );
+
       if (
         typeInfo.isBoss &&
         typeInfo.category === "multi" &&
         eligible.length >= typeInfo.wordCount
       ) {
-        nextRandomIndices = pickDistinct(typeInfo.wordCount, eligible);
+        const hardPicks = pickDistinct(
+          1,
+          hardEligible.length > 0 ? hardEligible : eligible,
+        );
+
+        const remainingForEasy = easyEligible.filter(
+          (id) => !hardPicks.includes(id),
+        );
+        const fallbackForEasy = eligible.filter(
+          (id) => !hardPicks.includes(id),
+        );
+
+        const easyPicks = pickDistinct(
+          typeInfo.wordCount - 1,
+          remainingForEasy.length >= typeInfo.wordCount - 1
+            ? remainingForEasy
+            : fallbackForEasy,
+        );
+
+        nextRandomIndices = [...hardPicks, ...easyPicks].sort(
+          () => Math.random() - 0.5,
+        );
         nextRandom = null;
       } else if (typeInfo.isBoss && typeInfo.category === "bomb") {
         const easyCount = Math.max(0, typeInfo.maxTurns - 1);
@@ -287,16 +311,15 @@ export default function useWordPool(mode) {
         nextRandom = pickRandom(eligible500);
         nextRandomIndices = [];
       } else {
-        // Hard Normal Clamp
+        // Hard Normal Clamp (Level 4) vs Easy/Medium (Level 1 & 2)
         if (typeInfo.isHardNormal) {
-          const hardEligible = eligible.filter(
-            (idx) => idx < HARD_SOLUTION_WORD_COUNT,
-          );
           nextRandom = pickRandom(
             hardEligible.length > 0 ? hardEligible : eligible,
           );
         } else {
-          nextRandom = pickRandom(eligible);
+          nextRandom = pickRandom(
+            easyEligible.length > 0 ? easyEligible : eligible,
+          );
         }
         nextRandomIndices = [];
 
@@ -329,6 +352,7 @@ export default function useWordPool(mode) {
     setBombPhrases(nextBombPhrases);
     setBombEasyBag(currentBombEasyBag);
     setBombHardBag(currentBombHardBag);
+
     return true;
   };
 
@@ -339,11 +363,13 @@ export default function useWordPool(mode) {
     setPlayedMiniBossTypes([]);
     setBannedOpeningWords([]);
     setAvailableIndices(getAllSolutionIndices());
+
     setShapeBag(setup.shapeBag);
     setShapeBannedWords(setup.shapeBannedWords);
     setBombEasyBag(setup.bombEasyBag);
     setBombHardBag(setup.bombHardBag);
     setBombPhrases(setup.bombPhrases);
+
     setIsBossGame(setup.isBoss);
     setIsMiniBossGame(setup.isMiniBoss);
     setIsHardNormalGame(setup.isHardNormal);

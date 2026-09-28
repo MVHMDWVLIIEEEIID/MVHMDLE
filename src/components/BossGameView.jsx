@@ -275,7 +275,7 @@ export default function BossGameView({
                 onClick={() =>
                   window.dispatchEvent(new CustomEvent("clear-wordle500"))
                 }
-                className="flex items-center gap-2 bg-gameRed/10 hover:bg-gameRed/20 border border-gameRed/50 text-gameRed px-4 py-1.5 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(218,3,42,0.2)] font-bold text-xs uppercase tracking-widest"
+                className="flex items-center gap-2 bg-gameRed/10 hover:bg-gameRed/20 border border-gameRed/50 text-gameRed px-4 py-1.5 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 font-bold text-xs uppercase tracking-widest"
                 title="Clear All Board Colors (Ctrl + Right Click)"
               >
                 <svg

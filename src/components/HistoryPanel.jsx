@@ -2,7 +2,7 @@ import React from "react";
 
 export default function HistoryPanel({ history }) {
   return (
-    <div className="w-72 h-72 text-gameLight rounded-lg flex flex-col bg-[#0a0a0a] border-2 border-gameLight shadow-[0_0_15px_rgba(0,0,0,0.5)] overflow-hidden font-sans">
+    <div className="w-72 h-72 text-gameLight rounded-lg flex flex-col bg-[#0a0a0a] border-2 border-gameLight overflow-hidden font-sans">
       <style>{`
         @keyframes slideIn {
           0% { opacity: 0; transform: translateY(-10px); }

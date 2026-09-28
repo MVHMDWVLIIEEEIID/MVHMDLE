@@ -26,7 +26,7 @@ export default function ShapeDictionaryModal({ isOpen, onClose }) {
     >
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
       <div
-        className={`relative w-full max-w-5xl max-h-[90vh] overflow-y-auto clean-scroll rounded-3xl bg-[#0a0a0a] border-2 border-gameYellow/50 p-6 md:p-10 transition-colors duration-500 shadow-[0_0_40px_rgba(255,213,0,0.12)] ${modalTransform}`}
+        className={`relative w-full max-w-5xl max-h-[90vh] overflow-y-auto clean-scroll rounded-3xl bg-[#0a0a0a] border-2 border-gameYellow/50 p-6 md:p-10 transition-colors duration-500 ${modalTransform}`}
       >
         <div className="relative flex items-center justify-center mb-8 h-10 w-full">
           <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase text-center text-gameYellow">
@@ -74,9 +74,9 @@ export default function ShapeDictionaryModal({ isOpen, onClose }) {
                         key={cIdx}
                         className={`w-5 h-5 rounded border transition-all ${
                           cell === "G"
-                            ? "bg-gameGreen border-gameGreen shadow-[0_0_6px_rgba(0,225,150,0.5)]"
+                            ? "bg-gameGreen border-gameGreen"
                             : cell === "Y"
-                              ? "bg-gameYellow border-gameYellow shadow-[0_0_6px_rgba(255,213,0,0.5)]"
+                              ? "bg-gameYellow border-gameYellow"
                               : "bg-transparent border-gameGrey/30"
                         }`}
                       />

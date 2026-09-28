@@ -27,7 +27,7 @@ export default function Shop({
 }) {
   const MAX_HEARTS = 5;
   return (
-    <div className="h-72 w-full text-gameLight rounded-lg flex flex-col bg-[#0a0a0a] border-2 border-gameLight shadow-[0_0_15px_rgba(0,0,0,0.5)] overflow-hidden font-sans">
+    <div className="h-72 w-full text-gameLight rounded-lg flex flex-col bg-[#0a0a0a] border-2 border-gameLight overflow-hidden font-sans">
       <header className="h-12 flex-none bg-gameLight px-4 flex justify-between items-center border-b-2 border-gameLight/30">
         <div className="flex flex-col">
           <h2 className="text-xs font-black uppercase text-gameDark leading-none">

@@ -87,10 +87,11 @@ export const getGameTypeInfo = (
 };
 
 let cachedInitialSetup = null;
+
 export const getInitialSetup = (forceNew = false) => {
   if (cachedInitialSetup && !forceNew) return cachedInitialSetup;
-
   const typeInfo = getGameTypeInfo(0, [], []);
+
   let finalBossType = typeInfo.bossType;
   let finalRandom = null;
   let finalRandomIndices = [];
@@ -115,30 +116,46 @@ export const getInitialSetup = (forceNew = false) => {
         initialBanned = [data[finalRandom]];
       }
     } else if (typeInfo.category === "multi") {
-      const freshPool = Array.from(
-        { length: SOLUTION_WORD_COUNT },
+      const hardPool = Array.from(
+        { length: HARD_SOLUTION_WORD_COUNT },
         (_, idx) => idx,
       );
-      finalRandomIndices = pickDistinct(typeInfo.wordCount, freshPool);
+      const easyPool = Array.from(
+        { length: SOLUTION_WORD_COUNT - HARD_SOLUTION_WORD_COUNT },
+        (_, idx) => idx + HARD_SOLUTION_WORD_COUNT,
+      );
+      const hardPicks = pickDistinct(1, hardPool);
+      const easyPicks = pickDistinct(typeInfo.wordCount - 1, easyPool);
+      finalRandomIndices = [...hardPicks, ...easyPicks].sort(
+        () => Math.random() - 0.5,
+      );
     } else if (typeInfo.category === "bomb") {
       const easyCount = Math.max(0, typeInfo.maxTurns - 1);
       const hardCount = 1;
-
       const pickedEasy = initialBombEasyBag.splice(0, easyCount);
       const pickedHard = initialBombHardBag.splice(0, hardCount);
       initialBombPhrases = [...pickedEasy, ...pickedHard].sort(
         () => Math.random() - 0.5,
       );
-
       finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy Target
     } else if (finalBossType === "wordle500") {
       const eligible500 = Array.from({ length: 500 }, (_, idx) => idx);
       finalRandom = pickRandom(eligible500);
     } else {
-      finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT);
+      finalRandom = typeInfo.isHardNormal
+        ? Math.floor(Math.random() * HARD_SOLUTION_WORD_COUNT)
+        : HARD_SOLUTION_WORD_COUNT +
+          Math.floor(
+            Math.random() * (SOLUTION_WORD_COUNT - HARD_SOLUTION_WORD_COUNT),
+          );
     }
   } else {
-    finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT);
+    finalRandom = typeInfo.isHardNormal
+      ? Math.floor(Math.random() * HARD_SOLUTION_WORD_COUNT)
+      : HARD_SOLUTION_WORD_COUNT +
+        Math.floor(
+          Math.random() * (SOLUTION_WORD_COUNT - HARD_SOLUTION_WORD_COUNT),
+        );
   }
 
   cachedInitialSetup = {
