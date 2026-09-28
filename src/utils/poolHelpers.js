@@ -96,6 +96,11 @@ export const getInitialSetup = (forceNew = false) => {
   let finalRandomIndices = [];
   let initialBag = [];
   let initialBanned = [];
+
+  // Create a brand new shuffled bag without duplicates
+  let initialBombBag = [...new Set(BOMB_PHRASES)].sort(
+    () => Math.random() - 0.5,
+  );
   let initialBombPhrases = [];
 
   if (typeInfo.isBoss) {
@@ -114,8 +119,8 @@ export const getInitialSetup = (forceNew = false) => {
       );
       finalRandomIndices = pickDistinct(typeInfo.wordCount, freshPool);
     } else if (typeInfo.category === "bomb") {
-      initialBombPhrases = pickDistinct(typeInfo.maxTurns, BOMB_PHRASES);
-      finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy target for bomb
+      initialBombPhrases = initialBombBag.splice(0, typeInfo.maxTurns);
+      finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy Target
     } else if (finalBossType === "wordle500") {
       const eligible500 = Array.from({ length: 500 }, (_, idx) => idx);
       finalRandom = pickRandom(eligible500);
@@ -138,6 +143,7 @@ export const getInitialSetup = (forceNew = false) => {
     randomIndices: finalRandomIndices,
     shapeBag: initialBag,
     shapeBannedWords: initialBanned,
+    bombBag: initialBombBag,
     bombPhrases: initialBombPhrases,
   };
 

@@ -208,14 +208,15 @@ export const generateAndLogBombPhrases = () => {
   const invalid = [];
   const valid = [];
 
-  // Clamp the search exclusively to the first 2315 solution words
-  const solutionWords = data.slice(0, 2315);
+  // Clean duplicates out of both arrays before processing
+  const uniqueSolutionWords = [...new Set(data.slice(0, 2315))];
+  const uniquePhrases = [...new Set(BOMB_PHRASES)];
 
-  BOMB_PHRASES.forEach((phrase) => {
-    // String.includes() checks if the exact consecutive string exists in the word
-    const matches = solutionWords.filter((w) => w.includes(phrase));
+  uniquePhrases.forEach((phrase) => {
+    // Check if the exact string exists anywhere in the word
+    const matches = uniqueSolutionWords.filter((w) => w.includes(phrase));
 
-    // Check if the phrase is present in at least 2 unique words
+    // Validate that it exists in at least 2 unique words
     if (matches.length < 2) {
       invalid.push({ phrase, count: matches.length, matches });
     } else {
@@ -237,7 +238,7 @@ export const generateAndLogBombPhrases = () => {
   }
 
   console.log(
-    `%c[BOMB PHRASES] Validated ${valid.length} phrases! Right-click the array below and select 'Copy object' to paste into bossConfig.js:`,
+    `%c[BOMB PHRASES] Validated ${valid.length} unique phrases! Right-click the array below and select 'Copy object' to paste into bossConfig.js:`,
     "color: #00e196; font-weight: bold;",
   );
   console.log(valid);

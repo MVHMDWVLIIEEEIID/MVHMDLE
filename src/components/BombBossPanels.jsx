@@ -1,16 +1,16 @@
 // components/BombBossPanels.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 export function BombLeftPanel({ currentPhrase }) {
   return (
-    <div className="w-72 h-72 rounded-lg flex flex-col justify-center items-center bg-[#0a0a0a] border-2 border-gameYellow p-6 relative">
-      <h2 className="absolute top-8 text-center text-gameYellow font-black uppercase tracking-widest text-lg">
+    <div className="w-72 h-72 rounded-2xl flex items-center justify-center bg-[#0a0a0a] border-2 border-gameYellow relative">
+      <h2 className="absolute top-6 text-lg text-gameYellow font-black uppercase tracking-widest">
         Required Phrase
       </h2>
 
       <div
         key={currentPhrase}
-        className="animate-modalIn text-6xl font-black text-gameLight uppercase tracking-widest"
+        className="animate-modalIn text-7xl font-black text-white uppercase tracking-widest"
       >
         {currentPhrase}
       </div>
@@ -26,14 +26,22 @@ export function BombRightPanel({
 }) {
   const BOMB_TIME = 60; // 60 seconds
 
+  // Use a ref to hold the latest callback. This prevents the interval
+  // from restarting every time the parent component re-renders.
+  const onTimeUpRef = useRef(onTimeUp);
   useEffect(() => {
-    if (gameState !== "playing" || bombTimeLeft <= 0) return;
+    onTimeUpRef.current = onTimeUp;
+  }, [onTimeUp]);
+
+  useEffect(() => {
+    // Only run when actively playing
+    if (gameState !== "playing") return;
 
     const interval = setInterval(() => {
       setBombTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          onTimeUp();
+          onTimeUpRef.current();
           return 0;
         }
         return prev - 1;
@@ -41,28 +49,31 @@ export function BombRightPanel({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [gameState, onTimeUp, setBombTimeLeft, bombTimeLeft]);
+  }, [gameState, setBombTimeLeft]);
 
   const percentage = (bombTimeLeft / BOMB_TIME) * 100;
+  const isDanger = bombTimeLeft <= 15;
 
   return (
-    <div className="w-72 h-72 rounded-lg flex flex-col justify-center items-center bg-[#0a0a0a] border-2 border-gameRed p-6">
-      <h2 className="text-center text-gameRed font-black uppercase tracking-widest text-lg mb-6">
-        Bomb Defusal
+    <div className="w-72 h-72 rounded-2xl flex items-center justify-center bg-[#0a0a0a] border-2 border-gameRed relative">
+      <h2 className="absolute top-6 text-lg font-black uppercase tracking-widest text-gameRed">
+        Bomb Detonates In
       </h2>
 
-      <div
-        className="radial-progress bg-gameRed/10 text-gameRed transition-all duration-300"
-        style={{
-          "--value": Math.max(1, percentage),
-          "--size": "8rem",
-          "--thickness": "0.75rem",
-        }}
-        role="progressbar"
+      <span
+        className={`text-8xl font-black font-mono tracking-tighter ${isDanger ? "animate-pulse text-gameRed" : "text-white"}`}
       >
-        <span className="countdown font-mono text-4xl text-white">
-          <span style={{ "--value": bombTimeLeft }}></span>
-        </span>
+        {bombTimeLeft}<small>s</small>
+      </span>
+
+      {/* Flat, simple linear progress bar with solid track color */}
+      <div className="absolute bottom-6 w-full px-6">
+        <div className="w-full h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gameRed rounded-full transition-[width] duration-1000 ease-linear"
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
       </div>
     </div>
   );

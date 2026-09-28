@@ -87,6 +87,7 @@ export default function useWordPool(mode) {
     `wordle-solution-indices-${mode}`,
     () => getInitialSetup().randomIndices,
   );
+
   const [shapeBag, setShapeBag] = useSecureState(
     `wordle-shape-bag-${mode}`,
     () => getInitialSetup().shapeBag,
@@ -94,6 +95,11 @@ export default function useWordPool(mode) {
   const [shapeBannedWords, setShapeBannedWords] = useSecureState(
     `wordle-shape-banned-${mode}`,
     () => getInitialSetup().shapeBannedWords,
+  );
+
+  const [bombBag, setBombBag] = useSecureState(
+    `wordle-bomb-bag-${mode}`,
+    () => getInitialSetup().bombBag,
   );
   const [bombPhrases, setBombPhrases] = useSecureState(
     `wordle-bomb-phrases-${mode}`,
@@ -189,6 +195,7 @@ export default function useWordPool(mode) {
     let nextRandom = random;
     let nextRandomIndices = randomIndices;
     let nextBombPhrases = bombPhrases;
+    let currentBombBag = [...bombBag];
 
     if (typeInfo.isBoss && typeInfo.category === "shape") {
       let currentBag = [...shapeBag];
@@ -228,7 +235,16 @@ export default function useWordPool(mode) {
         nextRandomIndices = pickDistinct(typeInfo.wordCount, eligible);
         nextRandom = null;
       } else if (typeInfo.isBoss && typeInfo.category === "bomb") {
-        nextBombPhrases = pickDistinct(typeInfo.maxTurns, BOMB_PHRASES);
+        // Refill the bag if there aren't enough phrases for the round
+        if (currentBombBag.length < typeInfo.maxTurns) {
+          const freshBag = [...new Set(BOMB_PHRASES)].sort(
+            () => Math.random() - 0.5,
+          );
+          currentBombBag = [...currentBombBag, ...freshBag];
+        }
+
+        // Splice exactly maxTurns (6) out of the bag array
+        nextBombPhrases = currentBombBag.splice(0, typeInfo.maxTurns);
         nextRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy Target
       } else if (finalBossType === "wordle500") {
         const eligible500 = getEligible(
@@ -277,6 +293,7 @@ export default function useWordPool(mode) {
     setRandomIndices(nextRandomIndices);
     setMaxTurns(advanceLevel ? typeInfo.maxTurns : maxTurns);
     setBombPhrases(nextBombPhrases);
+    setBombBag(currentBombBag);
     return true;
   };
 
@@ -289,6 +306,7 @@ export default function useWordPool(mode) {
     setAvailableIndices(getAllSolutionIndices());
     setShapeBag(setup.shapeBag);
     setShapeBannedWords(setup.shapeBannedWords);
+    setBombBag(setup.bombBag);
     setBombPhrases(setup.bombPhrases);
     setIsBossGame(setup.isBoss);
     setIsMiniBossGame(setup.isMiniBoss);
