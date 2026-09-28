@@ -231,8 +231,7 @@ export default function useSurvivalActions({
           progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
         const score = isModalOpen[1] === "won" ? "WIN" : "FAIL";
 
-        const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) SHAPE BOSS - ${score}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
-
+        const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) SHAPEDLE - ${score}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
         try {
           await navigator.clipboard.writeText(shareText);
           addToast("Copied!", "success");
@@ -265,8 +264,7 @@ export default function useSurvivalActions({
         const streakText =
           progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
         const score = isModalOpen[1] === "won" ? "DEFUSED" : "EXPLODED";
-
-        const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) BOMB BOSS - ${score}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
+        const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) BOMBEDLE - ${score}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
 
         try {
           await navigator.clipboard.writeText(shareText);
@@ -315,7 +313,8 @@ export default function useSurvivalActions({
       const streakText =
         progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
 
-      const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) BOSS (${game.bossWordCount} words)\n\n${allGrids}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
+      const bossName = game.bossWordCount === 4 ? "FOURDLE" : "DUODLE";
+      const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) ${bossName}\n\n${allGrids}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
 
       try {
         await navigator.clipboard.writeText(shareText);

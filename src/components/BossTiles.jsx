@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+// components/BossTiles.jsx
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import useGameInput from "../hooks/useGameInput";
 import WordGrid from "./WordGrid";
 
@@ -20,7 +21,12 @@ export default function BossTiles({
   onWordClick,
   onWordDoubleClick,
 }) {
-  const [solutions] = useState(targetWords.map((w) => w?.toLowerCase()));
+  // FIXED: Converted from useState to useMemo so it reacts when targetWords populate asynchronously
+  const solutions = useMemo(
+    () => targetWords.map((w) => w?.toLowerCase()),
+    [targetWords],
+  );
+
   const [shake, setShake] = useState(false);
   const [bannedFlash, setBannedFlash] = useState(false);
   const [pendingFlipTurn, setPendingFlipTurn] = useState(-1);
@@ -63,6 +69,7 @@ export default function BossTiles({
     setShake(true);
     setTimeout(() => setShake(false), 500);
   }, []);
+
   const triggerBannedFlash = useCallback(() => {
     setBannedFlash(true);
     setTimeout(() => setBannedFlash(false), 2000);
@@ -95,6 +102,7 @@ export default function BossTiles({
         setPendingFlipTurn(turn);
         return true;
       }
+
       return false;
     },
     [
@@ -128,8 +136,8 @@ export default function BossTiles({
       {solutions.map((solution, wordIdx) => {
         const wordGuessesObjs = guesses.filter((g) => g.wordIndex === wordIdx);
         const isSolved = wordGuessesObjs.some((g) => g.word === solution);
-
         const gridGuesses = Array(rowCount).fill("");
+
         wordGuessesObjs.forEach((g) => {
           if (typeof g.rowNumber === "number") {
             gridGuesses[g.rowNumber] = g.word;
@@ -171,10 +179,10 @@ export default function BossTiles({
                 rowCount={rowCount}
                 gameState={gameState}
                 shake={shake}
-                lastSubmittedTurn={lastSubmittedTurn} 
+                lastSubmittedTurn={lastSubmittedTurn}
                 pendingFlipTurn={pendingFlipTurn}
                 sizeMode={sizeMode}
-                hideEmptyRowsAfterWin={true} // [FIX] تفعيل إخفاء السطور هنا فقط
+                hideEmptyRowsAfterWin={true}
                 bannedRows={bannedRows}
                 bannedFlash={bannedFlash}
               />

@@ -304,7 +304,7 @@ export default function useWordPool(mode) {
           () => Math.random() - 0.5,
         );
         nextRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy Target
-      } else if (finalBossType === "wordle500") {
+      } else if (finalBossType === "500dle") {
         const eligible500 = getEligible(
           availableIndices.filter((idx) => idx < 500),
         );
@@ -327,7 +327,7 @@ export default function useWordPool(mode) {
           !advanceLevel &&
           typeInfo.isBoss &&
           typeInfo.wordCount === 1 &&
-          finalBossType !== "wordle500" &&
+          finalBossType !== "500dle" &&
           typeInfo.category !== "shape" &&
           typeInfo.category !== "bomb"
         ) {

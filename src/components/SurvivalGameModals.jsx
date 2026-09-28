@@ -12,7 +12,6 @@ export default function SurvivalGameModals({
 }) {
   const [showModal, modalType] = isOpen;
   const renderBossWordsInline = (words = []) => words.join(" , ");
-
   const isBomb = stats.bossCategory === "bomb";
 
   // Default Base Config
@@ -57,19 +56,27 @@ export default function SurvivalGameModals({
       title: stats.isBossGame ? "BOSS DEFEATED" : "You Won",
       status: "success",
       subtitle: stats.isBossGame
-        ? stats.bossType === "wordle500"
-          ? "Boss: Wordle500"
+        ? stats.bossType === "500dle"
+          ? "Boss: 500dle"
           : stats.bossType?.startsWith("shape-")
-            ? "Boss: Shapeword"
+            ? "Boss: Shapedle"
             : isBomb
-              ? "Boss: Bomb Defused"
-              : `Boss: ${stats.bossWordCount} words`
+              ? "Boss: Bombedle Defused"
+              : stats.bossWordCount === 4
+                ? "Boss: Fourdle"
+                : "Boss: Duodle"
         : "The word was",
       highlight: stats.isBossGame
-        ? isBomb ? stats.bombPhrases.join(" - ") : renderBossWordsInline(stats.targetWords)
+        ? isBomb
+          ? stats.bombPhrases.join(" - ")
+          : renderBossWordsInline(stats.targetWords)
         : stats.targetWord,
       highlightType: stats.isBossGame ? "boss" : "normal",
-      wordsForDef: stats.isBossGame ? (isBomb ? [] : stats.targetWords) : [stats.targetWord],
+      wordsForDef: stats.isBossGame
+        ? isBomb
+          ? []
+          : stats.targetWords
+        : [stats.targetWord],
       guessesData: stats.guesses,
       customBody: stats.lastReward && (
         <>
@@ -154,7 +161,9 @@ export default function SurvivalGameModals({
       status: "warning",
       subtitle: stats.isBossGame ? "Boss Attempt Failed:" : "Attempt Failed:",
       highlight: stats.isBossGame
-        ? isBomb ? stats.bombPhrases.join(" - ") : renderBossWordsInline(stats.targetWords)
+        ? isBomb
+          ? stats.bombPhrases.join(" - ")
+          : renderBossWordsInline(stats.targetWords)
         : stats.targetWord,
       highlightType: stats.isBossGame ? "boss" : "normal",
       heartsData: {
@@ -162,7 +171,11 @@ export default function SurvivalGameModals({
         broken: 1,
         empty: Math.max(0, 5 - (stats?.hearts || 0) - 1),
       },
-      wordsForDef: stats.isBossGame ? (isBomb ? [] : stats.targetWords) : [stats.targetWord],
+      wordsForDef: stats.isBossGame
+        ? isBomb
+          ? []
+          : stats.targetWords
+        : [stats.targetWord],
       guessesData: stats.guesses,
       statCards: [
         {
@@ -184,13 +197,19 @@ export default function SurvivalGameModals({
       title: "Game Over",
       status: "error",
       subtitle: stats.isBossGame
-        ? `${stats.bossType === "wordle500" ? "Wordle500 Boss" : stats.bossType?.startsWith("shape-") ? "Shapeword Boss" : isBomb ? "Bomb Exploded" : stats.bossWordCount === 4 ? "4-Words Boss" : "2-Words Boss"} Was :`
+        ? `${stats.bossType === "500dle" ? "500dle" : stats.bossType?.startsWith("shape-") ? "Shapedle" : isBomb ? "Bombedle Exploded" : stats.bossWordCount === 4 ? "Fourdle" : "Duodle"} Was :`
         : "The word was",
       highlight: stats.isBossGame
-        ? isBomb ? stats.bombPhrases.join(" - ") : renderBossWordsInline(stats.targetWords)
+        ? isBomb
+          ? stats.bombPhrases.join(" - ")
+          : renderBossWordsInline(stats.targetWords)
         : stats.targetWord,
       highlightType: stats.isBossGame ? "boss" : "normal",
-      wordsForDef: stats.isBossGame ? (isBomb ? [] : stats.targetWords) : [stats.targetWord],
+      wordsForDef: stats.isBossGame
+        ? isBomb
+          ? []
+          : stats.targetWords
+        : [stats.targetWord],
       guessesData: stats.guesses,
       statCards: [
         {

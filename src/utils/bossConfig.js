@@ -5,19 +5,20 @@ export const DEV_SETTINGS = {
 };
 
 export const MINI_BOSS_REGISTRY = {
-  "two-word": {
-    id: "two-word",
+  duodle: {
+    id: "duodle",
     category: "multi",
     wordCount: 2,
     maxTurns: 7,
   },
-  "bomb-boss": {
-    id: "bomb-boss",
+  bombedle: {
+    id: "bombedle",
     category: "bomb",
     wordCount: 1,
     maxTurns: 6,
   },
 };
+
 export const MINI_BOSS_TYPES = Object.values(MINI_BOSS_REGISTRY);
 
 export const BOMB_PHRASES = {
@@ -434,20 +435,20 @@ export const BOMB_PHRASES = {
 };
 
 export const BOSS_REGISTRY = {
-  wordle500: {
-    id: "wordle500",
+  "500dle": {
+    id: "500dle",
     category: "special",
     wordCount: 1,
     maxTurns: 8,
   },
-  "four-word": {
-    id: "four-word",
+  fourdle: {
+    id: "fourdle",
     category: "multi",
     wordCount: 4,
     maxTurns: 10,
   },
-  "shape-boss": {
-    id: "shape-boss",
+  shapedle: {
+    id: "shapedle",
     category: "shape",
     wordCount: 1,
     maxTurns: 6,

@@ -138,7 +138,7 @@ export const getInitialSetup = (forceNew = false) => {
         () => Math.random() - 0.5,
       );
       finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy Target
-    } else if (finalBossType === "wordle500") {
+    } else if (finalBossType === "500dle") {
       const eligible500 = Array.from({ length: 500 }, (_, idx) => idx);
       finalRandom = pickRandom(eligible500);
     } else {

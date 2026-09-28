@@ -1,7 +1,10 @@
+// App.jsx
 import { Routes, Route } from "react-router";
 import Menu from "./pages/Menu";
 import Daily from "./pages/Daily";
 import Survival from "./pages/Survival";
+import PracticeMenu from "./pages/PracticeMenu";
+import PracticeGame from "./pages/PracticeGame";
 import MobileBlocker from "./components/MobileBlocker";
 import ParticleOverlay from "./components/ParticleOverlay";
 
@@ -13,6 +16,9 @@ export default function App() {
         <Route index element={<Menu />} />
         <Route path="/daily" element={<Daily />} />
         <Route path="/survival" element={<Survival />} />
+        <Route path="/practice" element={<PracticeMenu />} />
+        <Route path="/practice/:bossId" element={<PracticeGame />} />
+        <Route path="/practice/:bossId/:subId" element={<PracticeGame />} />
       </Routes>
     </MobileBlocker>
   );

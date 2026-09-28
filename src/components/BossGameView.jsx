@@ -18,7 +18,7 @@ export default function BossGameView({
   handleGameOver,
   addToast,
 }) {
-  const isWordle500Boss = game.bossType === "wordle500";
+  const isWordle500Boss = game.bossType === "500dle";
   const isShapeBoss = game.bossCategory === "shape";
   const isBombBoss = game.bossCategory === "bomb";
   const multiWordCount = game.bossWordCount || game.targetWords?.length || 0;
