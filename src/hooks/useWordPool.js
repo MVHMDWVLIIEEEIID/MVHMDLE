@@ -97,9 +97,13 @@ export default function useWordPool(mode) {
     () => getInitialSetup().shapeBannedWords,
   );
 
-  const [bombBag, setBombBag] = useSecureState(
-    `wordle-bomb-bag-${mode}`,
-    () => getInitialSetup().bombBag,
+  const [bombEasyBag, setBombEasyBag] = useSecureState(
+    `wordle-bomb-easy-bag-${mode}`,
+    () => getInitialSetup().bombEasyBag,
+  );
+  const [bombHardBag, setBombHardBag] = useSecureState(
+    `wordle-bomb-hard-bag-${mode}`,
+    () => getInitialSetup().bombHardBag,
   );
   const [bombPhrases, setBombPhrases] = useSecureState(
     `wordle-bomb-phrases-${mode}`,
@@ -195,7 +199,9 @@ export default function useWordPool(mode) {
     let nextRandom = random;
     let nextRandomIndices = randomIndices;
     let nextBombPhrases = bombPhrases;
-    let currentBombBag = [...bombBag];
+
+    let currentBombEasyBag = [...bombEasyBag];
+    let currentBombHardBag = [...bombHardBag];
 
     if (typeInfo.isBoss && typeInfo.category === "shape") {
       let currentBag = [...shapeBag];
@@ -235,16 +241,44 @@ export default function useWordPool(mode) {
         nextRandomIndices = pickDistinct(typeInfo.wordCount, eligible);
         nextRandom = null;
       } else if (typeInfo.isBoss && typeInfo.category === "bomb") {
-        // Refill the bag if there aren't enough phrases for the round
-        if (currentBombBag.length < typeInfo.maxTurns) {
-          const freshBag = [...new Set(BOMB_PHRASES)].sort(
+        const easyCount = Math.max(0, typeInfo.maxTurns - 1);
+        const hardCount = 1;
+
+        // Refill Easy Bag
+        if (currentBombEasyBag.length < easyCount) {
+          const fresh = [...new Set(BOMB_PHRASES.easy || [])].sort(
             () => Math.random() - 0.5,
           );
-          currentBombBag = [...currentBombBag, ...freshBag];
+          currentBombEasyBag = [...currentBombEasyBag, ...fresh];
         }
 
-        // Splice exactly maxTurns (6) out of the bag array
-        nextBombPhrases = currentBombBag.splice(0, typeInfo.maxTurns);
+        // Refill Hard Bag
+        if (
+          currentBombHardBag.length < hardCount &&
+          (BOMB_PHRASES.hard || []).length > 0
+        ) {
+          const fresh = [...new Set(BOMB_PHRASES.hard)].sort(
+            () => Math.random() - 0.5,
+          );
+          currentBombHardBag = [...currentBombHardBag, ...fresh];
+        }
+
+        const pickedEasy = currentBombEasyBag.splice(0, easyCount);
+        const pickedHard = currentBombHardBag.splice(0, hardCount);
+
+        // Fallback if Hard Phrases array is totally empty
+        if (pickedHard.length < hardCount) {
+          const fallback = currentBombEasyBag.splice(
+            0,
+            hardCount - pickedHard.length,
+          );
+          pickedHard.push(...fallback);
+        }
+
+        // Shuffle the 5 easy and 1 hard
+        nextBombPhrases = [...pickedEasy, ...pickedHard].sort(
+          () => Math.random() - 0.5,
+        );
         nextRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy Target
       } else if (finalBossType === "wordle500") {
         const eligible500 = getEligible(
@@ -293,7 +327,8 @@ export default function useWordPool(mode) {
     setRandomIndices(nextRandomIndices);
     setMaxTurns(advanceLevel ? typeInfo.maxTurns : maxTurns);
     setBombPhrases(nextBombPhrases);
-    setBombBag(currentBombBag);
+    setBombEasyBag(currentBombEasyBag);
+    setBombHardBag(currentBombHardBag);
     return true;
   };
 
@@ -306,7 +341,8 @@ export default function useWordPool(mode) {
     setAvailableIndices(getAllSolutionIndices());
     setShapeBag(setup.shapeBag);
     setShapeBannedWords(setup.shapeBannedWords);
-    setBombBag(setup.bombBag);
+    setBombEasyBag(setup.bombEasyBag);
+    setBombHardBag(setup.bombHardBag);
     setBombPhrases(setup.bombPhrases);
     setIsBossGame(setup.isBoss);
     setIsMiniBossGame(setup.isMiniBoss);

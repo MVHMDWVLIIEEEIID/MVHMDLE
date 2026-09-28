@@ -201,47 +201,59 @@ export const generateAndLogShapeData = () => {
 
 export const generateAndLogBombPhrases = () => {
   console.log(
-    "%c[BOMB PHRASES] Validating phrases for minimum solvability...",
+    "%c[BOMB PHRASES] Validating phrases and classifying by difficulty...",
     "color: #ffd500; font-weight: bold;",
   );
 
   const invalid = [];
-  const valid = [];
+  const validEasy = [];
+  const validHard = [];
 
   // Clean duplicates out of both arrays before processing
   const uniqueSolutionWords = [...new Set(data.slice(0, 2315))];
-  const uniquePhrases = [...new Set(BOMB_PHRASES)];
+
+  // If BOMB_PHRASES is an object, flatten it for testing
+  const phrasesToTest = Array.isArray(BOMB_PHRASES)
+    ? BOMB_PHRASES
+    : [
+        ...new Set([
+          ...(BOMB_PHRASES.easy || []),
+          ...(BOMB_PHRASES.hard || []),
+        ]),
+      ];
+
+  const uniquePhrases = [...new Set(phrasesToTest)];
 
   uniquePhrases.forEach((phrase) => {
-    // Check if the exact string exists anywhere in the word
+    // Check if the exact consecutive string exists in the word
     const matches = uniqueSolutionWords.filter((w) => w.includes(phrase));
 
-    // Validate that it exists in at least 2 unique words
+    // Check if the phrase is present in at least 2 unique words
     if (matches.length < 2) {
       invalid.push({ phrase, count: matches.length, matches });
     } else {
-      valid.push(phrase);
+      // Difficulty check: contains j, q, x, z OR y not at the end of the phrase
+      if (/[jqxz]/.test(phrase) || /y(?!$)/.test(phrase)) {
+        validHard.push(phrase);
+      } else {
+        validEasy.push(phrase);
+      }
     }
   });
 
   if (invalid.length > 0) {
     console.log(
-      "%c[BOMB PHRASES] Found unsolvable or hard phrases (Removed from final array):",
+      "%c[BOMB PHRASES] Found unsolvable or hard phrases (Removed from final object):",
       "color: #da032a; font-weight: bold;",
       invalid,
-    );
-  } else {
-    console.log(
-      "%c[BOMB PHRASES] All phrases are perfectly solvable!",
-      "color: #00e196; font-weight: bold;",
     );
   }
 
   console.log(
-    `%c[BOMB PHRASES] Validated ${valid.length} unique phrases! Right-click the array below and select 'Copy object' to paste into bossConfig.js:`,
+    `%c[BOMB PHRASES] Validated! Right-click the object below and select 'Copy object' to paste into bossConfig.js:`,
     "color: #00e196; font-weight: bold;",
   );
-  console.log(valid);
+  console.log({ easy: validEasy, hard: validHard });
 };
 
 export const generateAndLogUniqueWords = () => {
