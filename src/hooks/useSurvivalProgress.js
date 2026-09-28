@@ -38,9 +38,15 @@ export default function useSurvivalProgress(mode) {
   const RUN_STATS_KEY = `wordle-run-stats-${mode}`;
   const RUN_COMPLETED_KEY = `wordle-run-completed-${mode}`;
 
-  // --- NEW: Easter Egg Claim State ---
+  // Easter Egg Claim State
   const [bonusClaimed, setBonusClaimed] = useSecureState(
     `wordle-bonus-claim-${mode}`,
+    false,
+  );
+
+  // NEW: Bomb Boss Warning State
+  const [hasSeenBombWarning, setHasSeenBombWarning] = useSecureState(
+    `wordle-bomb-warning-${mode}`,
     false,
   );
 
@@ -124,6 +130,7 @@ export default function useSurvivalProgress(mode) {
   const resetRoundInfo = () => {
     setHintsUsedInRound({});
     setLastReward(null);
+    setHasSeenBombWarning(false); // Reset warning for the next bomb boss encounter
   };
 
   const resetAllProgress = () => {
@@ -140,9 +147,8 @@ export default function useSurvivalProgress(mode) {
     setBoss500Count(0);
     setRunStats(DEFAULT_RUN_STATS);
     setRunCompleted(false);
-
-    // --- NEW: Reset Easter Egg on new run ---
     setBonusClaimed(false);
+    setHasSeenBombWarning(false);
   };
 
   return {
@@ -178,5 +184,7 @@ export default function useSurvivalProgress(mode) {
     resetAllProgress,
     bonusClaimed,
     setBonusClaimed,
+    hasSeenBombWarning, // Exported to Survival.jsx
+    setHasSeenBombWarning,
   };
 }

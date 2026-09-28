@@ -125,7 +125,6 @@ const TargetTooltip = ({ word, theme, children }) => {
   return (
     <div
       ref={triggerRef}
-      // FIXED: Removed mt-2 and flex-col so it renders inline accurately without pushing words down
       className="inline-flex items-center cursor-help"
       onMouseEnter={() => {
         updateCoords();
@@ -210,9 +209,13 @@ export default function Modal({
         if (e.repeat) return;
         e.preventDefault();
         e.stopPropagation();
-        const primaryBtn = buttons.find((b) =>
-          ["success", "primary", "warning", "danger"].includes(b.variant),
-        );
+
+        // FIXED: Prioritize positive progression (success, warning) before destructive actions (danger)
+        const primaryBtn =
+          buttons.find((b) =>
+            ["success", "primary", "warning"].includes(b.variant),
+          ) || buttons.find((b) => b.variant === "danger");
+
         if (primaryBtn?.onClick) primaryBtn.onClick();
       } else if (e.key === "Escape") {
         e.preventDefault();
@@ -267,13 +270,11 @@ export default function Modal({
 
       return (
         <div
-          // FIXED: Smaller font size for bombs so it strictly stays on one line
           className={`${isBomb ? "text-xl tracking-widest" : "text-2xl"} font-black text-gameLight uppercase ${theme.drop} text-center mb-4 mt-2 flex justify-center items-center leading-none whitespace-nowrap`}
         >
           <span className="mr-1">(</span>
           {words.map((w, i) => (
             <React.Fragment key={i}>
-              {/* FIXED: No tooltip wrapper for bombs */}
               {isBomb ? (
                 <span className="mx-1.5">{w.trim()}</span>
               ) : (
@@ -301,6 +302,7 @@ export default function Modal({
       </TargetTooltip>
     );
   };
+
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ease-out ${visibilityClass}`}

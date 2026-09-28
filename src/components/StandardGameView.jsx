@@ -1,8 +1,9 @@
+// components/StandardGameView.jsx
 import Shop from "./Shop";
 import Tiles from "./Tiles";
 import HistoryPanel from "./HistoryPanel";
 import Keyboard from "./Keyboard";
-import GameBoardLayout from "./GameBoardLayout"; // [REFACTORED]
+import GameBoardLayout from "./GameBoardLayout";
 
 export default function StandardGameView({
   game,
@@ -62,7 +63,13 @@ export default function StandardGameView({
           rowCount={game.maxTurns}
         />
       }
-      rightPanel={<HistoryPanel history={progress.hintHistory} />}
+      rightPanel={
+        <HistoryPanel
+          history={progress.hintHistory}
+          currentGameCount={progress.gamesPlayed}
+          gameState={game.gameState} // <--- Passed the exact game state here
+        />
+      }
       keyboard={
         <Keyboard letters={game.letters} lastChanged={game.lastChanged} />
       }

@@ -17,7 +17,6 @@ export default function useSurvivalActions({
 }) {
   const RESULT_ANIMATION_MS = 1500;
   const MAX_HEARTS = 5;
-
   const transitionLockRef = useRef(false);
 
   const withTransitionLock = (fn) => {
@@ -38,7 +37,6 @@ export default function useSurvivalActions({
       else game.retryCurrentGame();
       progress.resetRoundInfo();
       setGameResetKey((prev) => prev + 1);
-
       if (advanceLevel) progress.setGamesPlayed((prev) => prev + 1);
       setIsModalOpen([false, "playing"]);
     });
@@ -79,8 +77,8 @@ export default function useSurvivalActions({
   const handleGameOver = (result, guessCount) => {
     document.activeElement.blur();
     window.focus();
-
     const now = Date.now();
+
     if (result === "won" || result === "lost") {
       modalReadyAtRef.current = now + RESULT_ANIMATION_MS;
     }
@@ -105,7 +103,6 @@ export default function useSurvivalActions({
             progress.setBoss4Count(rewards.newBoss4Count);
           if (game.bossWordCount === 1)
             progress.setBoss500Count(rewards.newBoss500Count);
-
           progress.setHearts(rewards.newHearts);
         }
 
@@ -114,10 +111,16 @@ export default function useSurvivalActions({
           total: rewards.grandTotal,
           breakdown: rewards.breakdown,
         });
-
         progress.setStreak((prev) => prev + 1);
         setIsModalOpen([true, "won"]);
         handleConfetti();
+
+        const gameTypeStr =
+          game.isBossGame && !game.isMiniBossGame
+            ? "Boss"
+            : game.isMiniBossGame
+              ? "Mini Boss"
+              : "Normal";
 
         progress.setHintHistory((prev) => [
           ...prev,
@@ -125,15 +128,23 @@ export default function useSurvivalActions({
             type: "game-marker",
             result: "won",
             gameCount: progress.gamesPlayed,
+            earned: rewards.grandTotal,
+            gameType: gameTypeStr,
           },
         ]);
       } else if (result === "lost") {
         setStreakBeforeLastLoss(progress.streak);
         progress.addLoss();
-
         const newHearts = Math.max(0, progress.hearts - 1);
         progress.setHearts(newHearts);
         progress.setStreak(0);
+
+        const gameTypeStr =
+          game.isBossGame && !game.isMiniBossGame
+            ? "Boss"
+            : game.isMiniBossGame
+              ? "Mini Boss"
+              : "Normal";
 
         progress.setHintHistory((prev) => [
           ...prev,
@@ -141,6 +152,8 @@ export default function useSurvivalActions({
             type: "game-marker",
             result: "lost",
             gameCount: progress.gamesPlayed,
+            earned: 0,
+            gameType: gameTypeStr,
           },
         ]);
 
@@ -232,6 +245,7 @@ export default function useSurvivalActions({
         const score = isModalOpen[1] === "won" ? "WIN" : "FAIL";
 
         const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) SHAPEDLE - ${score}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
+
         try {
           await navigator.clipboard.writeText(shareText);
           addToast("Copied!", "success");
@@ -264,6 +278,7 @@ export default function useSurvivalActions({
         const streakText =
           progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
         const score = isModalOpen[1] === "won" ? "DEFUSED" : "EXPLODED";
+
         const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) BOMBEDLE - ${score}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
 
         try {
@@ -278,7 +293,6 @@ export default function useSurvivalActions({
       // --- MULTI-WORD BOSS SHARE ---
       const gridsByWord = game.targetWords.map((word, wordIdx) => {
         const wordGuesses = game.guesses.filter((g) => g.wordIndex === wordIdx);
-
         return wordGuesses.map((guessObj) => {
           const splitSolution = word.toLowerCase().split("");
           const splitGuess = guessObj.word.toLowerCase().split("");
@@ -300,20 +314,20 @@ export default function useSurvivalActions({
               }
             }
           });
+
           return statuses.join("");
         });
       });
 
       const maxRows = Math.max(0, ...gridsByWord.map((rows) => rows.length));
-
       const allGrids = Array.from({ length: maxRows }, (_, rowIdx) =>
         gridsByWord.map((rows) => rows[rowIdx] || "⬛⬛⬛⬛⬛").join("   "),
       ).join("\n");
 
       const streakText =
         progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
-
       const bossName = game.bossWordCount === 4 ? "FOURDLE" : "DUODLE";
+
       const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) ${bossName}\n\n${allGrids}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
 
       try {
@@ -331,7 +345,6 @@ export default function useSurvivalActions({
             typeof guess === "string"
               ? guess.toLowerCase().split("")
               : guess.word.toLowerCase().split("");
-
           const statuses = Array(5).fill("⬛");
 
           splitGuess.forEach((char, i) => {

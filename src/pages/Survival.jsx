@@ -17,6 +17,7 @@ import SurvivalGameModals from "../components/SurvivalGameModals";
 import StandardGameView from "../components/StandardGameView";
 import BossGameView from "../components/BossGameView";
 import ShapeDictionaryModal from "../components/ShapeDictionaryModal";
+import WarningModal from "../components/WarningModal"; // <--- Import new component
 
 // Hooks
 import useSurvivalGame from "../hooks/useSurvivalGame";
@@ -28,7 +29,6 @@ import useToast from "../hooks/useToast";
 export default function Survival({ mode = "survival" }) {
   const navigate = useNavigate();
   const { toasts, addToast } = useToast();
-
   const [gameResetKey, setGameResetKey] = useState(0);
   const [streakBeforeLastLoss, setStreakBeforeLastLoss] = useState(0);
   const modalReadyAtRef = useRef(0);
@@ -103,6 +103,13 @@ export default function Survival({ mode = "survival" }) {
     );
   }
 
+  // --- NEW: Open Warning Modal if it's a Bomb Boss, user hasn't seen it yet, and game is active
+  const isBombWarningOpen =
+    game.isBossGame &&
+    game.bossCategory === "bomb" &&
+    !progress.hasSeenBombWarning &&
+    game.gameState === "playing";
+
   return (
     <div className="flex flex-col h-screen relative overflow-hidden bg-gameDark text-white">
       <Toast toasts={toasts} />
@@ -126,6 +133,7 @@ export default function Survival({ mode = "survival" }) {
           bossKeyboardLineColors={bossKeyboardLineColors}
           handleGameOver={handleGameOver}
           addToast={addToast}
+          isBombTimerPaused={isBombWarningOpen} // <--- Pass the pause flag
         />
       ) : (
         <StandardGameView
@@ -163,7 +171,7 @@ export default function Survival({ mode = "survival" }) {
           >
             Wipe Data
           </button>
-          
+
           <button
             onClick={() => {
               generateAndLogBombPhrases();
@@ -223,6 +231,20 @@ export default function Survival({ mode = "survival" }) {
         </>
       )}
 
+      {/* --- NEW: The Warning Modal --- */}
+      <WarningModal
+        isOpen={isBombWarningOpen}
+        onClose={() => {
+          progress.setHasSeenBombWarning(true);
+          document.activeElement.blur();
+          window.focus();
+        }}
+        title="BOMBEDLE DETECTED"
+        message="Defuse the bomb before time runs out! Each correct guess requires the target phrase."
+        buttonText="Roger That"
+        theme="danger"
+      />
+
       <SurvivalGameModals
         isOpen={isModalOpen}
         onClose={() => {
@@ -234,7 +256,8 @@ export default function Survival({ mode = "survival" }) {
           const modalType = isModalOpen[1];
           if (modalType === "game-over") return handleFullReset();
           if (modalType === "lost-heart") {
-            if (game.isBossGame || game.isMiniBossGame) return handleRetryBoss();
+            if (game.isBossGame || game.isMiniBossGame)
+              return handleRetryBoss();
             return handleResetWrapper(false);
           }
           return handleResetWrapper();

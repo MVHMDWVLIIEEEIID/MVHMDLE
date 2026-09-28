@@ -17,6 +17,7 @@ export default function BossGameView({
   bossKeyboardLineColors,
   handleGameOver,
   addToast,
+  isBombTimerPaused, // <--- Add prop here
 }) {
   const isWordle500Boss = game.bossType === "500dle";
   const isShapeBoss = game.bossCategory === "shape";
@@ -63,10 +64,12 @@ export default function BossGameView({
       for (let cIdx = 0; cIdx < 5; cIdx++) {
         const char = guessStr[cIdx];
         if (!char) continue;
+
         let color = wordle500State.manualColors[rIdx]?.[cIdx];
         if (isWinningGuess) {
           color = "green";
         }
+
         const currentHighest = wordle500LetterColors[char];
         if (color === "green") {
           wordle500LetterColors[char] = "green";
@@ -108,6 +111,7 @@ export default function BossGameView({
                 finalColorClass = "bg-gameGrey border-gameGrey text-gameDark";
               }
             }
+
             return [
               key,
               {
@@ -146,6 +150,7 @@ export default function BossGameView({
             bombTimeLeft={game.bombTimeLeft}
             setBombTimeLeft={game.setBombTimeLeft}
             onTimeUp={() => game.triggerBombTimeUp(handleGameOver)}
+            isPaused={isBombTimerPaused} // <--- Pass it down
           />
         ) : null
       }
