@@ -146,25 +146,37 @@ export default function Survival({ mode = "survival" }) {
         />
       )}
 
-      {/* LEFT: Guide Button */}
-      <button
-        onClick={() => {
-          setIsGuideOpen(true);
-          document.activeElement.blur();
-          window.focus();
-        }}
-        className="absolute bottom-4 left-4 bg-gameBlue/20 hover:bg-gameBlue text-white/50 hover:text-white text-[10px] font-bold py-2 px-3 rounded-lg border border-gameBlue/30 transition-all z-50 uppercase tracking-widest"
-      >
-        Guide
-      </button>
+      {/* Guide Button FAB - Right Aligned & Blue */}
+      <div className="absolute bottom-4 right-4 z-40 flex flex-col items-end">
+        <button
+          onClick={() => {
+            setIsGuideOpen(true);
+            document.activeElement.blur();
+            window.focus();
+          }}
+          className="flex flex-col items-center justify-center w-16 h-16 bg-gameBlue/90 hover:bg-gameBlue text-gameDark border-2 border-gameBlue rounded-2xl shadow-[0_0_15px_rgba(0,153,255,0.3)] hover:shadow-[0_0_20px_rgba(0,153,255,0.5)] transition-all active:scale-95"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="w-6 h-6 mb-0.5"
+          >
+            <path d="M11.25 4.533A9.707 9.707 0 0 0 6 3a9.735 9.735 0 0 0-3.25.555.75.75 0 0 0-.5.707v14.25a.75.75 0 0 0 1 .707A8.237 8.237 0 0 1 6 18.75c1.995 0 3.938.618 5.5 1.765.15.111.35.111.5 0 1.562-1.147 3.505-1.765 5.5-1.765 1.042 0 2.062.196 3.024.56.55.209 1.127-.19 1.127-.773V4.262a.75.75 0 0 0-.5-.707A9.735 9.735 0 0 0 18 3a9.707 9.707 0 0 0-5.25 1.533Z" />
+          </svg>
+          <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+            Guide
+          </span>
+        </button>
+      </div>
 
-      {/* RIGHT: Debug FAB Menu (Only visible in Development) */}
+      {/* RIGHT: Debug FAB Menu moved to Top Right */}
       {import.meta.env.DEV && (
-        <div className="dropdown dropdown-top dropdown-end absolute bottom-16 right-4 z-50">
+        <div className="dropdown dropdown-bottom dropdown-end absolute top-15 right-4 z-50">
           <div
             tabIndex={0}
             role="button"
-            className="flex items-center justify-center w-10 h-10 bg-gameRed/20 hover:bg-gameRed text-gameRed hover:text-gameDark border border-gameRed/30 rounded-xl transition-all shadow-lg active:scale-95"
+            className="flex items-center justify-center w-10 h-10 bg-gameRed hover:opacity-100 opacity-75 text-black hover:text-gameDark border border-gameRed/30 rounded-xl transition-all shadow-lg active:scale-95"
             title="Debug Menu"
           >
             <svg
@@ -189,7 +201,7 @@ export default function Survival({ mode = "survival" }) {
           </div>
           <ul
             tabIndex={0}
-            className="dropdown-content menu mb-3 p-2 shadow-[0_0_20px_rgba(255,0,0,0.15)] bg-[#0a0a0a] border-2 border-gameRed/30 rounded-2xl w-48 gap-1.5 z-[100]"
+            className="dropdown-content menu mt-3 p-2 shadow-[0_0_20px_rgba(255,0,0,0.15)] bg-[#0a0a0a] border-2 border-gameRed/30 rounded-2xl w-48 gap-1.5 z-[100]"
           >
             <li>
               <button
@@ -197,7 +209,7 @@ export default function Survival({ mode = "survival" }) {
                   localStorage.clear();
                   window.location.reload();
                 }}
-                className="text-[10px] font-bold uppercase tracking-widest text-gameRed hover:bg-gameRed/20 py-2.5"
+                className="text-[10px] font-bold uppercase tracking-widest text-gameRed hover:bg-gameRed/20 py-2.5 justify-center text-center w-full"
               >
                 Wipe Data
               </button>
@@ -205,7 +217,7 @@ export default function Survival({ mode = "survival" }) {
             <li>
               <button
                 onClick={() => generateAndLogBombPhrases()}
-                className="text-[10px] font-bold uppercase tracking-widest text-white/70 hover:bg-white/10 hover:text-white py-2.5"
+                className="text-[10px] font-bold uppercase tracking-widest text-white/70 hover:bg-white/10 hover:text-white py-2.5 justify-center text-center w-full"
               >
                 Log Bomb Phrases
               </button>
@@ -213,7 +225,7 @@ export default function Survival({ mode = "survival" }) {
             <li>
               <button
                 onClick={() => generateAndLogShapeData()}
-                className="text-[10px] font-bold uppercase tracking-widest text-gameGreen hover:bg-gameGreen/20 py-2.5"
+                className="text-[10px] font-bold uppercase tracking-widest text-gameGreen hover:bg-gameGreen/20 py-2.5 justify-center text-center w-full"
               >
                 Log Shapes JSON
               </button>
@@ -221,7 +233,7 @@ export default function Survival({ mode = "survival" }) {
             <li>
               <button
                 onClick={() => generateAndLogUniqueWords()}
-                className="text-[10px] font-bold uppercase tracking-widest text-gameBlue hover:bg-gameBlue/20 py-2.5"
+                className="text-[10px] font-bold uppercase tracking-widest text-gameBlue hover:bg-gameBlue/20 py-2.5 justify-center text-center w-full"
               >
                 Log Words JSON
               </button>
@@ -233,7 +245,7 @@ export default function Survival({ mode = "survival" }) {
                   document.activeElement.blur();
                   window.focus();
                 }}
-                className="text-[10px] font-bold uppercase tracking-widest text-gameYellow hover:bg-gameYellow/20 py-2.5"
+                className="text-[10px] font-bold uppercase tracking-widest text-gameYellow hover:bg-gameYellow/20 py-2.5 justify-center text-center w-full"
               >
                 Shapes Dict
               </button>
@@ -244,7 +256,7 @@ export default function Survival({ mode = "survival" }) {
                   progress.setCurrency((prev) => prev + 1000000);
                   addToast("Added $1,000,000!", "success");
                 }}
-                className="text-[10px] font-bold uppercase tracking-widest text-gameGreen hover:bg-gameGreen/20 py-2.5"
+                className="text-[10px] font-bold uppercase tracking-widest text-gameGreen hover:bg-gameGreen/20 py-2.5 justify-center text-center w-full"
               >
                 +1M Cash
               </button>

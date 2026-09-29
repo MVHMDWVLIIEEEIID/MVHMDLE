@@ -30,8 +30,7 @@ export default function Shop({
   const MAX_HEARTS = 5;
 
   return (
-    // Swapped h-72 for flex-1 so it takes up exactly the remaining modal height
-    <div className="flex-1 w-full text-gameLight flex flex-col font-sans overflow-y-auto clean-scroll pr-1 pb-2">
+    <div className="flex-1 w-full text-gameLight flex flex-col font-sans overflow-y-auto clean-scroll pr-1 pb-1">
       {Object.entries(hintsArray).map(([name, data]) => {
         const usedCount = hintsUsedInRound[name] || 0;
         const totalBought = data.bought || 0;
@@ -75,21 +74,20 @@ export default function Shop({
             key={name}
             onClick={() => onBuyHint(name, currentPrice)}
             disabled={isDisabled}
-            // Made rows taller (min-h-[4.5rem]) and increased vertical padding
-            className={`group w-full border-b border-white/5 px-3 py-3 transition-all duration-200 flex flex-row items-center justify-between min-h-[4.5rem] relative
+            // Reduced padding and minimum height to squeeze the rows together
+            className={`group w-full border-b border-white/5 px-2 py-2 transition-all duration-200 flex flex-row items-center justify-between min-h-[3.5rem] relative
               ${!isDisabled ? "hover:bg-white/5 active:bg-white/10 cursor-pointer rounded-xl" : "opacity-30 cursor-not-allowed"}
             `}
           >
             {/* Highlight Bar */}
             {!isDisabled && (
-              <div className="absolute left-0 top-3 bottom-3 w-1 bg-gameLight scale-y-0 group-hover:scale-y-100 transition-transform duration-200 rounded-full" />
+              <div className="absolute left-0 top-2 bottom-2 w-1 bg-gameLight scale-y-0 group-hover:scale-y-100 transition-transform duration-200 rounded-full" />
             )}
 
             {/* LEFT SIDE: Name & Description */}
-            <div className="flex flex-col items-start gap-1 flex-1 min-w-0 mr-4 ml-2">
+            <div className="flex flex-col items-start gap-0.5 flex-1 min-w-0 mr-2 ml-1.5">
               <span
-                // Increased text size from text-[11px] to text-sm
-                className={`text-sm font-black uppercase tracking-wider truncate w-full text-left transition-colors ${
+                className={`text-xs font-black uppercase tracking-wider truncate w-full text-left transition-colors ${
                   !isDisabled
                     ? "text-white group-hover:text-gameLight"
                     : "text-white/40"
@@ -97,10 +95,7 @@ export default function Shop({
               >
                 {name}
               </span>
-              <p
-                // Increased text size from text-[9px] to text-[10px], allowed multiple lines
-                className="text-[10px] text-white/50 leading-tight uppercase tracking-tight font-bold text-left w-full break-words whitespace-normal"
-              >
+              <p className="text-[8.5px] text-white/50 leading-tight uppercase tracking-tight font-bold text-left w-full break-words whitespace-normal">
                 {data.desc}
               </p>
             </div>
@@ -108,8 +103,7 @@ export default function Shop({
             {/* RIGHT SIDE: Price & Level Stack */}
             <div className="flex flex-col items-end justify-center shrink-0">
               <span
-                // Increased text size and padding for price
-                className={`text-xs font-mono font-bold px-2 py-1 rounded mb-1 ${
+                className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded mb-0.5 ${
                   canAfford
                     ? "bg-green-500/10 text-green-500"
                     : "bg-red-500/10 text-red-500"
@@ -119,7 +113,7 @@ export default function Shop({
               </span>
               {/* Level Display */}
               {data.bought > 0 && (
-                <span className="text-[9px] text-gameYellow/80 font-bold uppercase tracking-wider">
+                <span className="text-[8px] text-gameYellow/80 font-bold uppercase tracking-wider">
                   ({data.bought} times)
                 </span>
               )}
