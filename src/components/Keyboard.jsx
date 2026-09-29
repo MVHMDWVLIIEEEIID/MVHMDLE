@@ -1,3 +1,5 @@
+// components/Keyboard.jsx
+
 export default function Keyboard({
   letters,
   lastChanged,
@@ -5,6 +7,7 @@ export default function Keyboard({
   bossWordCount = 0,
   selectedView = "all",
   onSelectedViewChange,
+  indicators = {},
 }) {
   if (!letters || typeof letters !== "object") return null;
 
@@ -36,7 +39,38 @@ export default function Keyboard({
     const lines = lineColorsByLetter[letter] || [];
     const showLines = lines.length > 0 && /^[a-z]$/i.test(letter);
 
-    // محتوى الزر
+    // --- INDICATOR LOGIC ---
+    const ind = indicators[letter];
+    let displayLabel = ind?.label || "";
+    let displayClass = ind?.className || "";
+
+    // Apply iconography and strip transparency
+    if (ind && !displayLabel) {
+      if (displayClass.includes("bg-gameYellow")) {
+        displayLabel = "?";
+        displayClass = displayClass.replace(
+          "text-transparent",
+          "text-gameDark",
+        );
+      } else if (displayClass.includes("bg-gameGrey")) {
+        displayLabel = "x";
+        displayClass = displayClass.replace(
+          "text-transparent",
+          "text-gameDark",
+        );
+      }
+    }
+
+    const indBadge = ind ? (
+      <span
+        // FIXED: Changed from `-top-1.5 -right-1.5` to `top-1 right-1` to sit fully inside the key
+        className={`absolute -top-0.75 -right-0.75 rounded-full flex items-center justify-center font-black z-50 ${displayClass} min-h-[18px] min-w-[18px] border-[2.5px] border-black text-[10px] lowercase ${displayLabel === "?" ? "pt-0.25" : ""} ${displayLabel === "x" ? "text-[11px] pb-[1px]" : ""}`}
+        style={{ lineHeight: 1 }}
+      >
+        {displayLabel}
+      </span>
+    ) : null;
+
     const keyContent = (
       <>
         {showLines && (
@@ -44,12 +78,14 @@ export default function Keyboard({
             {lines.map((lineColor, idx) => (
               <div
                 key={`${letter}-line-${idx}`}
-                // [FIX] إزالة الـ Fallback للاعتماد على اللون الدقيق لكل قسم فقط
                 className={`flex-1 h-full ${lineColor} ${idx < lines.length - 1 ? "border-r border-black/25" : ""}`}
               />
             ))}
           </div>
         )}
+
+        {indBadge}
+
         <span className="relative z-10 text-2xl font-bold leading-none">
           {letter === "enter" ? "Back" : letter === "back" ? "Enter" : letter}
         </span>
@@ -71,7 +107,7 @@ export default function Keyboard({
         <button
           key={uniqueKey}
           {...buttonProps}
-          className={`${baseStyle} aspect-square w-14 relative overflow-hidden flex items-center justify-center`}
+          className={`${baseStyle} aspect-square w-14 relative flex items-center justify-center`}
         >
           {keyContent}
         </button>,
@@ -81,7 +117,7 @@ export default function Keyboard({
         <button
           key={uniqueKey}
           {...buttonProps}
-          className={`${baseStyle} h-14 ${keyData.big ? "flex-1.5 px-4" : "flex-1"} relative overflow-hidden flex items-center justify-center`}
+          className={`${baseStyle} h-14 ${keyData.big ? "flex-1.5 px-4" : "flex-1"} relative flex items-center justify-center`}
         >
           {keyContent}
         </button>,
@@ -108,11 +144,10 @@ export default function Keyboard({
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center pt-2 px-2 pb-1">
       <div className="flex">{lettersRow1}</div>
       <div className="flex justify-center">{lettersRow2}</div>
       <div className="flex w-full justify-center">{lettersRow3}</div>
-
       {bossWordCount > 1 && typeof onSelectedViewChange === "function" && (
         <div className="mt-2 flex items-center justify-center rounded-md border border-gameLight/25 bg-black/30 p-1">
           {selectorItems.map((item) => {

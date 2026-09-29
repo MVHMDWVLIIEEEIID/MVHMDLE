@@ -17,7 +17,7 @@ import SurvivalGameModals from "../components/SurvivalGameModals";
 import StandardGameView from "../components/StandardGameView";
 import BossGameView from "../components/BossGameView";
 import ShapeDictionaryModal from "../components/ShapeDictionaryModal";
-import WarningModal from "../components/WarningModal"; // <--- Import new component
+import WarningModal from "../components/WarningModal";
 
 // Hooks
 import useSurvivalGame from "../hooks/useSurvivalGame";
@@ -103,7 +103,6 @@ export default function Survival({ mode = "survival" }) {
     );
   }
 
-  // --- NEW: Open Warning Modal if it's a Bomb Boss, user hasn't seen it yet, and game is active
   const isBombWarningOpen =
     game.isBossGame &&
     game.bossCategory === "bomb" &&
@@ -133,7 +132,7 @@ export default function Survival({ mode = "survival" }) {
           bossKeyboardLineColors={bossKeyboardLineColors}
           handleGameOver={handleGameOver}
           addToast={addToast}
-          isBombTimerPaused={isBombWarningOpen} // <--- Pass the pause flag
+          isBombTimerPaused={isBombWarningOpen}
         />
       ) : (
         <StandardGameView
@@ -159,67 +158,98 @@ export default function Survival({ mode = "survival" }) {
         Guide
       </button>
 
-      {/* RIGHT: Debug Buttons (Only visible in Development) */}
+      {/* RIGHT: Debug FAB Menu (Only visible in Development) */}
       {import.meta.env.DEV && (
-        <>
-          <button
-            onClick={() => {
-              localStorage.clear();
-              window.location.reload();
-            }}
-            className="absolute bottom-4 right-4 bg-gameRed/20 hover:bg-gameRed text-white/50 hover:text-white text-[10px] font-bold py-2 px-3 rounded-lg border border-gameRed/30 transition-all z-50 uppercase tracking-widest"
+        <div className="dropdown dropdown-top dropdown-end absolute bottom-16 right-4 z-50">
+          <div
+            tabIndex={0}
+            role="button"
+            className="flex items-center justify-center w-10 h-10 bg-gameRed/20 hover:bg-gameRed text-gameRed hover:text-gameDark border border-gameRed/30 rounded-xl transition-all shadow-lg active:scale-95"
+            title="Debug Menu"
           >
-            Wipe Data
-          </button>
-
-          <button
-            onClick={() => {
-              generateAndLogBombPhrases();
-            }}
-            className="absolute bottom-16 right-4 bg-gameRed/20 hover:bg-gameRed text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameRed/30 transition-all z-50 uppercase tracking-widest"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5"
+            >
+              <path d="M8 2v4" />
+              <path d="M16 2v4" />
+              <path d="M12 12v.01" />
+              <path d="M19 9h-2" />
+              <path d="M7 9H5" />
+              <path d="M19 14h-2" />
+              <path d="M7 14H5" />
+              <path d="M12 22c-3.31 0-6-2.69-6-6V9a6 6 0 0 1 12 0v7c0 3.31-2.69 6-6 6z" />
+            </svg>
+          </div>
+          <ul
+            tabIndex={0}
+            className="dropdown-content menu mb-3 p-2 shadow-[0_0_20px_rgba(255,0,0,0.15)] bg-[#0a0a0a] border-2 border-gameRed/30 rounded-2xl w-48 gap-1.5 z-[100]"
           >
-            Log Bomb Phrases
-          </button>
-
-          <button
-            onClick={() => {
-              generateAndLogShapeData();
-            }}
-            className="absolute bottom-28 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
-          >
-            Log Shapes JSON
-          </button>
-
-          <button
-            onClick={() => {
-              generateAndLogUniqueWords();
-            }}
-            className="absolute bottom-40 right-4 bg-gameBlue/20 hover:bg-gameBlue text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameBlue/30 transition-all z-50 uppercase tracking-widest"
-          >
-            Log Words JSON
-          </button>
-
-          <button
-            onClick={() => {
-              setIsShapeModalOpen(true);
-              document.activeElement.blur();
-              window.focus();
-            }}
-            className="absolute bottom-52 right-4 bg-gameYellow/20 hover:bg-gameYellow text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameYellow/30 transition-all z-50 uppercase tracking-widest"
-          >
-            Shapes Dict
-          </button>
-
-          <button
-            onClick={() => {
-              progress.setCurrency((prev) => prev + 1000000);
-              addToast("Added $1,000,000!", "success");
-            }}
-            className="absolute bottom-64 right-4 bg-gameGreen/20 hover:bg-gameGreen text-white/50 hover:text-gameDark text-[10px] font-bold py-2 px-3 rounded-lg border border-gameGreen/30 transition-all z-50 uppercase tracking-widest"
-          >
-            +1M Cash
-          </button>
-
+            <li>
+              <button
+                onClick={() => {
+                  localStorage.clear();
+                  window.location.reload();
+                }}
+                className="text-[10px] font-bold uppercase tracking-widest text-gameRed hover:bg-gameRed/20 py-2.5"
+              >
+                Wipe Data
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => generateAndLogBombPhrases()}
+                className="text-[10px] font-bold uppercase tracking-widest text-white/70 hover:bg-white/10 hover:text-white py-2.5"
+              >
+                Log Bomb Phrases
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => generateAndLogShapeData()}
+                className="text-[10px] font-bold uppercase tracking-widest text-gameGreen hover:bg-gameGreen/20 py-2.5"
+              >
+                Log Shapes JSON
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => generateAndLogUniqueWords()}
+                className="text-[10px] font-bold uppercase tracking-widest text-gameBlue hover:bg-gameBlue/20 py-2.5"
+              >
+                Log Words JSON
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  setIsShapeModalOpen(true);
+                  document.activeElement.blur();
+                  window.focus();
+                }}
+                className="text-[10px] font-bold uppercase tracking-widest text-gameYellow hover:bg-gameYellow/20 py-2.5"
+              >
+                Shapes Dict
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  progress.setCurrency((prev) => prev + 1000000);
+                  addToast("Added $1,000,000!", "success");
+                }}
+                className="text-[10px] font-bold uppercase tracking-widest text-gameGreen hover:bg-gameGreen/20 py-2.5"
+              >
+                +1M Cash
+              </button>
+            </li>
+          </ul>
           <ShapeDictionaryModal
             isOpen={isShapeModalOpen}
             onClose={() => {
@@ -228,10 +258,10 @@ export default function Survival({ mode = "survival" }) {
               window.focus();
             }}
           />
-        </>
+        </div>
       )}
 
-      {/* --- NEW: The Warning Modal --- */}
+      {/* --- The Warning Modal --- */}
       <WarningModal
         isOpen={isBombWarningOpen}
         onClose={() => {
