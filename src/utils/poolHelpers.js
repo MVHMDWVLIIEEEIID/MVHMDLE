@@ -27,6 +27,56 @@ export const pickDistinct = (count, pool = []) => {
   return picked;
 };
 
+export const pickValidBombPhrases = (
+  easyBag,
+  hardBag,
+  easyCount,
+  hardCount,
+) => {
+  let attempts = 0;
+  let valid = false;
+  let pickedEasy = [];
+  let pickedHard = [];
+
+  while (!valid && attempts < 100) {
+    pickedEasy = easyBag.slice(0, easyCount);
+    pickedHard = hardBag.slice(0, hardCount);
+
+    // Fallback if the hard bag runs completely dry
+    if (pickedHard.length < hardCount) {
+      const fallback = easyBag.slice(
+        easyCount,
+        easyCount + (hardCount - pickedHard.length),
+      );
+      pickedHard.push(...fallback);
+    }
+
+    const combo = [...pickedEasy, ...pickedHard];
+
+    // --- The Difficulty Constraints ---
+    const threeLetterCount = combo.filter((p) => p.length === 3).length;
+    const uCount = combo.filter((p) => p.includes("u")).length;
+
+    // Rule: 1-2 three-letter phrases AND max 1 phrase containing 'u'
+    if (threeLetterCount >= 1 && threeLetterCount <= 2 && uCount <= 1) {
+      valid = true;
+    } else {
+      easyBag.sort(() => Math.random() - 0.5);
+      hardBag.sort(() => Math.random() - 0.5);
+      attempts++;
+    }
+  }
+
+  // Remove the successfully picked phrases from the bags
+  const newEasyBag = easyBag.filter((p) => !pickedEasy.includes(p));
+  const newHardBag = hardBag.filter((p) => !pickedHard.includes(p));
+  const finalPhrases = [...pickedEasy, ...pickedHard].sort(
+    () => Math.random() - 0.5,
+  );
+
+  return { finalPhrases, newEasyBag, newHardBag };
+};
+
 export const getGameTypeInfo = (
   count,
   playedBosses = [],
@@ -88,6 +138,7 @@ export const getGameTypeInfo = (
 };
 
 let cachedInitialSetup = null;
+
 export const getInitialSetup = (forceNew = false) => {
   if (cachedInitialSetup && !forceNew) return cachedInitialSetup;
 
@@ -111,6 +162,7 @@ export const getInitialSetup = (forceNew = false) => {
   let finalRandomIndices = [];
   let initialBag = [];
   let initialBanned = [];
+
   let initialBombEasyBag = [...new Set(BOMB_PHRASES.easy || [])].sort(
     () => Math.random() - 0.5,
   );
@@ -148,11 +200,18 @@ export const getInitialSetup = (forceNew = false) => {
     } else if (typeInfo.category === "bomb") {
       const easyCount = Math.max(0, typeInfo.maxTurns - 1);
       const hardCount = 1;
-      const pickedEasy = initialBombEasyBag.splice(0, easyCount);
-      const pickedHard = initialBombHardBag.splice(0, hardCount);
-      initialBombPhrases = [...pickedEasy, ...pickedHard].sort(
-        () => Math.random() - 0.5,
+
+      const { finalPhrases, newEasyBag, newHardBag } = pickValidBombPhrases(
+        initialBombEasyBag,
+        initialBombHardBag,
+        easyCount,
+        hardCount,
       );
+
+      initialBombEasyBag = newEasyBag;
+      initialBombHardBag = newHardBag;
+      initialBombPhrases = finalPhrases;
+
       finalRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy Target
     } else if (finalBossType === "500dle") {
       const eligible500 = Array.from({ length: 500 }, (_, idx) => idx);

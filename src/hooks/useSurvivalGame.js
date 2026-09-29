@@ -4,6 +4,7 @@ import useSecureState from "./useSecureState";
 import { getGuessStatuses } from "../utils/gameUtils";
 import useWordPool from "./useWordPool";
 import { SHAPES } from "../utils/bossConfig";
+import data from "../data/words.json";
 
 const getInitialLetters = () => ({
   q: { color: " bg-gameLight ", row: 1 },
@@ -46,7 +47,6 @@ export default function useSurvivalGame(mode) {
 
   const [guesses, setGuesses] = useSecureState(TILES_GUESSES_KEY, []);
   const [turn, setTurn] = useSecureState(TILES_TURN_KEY, 0);
-
   const [shapeMistakes, setShapeMistakes] = useSecureState(
     `${mode}-shape-mistakes`,
     2,
@@ -55,8 +55,6 @@ export default function useSurvivalGame(mode) {
     `${mode}-bomb-time-left`,
     60,
   );
-
-  // NEW: Rapidle Timer (10 Seconds)
   const [rapidleTimeLeft, setRapidleTimeLeft] = useSecureState(
     `${mode}-rapidle-time-left`,
     10,
@@ -89,7 +87,7 @@ export default function useSurvivalGame(mode) {
 
   const [gameState, setGameState] = useSecureState(GAME_STATE_KEY, () => {
     if (pool.bossCategory === "rapidle") {
-      return "playing"; // Rapidle is ALWAYS manually ended by the timer
+      return "playing";
     }
     if (pool.bossCategory === "shape") {
       if (turn >= pool.maxTurns) return "won";
@@ -134,25 +132,34 @@ export default function useSurvivalGame(mode) {
   const triggerRapidleTimeUp = useCallback(
     (onGameOverCallback) => {
       if (gameState !== "playing") return;
-      setGameState("won"); // Rapidle is always a "win" (extraction)
-      // Send guesses.length so calculateWinRewards multiplies it by $2500
+      setGameState("won");
       if (onGameOverCallback) onGameOverCallback("won", guesses.length);
     },
     [gameState, guesses.length, setGameState],
   );
 
   useEffect(() => {
-    if (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
-      return;
-
     if (import.meta.env.DEV) {
       if (pool.bossCategory === "multi") {
+        if (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
+          return;
         console.log(
           `[DEBUG][${mode}] target words (${pool.bossWordCount}): ${pool.targetWords.join(", ")}`,
         );
       } else if (pool.bossCategory === "bomb") {
+        if (!pool.bombPhrases || pool.bombPhrases.length === 0) return;
+
+        const usedWords = new Set();
+        const cheatSheet = pool.bombPhrases.map((phrase) => {
+          const match = data.find(
+            (w) => w.includes(phrase) && !usedWords.has(w),
+          );
+          if (match) usedWords.add(match);
+          return match || "NO_MATCH";
+        });
+
         console.log(
-          `[DEBUG][${mode}] target phrases: ${pool.bombPhrases.join(", ")}`,
+          `[DEBUG][${mode}] target phrases: ${pool.bombPhrases.join(", ")}\n[DEBUG][${mode}] cheat sheet (unique): ${cheatSheet.join(", ")}`,
         );
       } else if (pool.bossCategory === "rapidle") {
         console.log(`[DEBUG][${mode}] RAPIDLE MODE ENGAGED`);
@@ -174,7 +181,6 @@ export default function useSurvivalGame(mode) {
     setLetters((prev) => {
       const current = prev[key];
       if (!current) return prev;
-
       const currentColor = current.color;
 
       if (currentColor.includes("bg-gameGreen")) return prev;
@@ -230,7 +236,6 @@ export default function useSurvivalGame(mode) {
         if (onBannedWord) onBannedWord();
         return false;
       }
-
       if (
         turn < openingGuessCount &&
         !pool.bannedOpeningWords.includes(normalizedGuess)
@@ -239,7 +244,6 @@ export default function useSurvivalGame(mode) {
       }
     }
 
-    // --- RAPIDLE LOGIC ---
     if (isRapidleBoss) {
       const newGuesses = [...guesses, guess];
       setGuesses(newGuesses);
@@ -274,7 +278,6 @@ export default function useSurvivalGame(mode) {
 
       const statuses = getGuessStatuses(guess, pool.targetWord);
       let matches = true;
-
       for (let i = 0; i < 5; i++) {
         let expected = "bg-gameGrey";
         if (requiredRow[i] === "G") expected = "bg-gameGreen";
@@ -332,7 +335,6 @@ export default function useSurvivalGame(mode) {
           (g) =>
             g.word === pool.targetWords[i]?.toLowerCase() && g.wordIndex === i,
         );
-
         if (!isSolved) {
           const statuses = getGuessStatuses(guess, pool.targetWords[i]);
           guess.split("").forEach((char, j) => {
@@ -392,7 +394,6 @@ export default function useSurvivalGame(mode) {
         }
       }
     }
-
     return true;
   };
 

@@ -40,6 +40,7 @@ const getInitialLetters = () => ({
 
 export default function usePracticeGame(bossId, subId) {
   const pool = usePracticePool(bossId, subId);
+
   const STATE_KEY = `practice-${bossId}-${subId || "rand"}`;
 
   const [guesses, setGuesses] = useSecureState(`${STATE_KEY}-guesses`, []);
@@ -60,12 +61,12 @@ export default function usePracticeGame(bossId, subId) {
     `${STATE_KEY}-state`,
     "playing",
   );
+
   const [lastChanged, setLastChanged] = useState({
     letter: null,
     timestamp: 0,
   });
 
-  // Console Log Debugger
   useEffect(() => {
     if (import.meta.env.DEV) {
       if (pool.bossCategory === "shape" && pool.targetWord && pool.bossType) {
@@ -90,16 +91,25 @@ export default function usePracticeGame(bossId, subId) {
             answers: guesses,
           })),
         });
-      } else if (
-        pool.bossCategory === "multi" &&
-        pool.targetWords?.length > 0
-      ) {
+      } else if (pool.bossCategory === "multi") {
+        if (!pool.targetWords || pool.targetWords.length === 0) return;
         console.log(
           `[DEBUG][practice] target words (${pool.bossWordCount}): ${pool.targetWords.join(", ")}`,
         );
-      } else if (pool.bossCategory === "bomb" && pool.bombPhrases?.length > 0) {
+      } else if (pool.bossCategory === "bomb") {
+        if (!pool.bombPhrases || pool.bombPhrases.length === 0) return;
+
+        const usedWords = new Set();
+        const cheatSheet = pool.bombPhrases.map((phrase) => {
+          const match = data.find(
+            (w) => w.includes(phrase) && !usedWords.has(w),
+          );
+          if (match) usedWords.add(match);
+          return match || "NO_MATCH";
+        });
+
         console.log(
-          `[DEBUG][practice] target phrases: ${pool.bombPhrases.join(", ")}`,
+          `[DEBUG][practice] target phrases: ${pool.bombPhrases.join(", ")}\n[DEBUG][practice] cheat sheet (unique): ${cheatSheet.join(", ")}`,
         );
       } else if (pool.targetWord) {
         console.log(`[DEBUG][practice] target word: ${pool.targetWord}`);
@@ -132,6 +142,7 @@ export default function usePracticeGame(bossId, subId) {
       const current = prev[key];
       if (!current) return prev;
       const currentColor = current.color;
+
       if (currentColor.includes("bg-gameGreen")) return prev;
       if (
         currentColor.includes("bg-gameYellow") &&
@@ -143,6 +154,7 @@ export default function usePracticeGame(bossId, subId) {
         newColor.includes("bg-gameGrey")
       )
         return prev;
+
       setLastChanged({ letter: key, timestamp: Date.now() });
       return { ...prev, [key]: { ...current, color: newColor } };
     });
@@ -157,6 +169,7 @@ export default function usePracticeGame(bossId, subId) {
     onMistake,
   ) => {
     if (gameState !== "playing") return false;
+
     if (
       !pool.targetWord &&
       (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
@@ -177,12 +190,15 @@ export default function usePracticeGame(bossId, subId) {
     if (pool.bossCategory === "bomb") {
       const requiredPhrase = pool.bombPhrases[turn];
       if (!requiredPhrase) return false;
+
       if (!normalizedGuess.includes(requiredPhrase)) {
         if (onMistake) onMistake();
         return false;
       }
+
       const newGuesses = [...guesses, guess];
       setGuesses(newGuesses);
+
       if (newGuesses.length >= pool.maxTurns) {
         setGameState("won");
         onGameOver("won", newGuesses.length);
@@ -202,6 +218,7 @@ export default function usePracticeGame(bossId, subId) {
         let expected = "bg-gameGrey";
         if (requiredRow[i] === "G") expected = "bg-gameGreen";
         else if (requiredRow[i] === "Y") expected = "bg-gameYellow";
+
         if (statuses[i] !== expected) {
           matches = false;
           break;
@@ -222,6 +239,7 @@ export default function usePracticeGame(bossId, subId) {
 
       const newGuesses = [...guesses, guess];
       setGuesses(newGuesses);
+
       if (newGuesses.length >= pool.maxTurns) {
         setGameState("won");
         onGameOver("won", newGuesses.length);
@@ -234,6 +252,7 @@ export default function usePracticeGame(bossId, subId) {
     if (pool.bossCategory === "multi") {
       const limit = pool.bossWordCount;
       const guessesToAdd = [];
+
       for (let i = 0; i < limit; i++) {
         const isSolved = guesses.some(
           (g) =>
@@ -279,6 +298,7 @@ export default function usePracticeGame(bossId, subId) {
     } else {
       const newGuesses = [...guesses, guess];
       setGuesses(newGuesses);
+
       const statuses = getGuessStatuses(guess, pool.targetWord);
       guess.split("").forEach((char, i) => {
         setTimeout(() => changeColor(statuses[i], char), i * 150 + 300);
