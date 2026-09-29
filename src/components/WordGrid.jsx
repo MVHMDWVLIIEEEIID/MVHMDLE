@@ -18,6 +18,7 @@ export default function WordGrid({
   bannedFlash = false,
   isShapeMode = false,
   isBombMode = false,
+  isRapidleMode = false,
 }) {
   const items = [];
   const flipDelay = sizeMode === "normal" ? 150 : 100;
@@ -26,7 +27,8 @@ export default function WordGrid({
     (g) => g && targetWord && g.toLowerCase() === targetWord.toLowerCase(),
   );
 
-  const isGridSolved = !isShapeMode && !isBombMode && solvedRowIndex !== -1;
+  const isGridSolved =
+    !isShapeMode && !isBombMode && !isRapidleMode && solvedRowIndex !== -1;
 
   for (let i = 0; i < rowCount; i++) {
     if (hideEmptyRowsAfterWin && isGridSolved && i > solvedRowIndex) {
@@ -36,8 +38,10 @@ export default function WordGrid({
     const isBannedRow = i < bannedRows;
     const isPrevRow = i < turn || (gameState === "won" && i === turn);
     const isCurrentRow = i === turn && gameState === "playing" && !isGridSolved;
+
     const rowWord = guesses[i] || "";
     const rowHasGuess = Boolean(rowWord);
+
     const isPendingRevealRow = i === pendingFlipTurn && rowHasGuess;
     const shouldFlip = i === lastSubmittedTurn && rowHasGuess;
     const shouldShowStatuses = isPrevRow && rowHasGuess && !isPendingRevealRow;
@@ -48,9 +52,12 @@ export default function WordGrid({
     if (isPrevRow && rowHasGuess) {
       rowLetters = rowWord.split("");
     }
+
     if (shouldShowStatuses) {
       if (isBombMode) {
         rowStatuses = Array(5).fill("bg-gameGreen");
+      } else if (isRapidleMode) {
+        rowStatuses = Array(5).fill("bg-gameBlue"); // Neutral Rapidle styling
       } else {
         rowStatuses = getGuessStatuses(rowWord, targetWord);
       }
@@ -65,12 +72,13 @@ export default function WordGrid({
       const isNextTile = isCurrentRow && j === currentGuess.length;
 
       let colorClass = "bg-gameLight border-gameLight text-gameDark";
-
       if (shouldShowStatuses) {
         if (rowStatuses[j] === "bg-gameGreen")
           colorClass = "bg-gameGreen border-gameGreen text-gameDark";
         else if (rowStatuses[j] === "bg-gameYellow")
           colorClass = "bg-gameYellow border-gameYellow text-gameDark";
+        else if (rowStatuses[j] === "bg-gameBlue")
+          colorClass = "bg-gameBlue border-gameBlue text-white";
         else colorClass = "bg-gameGrey border-gameGrey text-gameDark";
       }
 
@@ -83,7 +91,7 @@ export default function WordGrid({
         isPrevRow ||
         isCurrentRow ||
         isSolvedRow ||
-        ((isShapeMode || isBombMode) && gameState === "won")
+        ((isShapeMode || isBombMode || isRapidleMode) && gameState === "won")
           ? "opacity-100"
           : "opacity-60";
 

@@ -7,6 +7,7 @@ import GameBoardLayout from "./GameBoardLayout";
 import Tiles from "./Tiles";
 import { ShapeLeftPanel, ShapeRightPanel } from "./ShapeBossPanels";
 import { BombLeftPanel, BombRightPanel } from "./BombBossPanels";
+import { RapidleLeftPanel, RapidleRightPanel } from "./RapidlePanels";
 
 export default function BossGameView({
   game,
@@ -17,11 +18,14 @@ export default function BossGameView({
   bossKeyboardLineColors,
   handleGameOver,
   addToast,
-  isBombTimerPaused, // <--- Add prop here
+  isBombTimerPaused,
+  isRapidleTimerPaused,
 }) {
   const isWordle500Boss = game.bossType === "500dle";
   const isShapeBoss = game.bossCategory === "shape";
   const isBombBoss = game.bossCategory === "bomb";
+  const isRapidleBoss = game.bossCategory === "rapidle";
+
   const multiWordCount = game.bossWordCount || game.targetWords?.length || 0;
 
   const [wordle500State, setWordle500State] = useState(() => {
@@ -39,10 +43,24 @@ export default function BossGameView({
   });
 
   useEffect(() => {
-    if (!isWordle500Boss && !isShapeBoss && !isBombBoss && multiWordCount > 1) {
+    if (
+      !isWordle500Boss &&
+      !isShapeBoss &&
+      !isBombBoss &&
+      !isRapidleBoss &&
+      multiWordCount > 1
+    ) {
       setBossKeyboardView("all");
     }
-  }, [gameResetKey, multiWordCount, isWordle500Boss, isShapeBoss, isBombBoss]);
+  }, [
+    gameResetKey,
+    multiWordCount,
+    isWordle500Boss,
+    isShapeBoss,
+    isBombBoss,
+    isRapidleBoss,
+    setBossKeyboardView,
+  ]);
 
   useEffect(() => {
     const handleStatus = (e) => setWordle500State(e.detail);
@@ -82,7 +100,7 @@ export default function BossGameView({
     });
   }
 
-  const isUncoloredKeyboard = isShapeBoss || isBombBoss;
+  const isUncoloredKeyboard = isShapeBoss || isBombBoss || isRapidleBoss;
 
   const displayLetters = isUncoloredKeyboard
     ? Object.fromEntries(
@@ -134,6 +152,11 @@ export default function BossGameView({
             key={`bl-${gameResetKey}`}
             currentPhrase={game.bombPhrases?.[game.turn]}
           />
+        ) : isRapidleBoss ? (
+          <RapidleLeftPanel
+            key={`ral-${gameResetKey}`}
+            guessesCount={game.guesses?.length || 0}
+          />
         ) : null
       }
       rightPanel={
@@ -150,7 +173,16 @@ export default function BossGameView({
             bombTimeLeft={game.bombTimeLeft}
             setBombTimeLeft={game.setBombTimeLeft}
             onTimeUp={() => game.triggerBombTimeUp(handleGameOver)}
-            isPaused={isBombTimerPaused} // <--- Pass it down
+            isPaused={isBombTimerPaused}
+          />
+        ) : isRapidleBoss ? (
+          <RapidleRightPanel
+            key={`rar-${gameResetKey}`}
+            gameState={game.gameState}
+            rapidleTimeLeft={game.rapidleTimeLeft}
+            setRapidleTimeLeft={game.setRapidleTimeLeft}
+            onTimeUp={() => game.triggerRapidleTimeUp(handleGameOver)}
+            isPaused={isRapidleTimerPaused}
           />
         ) : null
       }
@@ -183,7 +215,7 @@ export default function BossGameView({
             onGameOver={handleGameOver}
             addToast={addToast}
           />
-        ) : isShapeBoss || isBombBoss ? (
+        ) : isShapeBoss || isBombBoss || isRapidleBoss ? (
           <Tiles
             key={gameResetKey}
             guesses={game.guesses}
@@ -193,6 +225,7 @@ export default function BossGameView({
             bannedRows={game.bannedRows}
             isShapeMode={isShapeBoss}
             isBombMode={isBombBoss}
+            isRapidleMode={isRapidleBoss}
             onGuessSubmit={(
               g,
               _wordIdx,
@@ -301,6 +334,7 @@ export default function BossGameView({
               </button>
             </div>
           )}
+
           <Keyboard
             letters={displayLetters}
             lastChanged={game.lastChanged}

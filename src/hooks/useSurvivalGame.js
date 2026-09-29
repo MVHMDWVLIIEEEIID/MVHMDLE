@@ -56,10 +56,17 @@ export default function useSurvivalGame(mode) {
     60,
   );
 
+  // NEW: Rapidle Timer (10 Seconds)
+  const [rapidleTimeLeft, setRapidleTimeLeft] = useSecureState(
+    `${mode}-rapidle-time-left`,
+    10,
+  );
+
   const [letters, setLetters] = useSecureState(
     LETTERS_KEY,
     getInitialLetters(),
   );
+
   const [lastChanged, setLastChanged] = useState({
     letter: null,
     timestamp: 0,
@@ -75,9 +82,15 @@ export default function useSurvivalGame(mode) {
 
   const isShapeBoss = pool.bossCategory === "shape";
   const isBombBoss = pool.bossCategory === "bomb";
-  const bannedRows = isShapeBoss || isBombBoss ? 0 : openingGuessCount + 1;
+  const isRapidleBoss = pool.bossCategory === "rapidle";
+
+  const bannedRows =
+    isShapeBoss || isBombBoss || isRapidleBoss ? 0 : openingGuessCount + 1;
 
   const [gameState, setGameState] = useSecureState(GAME_STATE_KEY, () => {
+    if (pool.bossCategory === "rapidle") {
+      return "playing"; // Rapidle is ALWAYS manually ended by the timer
+    }
     if (pool.bossCategory === "shape") {
       if (turn >= pool.maxTurns) return "won";
       if (shapeMistakes < 0) return "lost";
@@ -118,9 +131,20 @@ export default function useSurvivalGame(mode) {
     [gameState, pool.maxTurns, setGameState],
   );
 
+  const triggerRapidleTimeUp = useCallback(
+    (onGameOverCallback) => {
+      if (gameState !== "playing") return;
+      setGameState("won"); // Rapidle is always a "win" (extraction)
+      // Send guesses.length so calculateWinRewards multiplies it by $2500
+      if (onGameOverCallback) onGameOverCallback("won", guesses.length);
+    },
+    [gameState, guesses.length, setGameState],
+  );
+
   useEffect(() => {
     if (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
       return;
+
     if (import.meta.env.DEV) {
       if (pool.bossCategory === "multi") {
         console.log(
@@ -130,6 +154,8 @@ export default function useSurvivalGame(mode) {
         console.log(
           `[DEBUG][${mode}] target phrases: ${pool.bombPhrases.join(", ")}`,
         );
+      } else if (pool.bossCategory === "rapidle") {
+        console.log(`[DEBUG][${mode}] RAPIDLE MODE ENGAGED`);
       } else if (pool.targetWord) {
         console.log(`[DEBUG][${mode}] target word: ${pool.targetWord}`);
       }
@@ -150,6 +176,7 @@ export default function useSurvivalGame(mode) {
       if (!current) return prev;
 
       const currentColor = current.color;
+
       if (currentColor.includes("bg-gameGreen")) return prev;
       if (
         currentColor.includes("bg-gameYellow") &&
@@ -178,6 +205,7 @@ export default function useSurvivalGame(mode) {
     if (gameState !== "playing") return false;
 
     if (
+      !isRapidleBoss &&
       !pool.targetWord &&
       (!Array.isArray(pool.targetWords) || pool.targetWords.length === 0)
     )
@@ -194,7 +222,7 @@ export default function useSurvivalGame(mode) {
       return false;
     }
 
-    if (!isShapeBoss && !isBombBoss) {
+    if (!isShapeBoss && !isBombBoss && !isRapidleBoss) {
       if (
         turn < bannedRows &&
         pool.bannedOpeningWords.includes(normalizedGuess)
@@ -202,12 +230,21 @@ export default function useSurvivalGame(mode) {
         if (onBannedWord) onBannedWord();
         return false;
       }
+
       if (
         turn < openingGuessCount &&
         !pool.bannedOpeningWords.includes(normalizedGuess)
       ) {
         pool.setBannedOpeningWords((prev) => [...prev, normalizedGuess]);
       }
+    }
+
+    // --- RAPIDLE LOGIC ---
+    if (isRapidleBoss) {
+      const newGuesses = [...guesses, guess];
+      setGuesses(newGuesses);
+      setTurn(turn + 1);
+      return true;
     }
 
     if (pool.bossCategory === "bomb") {
@@ -237,6 +274,7 @@ export default function useSurvivalGame(mode) {
 
       const statuses = getGuessStatuses(guess, pool.targetWord);
       let matches = true;
+
       for (let i = 0; i < 5; i++) {
         let expected = "bg-gameGrey";
         if (requiredRow[i] === "G") expected = "bg-gameGreen";
@@ -294,6 +332,7 @@ export default function useSurvivalGame(mode) {
           (g) =>
             g.word === pool.targetWords[i]?.toLowerCase() && g.wordIndex === i,
         );
+
         if (!isSolved) {
           const statuses = getGuessStatuses(guess, pool.targetWords[i]);
           guess.split("").forEach((char, j) => {
@@ -318,7 +357,6 @@ export default function useSurvivalGame(mode) {
           newlySolved.push(pool.randomIndices[i]);
         }
       }
-
       pool.removeSolvedTargets(newlySolved);
 
       if (allWordsGuessed) {
@@ -335,8 +373,8 @@ export default function useSurvivalGame(mode) {
     } else {
       const newGuesses = [...guesses, guess];
       setGuesses(newGuesses);
-      const statuses = getGuessStatuses(guess, pool.targetWord);
 
+      const statuses = getGuessStatuses(guess, pool.targetWord);
       guess.split("").forEach((char, i) => {
         setTimeout(() => changeColor(statuses[i], char), i * 150 + 300);
       });
@@ -354,6 +392,7 @@ export default function useSurvivalGame(mode) {
         }
       }
     }
+
     return true;
   };
 
@@ -367,6 +406,7 @@ export default function useSurvivalGame(mode) {
     setGameState("playing");
     setShapeMistakes(2);
     setBombTimeLeft(60);
+    setRapidleTimeLeft(10);
   };
 
   const resetGame = () => {
@@ -412,6 +452,8 @@ export default function useSurvivalGame(mode) {
     shapeMistakes,
     bombTimeLeft,
     setBombTimeLeft,
+    rapidleTimeLeft,
+    setRapidleTimeLeft,
     changeColor,
     submitGuess,
     resetGame,
@@ -421,6 +463,7 @@ export default function useSurvivalGame(mode) {
     undoLastGuess,
     addExtraRow,
     triggerBombTimeUp,
+    triggerRapidleTimeUp,
     isBossGame: pool.isBossGame,
     isMiniBossGame: pool.isMiniBossGame,
     isHardNormalGame: pool.isHardNormalGame,

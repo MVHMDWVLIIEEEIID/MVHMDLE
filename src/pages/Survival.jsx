@@ -30,6 +30,7 @@ export default function Survival({ mode = "survival" }) {
   const navigate = useNavigate();
   const { toasts, addToast } = useToast();
   const [gameResetKey, setGameResetKey] = useState(0);
+
   const [streakBeforeLastLoss, setStreakBeforeLastLoss] = useState(0);
   const modalReadyAtRef = useRef(0);
 
@@ -109,6 +110,12 @@ export default function Survival({ mode = "survival" }) {
     !progress.hasSeenBombWarning &&
     game.gameState === "playing";
 
+  const isRapidleWarningOpen =
+    game.isBossGame &&
+    game.bossCategory === "rapidle" &&
+    !progress.hasSeenRapidleWarning &&
+    game.gameState === "playing";
+
   return (
     <div className="flex flex-col h-screen relative overflow-hidden bg-gameDark text-white">
       <Toast toasts={toasts} />
@@ -133,6 +140,7 @@ export default function Survival({ mode = "survival" }) {
           handleGameOver={handleGameOver}
           addToast={addToast}
           isBombTimerPaused={isBombWarningOpen}
+          isRapidleTimerPaused={isRapidleWarningOpen}
         />
       ) : (
         <StandardGameView
@@ -146,7 +154,7 @@ export default function Survival({ mode = "survival" }) {
         />
       )}
 
-      {/* Guide Button FAB - Right Aligned & Blue */}
+      {/* Guide Button FAB */}
       <div className="absolute bottom-4 right-4 z-40 flex flex-col items-end">
         <button
           onClick={() => {
@@ -170,7 +178,7 @@ export default function Survival({ mode = "survival" }) {
         </button>
       </div>
 
-      {/* RIGHT: Debug FAB Menu moved to Top Right */}
+      {/* Debug Menu */}
       {import.meta.env.DEV && (
         <div className="dropdown dropdown-bottom dropdown-end absolute top-15 right-4 z-50">
           <div
@@ -262,6 +270,7 @@ export default function Survival({ mode = "survival" }) {
               </button>
             </li>
           </ul>
+
           <ShapeDictionaryModal
             isOpen={isShapeModalOpen}
             onClose={() => {
@@ -273,7 +282,7 @@ export default function Survival({ mode = "survival" }) {
         </div>
       )}
 
-      {/* --- The Warning Modal --- */}
+      {/* Warning Modals */}
       <WarningModal
         isOpen={isBombWarningOpen}
         onClose={() => {
@@ -285,6 +294,19 @@ export default function Survival({ mode = "survival" }) {
         message="Defuse the bomb before time runs out! Each correct guess requires the target phrase."
         buttonText="Roger That"
         theme="danger"
+      />
+
+      <WarningModal
+        isOpen={isRapidleWarningOpen}
+        onClose={() => {
+          progress.setHasSeenRapidleWarning(true);
+          document.activeElement.blur();
+          window.focus();
+        }}
+        title="RAPIDLE DETECTED"
+        message="Type as many valid 5-letter words as you can in 10 seconds. GO FAST!"
+        buttonText="Start Typing"
+        theme="warning"
       />
 
       <SurvivalGameModals

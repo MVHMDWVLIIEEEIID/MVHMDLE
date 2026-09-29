@@ -77,8 +77,8 @@ export default function useSurvivalActions({
   const handleGameOver = (result, guessCount) => {
     document.activeElement.blur();
     window.focus();
-    const now = Date.now();
 
+    const now = Date.now();
     if (result === "won" || result === "lost") {
       modalReadyAtRef.current = now + RESULT_ANIMATION_MS;
     }
@@ -86,7 +86,11 @@ export default function useSurvivalActions({
     setTimeout(() => {
       if (result === "won") {
         const solvedWords =
-          game.isBossGame || game.isMiniBossGame ? game.bossWordCount : 1;
+          game.bossCategory === "rapidle"
+            ? guessCount
+            : game.isBossGame || game.isMiniBossGame
+              ? game.bossWordCount
+              : 1;
         progress.addWin(solvedWords);
 
         const rewards = calculateWinRewards({
@@ -103,6 +107,7 @@ export default function useSurvivalActions({
             progress.setBoss4Count(rewards.newBoss4Count);
           if (game.bossWordCount === 1)
             progress.setBoss500Count(rewards.newBoss500Count);
+
           progress.setHearts(rewards.newHearts);
         }
 
@@ -112,6 +117,7 @@ export default function useSurvivalActions({
           breakdown: rewards.breakdown,
         });
         progress.setStreak((prev) => prev + 1);
+
         setIsModalOpen([true, "won"]);
         handleConfetti();
 
@@ -121,7 +127,6 @@ export default function useSurvivalActions({
             : game.isMiniBossGame
               ? "Mini Boss"
               : "Normal";
-
         progress.setHintHistory((prev) => [
           ...prev,
           {
@@ -135,6 +140,7 @@ export default function useSurvivalActions({
       } else if (result === "lost") {
         setStreakBeforeLastLoss(progress.streak);
         progress.addLoss();
+
         const newHearts = Math.max(0, progress.hearts - 1);
         progress.setHearts(newHearts);
         progress.setStreak(0);
@@ -145,7 +151,6 @@ export default function useSurvivalActions({
             : game.isMiniBossGame
               ? "Mini Boss"
               : "Normal";
-
         progress.setHintHistory((prev) => [
           ...prev,
           {
@@ -179,6 +184,7 @@ export default function useSurvivalActions({
     const usedCount = progress.hintsUsedInRound[name] || 0;
     if (name === "Hide a Letter" && usedCount >= 5)
       return addToast("Max usage reached!", "error");
+
     if (
       ["Green Letter", "Yellow Letter", "Vowel Letter"].includes(name) &&
       usedCount >= 1
@@ -235,7 +241,7 @@ export default function useSurvivalActions({
                 .map((c) => (c === "G" ? "🟩" : c === "Y" ? "🟨" : "⬛"))
                 .join("");
             } else {
-              return "⬛⬛⬛⬛⬛";
+              return "⬜⬜⬜⬜⬜";
             }
           })
           .join("\n");
@@ -245,7 +251,6 @@ export default function useSurvivalActions({
         const score = isModalOpen[1] === "won" ? "WIN" : "FAIL";
 
         const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) SHAPEDLE - ${score}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
-
         try {
           await navigator.clipboard.writeText(shareText);
           addToast("Copied!", "success");
@@ -263,14 +268,15 @@ export default function useSurvivalActions({
                 ? guessObj.toLowerCase()
                 : guessObj.word.toLowerCase();
             const phrase = game.bombPhrases[rowIndex];
-            const idx = guessStr.indexOf(phrase);
 
+            const idx = guessStr.indexOf(phrase);
             if (idx === -1) return "⬛⬛⬛⬛⬛";
 
             let rowArr = ["⬛", "⬛", "⬛", "⬛", "⬛"];
             for (let i = 0; i < phrase.length; i++) {
               if (idx + i < 5) rowArr[idx + i] = "🟩";
             }
+
             return rowArr.join("");
           })
           .join("\n");
@@ -280,7 +286,20 @@ export default function useSurvivalActions({
         const score = isModalOpen[1] === "won" ? "DEFUSED" : "EXPLODED";
 
         const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) BOMBEDLE - ${score}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
+        try {
+          await navigator.clipboard.writeText(shareText);
+          addToast("Copied!", "success");
+        } catch (err) {
+          addToast("Failed to copy", "error");
+        }
+        return;
+      }
 
+      if (game.bossCategory === "rapidle") {
+        const score = isModalOpen[1] === "won" ? "SURVIVED" : "FAILED";
+        const streakText =
+          progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
+        const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) RAPIDLE - ${score}\nWords Typed: ${game.guesses.length}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
         try {
           await navigator.clipboard.writeText(shareText);
           addToast("Copied!", "success");
@@ -321,7 +340,7 @@ export default function useSurvivalActions({
 
       const maxRows = Math.max(0, ...gridsByWord.map((rows) => rows.length));
       const allGrids = Array.from({ length: maxRows }, (_, rowIdx) =>
-        gridsByWord.map((rows) => rows[rowIdx] || "⬛⬛⬛⬛⬛").join("   "),
+        gridsByWord.map((rows) => rows[rowIdx] || "⬜⬜⬜⬜⬜").join("   "),
       ).join("\n");
 
       const streakText =
@@ -329,7 +348,6 @@ export default function useSurvivalActions({
       const bossName = game.bossWordCount === 4 ? "FOURDLE" : "DUODLE";
 
       const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) ${bossName}\n\n${allGrids}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
-
       try {
         await navigator.clipboard.writeText(shareText);
         addToast("Copied!", "success");
@@ -373,7 +391,6 @@ export default function useSurvivalActions({
         progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
 
       const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) ${score}/${game.maxTurns}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
-
       try {
         await navigator.clipboard.writeText(shareText);
         addToast("Copied!", "success");

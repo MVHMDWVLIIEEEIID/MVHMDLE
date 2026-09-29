@@ -24,6 +24,7 @@ const DEFAULT_RUN_STATS = {
 
 export default function useSurvivalProgress(mode) {
   const MAX_HEARTS = 5;
+
   const STREAK_KEY = `wordle-streak-${mode}`;
   const HEARTS_KEY = `wordle-hearts-${mode}`;
   const CURRENCY_KEY = `wordle-shop-currency`;
@@ -38,15 +39,18 @@ export default function useSurvivalProgress(mode) {
   const RUN_STATS_KEY = `wordle-run-stats-${mode}`;
   const RUN_COMPLETED_KEY = `wordle-run-completed-${mode}`;
 
-  // Easter Egg Claim State
   const [bonusClaimed, setBonusClaimed] = useSecureState(
     `wordle-bonus-claim-${mode}`,
     false,
   );
 
-  // NEW: Bomb Boss Warning State
   const [hasSeenBombWarning, setHasSeenBombWarning] = useSecureState(
     `wordle-bomb-warning-${mode}`,
+    false,
+  );
+
+  const [hasSeenRapidleWarning, setHasSeenRapidleWarning] = useSecureState(
+    `wordle-rapidle-warning-${mode}`,
     false,
   );
 
@@ -84,7 +88,6 @@ export default function useSurvivalProgress(mode) {
     return { ...DEFAULT_RUN_STATS, ...(saved || {}) };
   });
 
-  // Track Highest Stats
   useEffect(() => {
     setRunStats((prev) => {
       const current = { ...DEFAULT_RUN_STATS, ...(prev || {}) };
@@ -130,7 +133,8 @@ export default function useSurvivalProgress(mode) {
   const resetRoundInfo = () => {
     setHintsUsedInRound({});
     setLastReward(null);
-    setHasSeenBombWarning(false); // Reset warning for the next bomb boss encounter
+    setHasSeenBombWarning(false);
+    setHasSeenRapidleWarning(false);
   };
 
   const resetAllProgress = () => {
@@ -149,6 +153,7 @@ export default function useSurvivalProgress(mode) {
     setRunCompleted(false);
     setBonusClaimed(false);
     setHasSeenBombWarning(false);
+    setHasSeenRapidleWarning(false);
   };
 
   return {
@@ -184,7 +189,9 @@ export default function useSurvivalProgress(mode) {
     resetAllProgress,
     bonusClaimed,
     setBonusClaimed,
-    hasSeenBombWarning, // Exported to Survival.jsx
+    hasSeenBombWarning,
     setHasSeenBombWarning,
+    hasSeenRapidleWarning,
+    setHasSeenRapidleWarning,
   };
 }

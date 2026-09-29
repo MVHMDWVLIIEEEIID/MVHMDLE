@@ -28,6 +28,13 @@ export default function useWordPool(mode) {
     `wordle-game-count-${mode}`,
     0,
   );
+
+  // NEW: Track the last 10-game cycle where Rapidle appeared
+  const [lastRapidleCycle, setLastRapidleCycle] = useSecureState(
+    `wordle-last-rapidle-cycle-${mode}`,
+    -1,
+  );
+
   const [playedBossTypes, setPlayedBossTypes] = useSecureState(
     `wordle-played-boss-types-${mode}`,
     [],
@@ -160,36 +167,72 @@ export default function useWordPool(mode) {
 
   const generateNextGame = (advanceLevel = true) => {
     if (availableIndices.length === 0) return false;
-    const nextGameCount = advanceLevel ? gameCount + 1 : gameCount;
 
-    const typeInfo = advanceLevel
-      ? getGameTypeInfo(nextGameCount, playedBossTypes, playedMiniBossTypes)
-      : {
-          isBoss: isBossGame,
-          isMiniBoss: isMiniBossGame,
-          isHardNormal: isHardNormalGame,
-          bossType,
-          category: bossCategory,
-          wordCount: bossWordCount,
-          maxTurns,
-        };
-
+    let nextGameCount = gameCount;
     let nextPlayedBossTypes = playedBossTypes;
     let nextPlayedMiniBossTypes = playedMiniBossTypes;
+    let typeInfo;
 
-    if (advanceLevel && typeInfo.isBoss && !DEV_SETTINGS.FORCE_BOSS_ID) {
-      if (typeInfo.isMiniBoss) {
-        nextPlayedMiniBossTypes = MINI_BOSS_TYPES.some(
-          (b) => !playedMiniBossTypes.includes(b.id),
-        )
-          ? [...playedMiniBossTypes, typeInfo.bossType]
-          : [typeInfo.bossType];
-      } else {
-        nextPlayedBossTypes = BOSS_TYPES.some(
-          (b) => !playedBossTypes.includes(b.id),
-        )
-          ? [...playedBossTypes, typeInfo.bossType]
-          : [typeInfo.bossType];
+    // --- RAPIDLE INJECTION LOGIC ---
+    // Calculates which 10-game cycle we are in (e.g. 0-9 is cycle 0, 10-19 is cycle 1)
+    const currentCycle10 = Math.floor(gameCount / 10);
+    // Pseudo-randomly pick exactly one slot in the current 10-game block
+    const rapidleSlot =
+      currentCycle10 * 10 + ((currentCycle10 * 9301 + 49297) % 10);
+
+    const shouldTriggerRapidle =
+      advanceLevel &&
+      (DEV_SETTINGS.FORCE_RAPIDLE ||
+        (gameCount === rapidleSlot && lastRapidleCycle < currentCycle10));
+
+    const isCurrentlyRapidle = !advanceLevel && bossCategory === "rapidle";
+
+    // If it's time for Rapidle, intercept the normal cycle!
+    if (shouldTriggerRapidle || isCurrentlyRapidle) {
+      typeInfo = {
+        isBoss: true,
+        isMiniBoss: false,
+        isHardNormal: false,
+        bossType: "rapidle",
+        category: "rapidle",
+        wordCount: 0,
+        maxTurns: 999,
+      };
+
+      // IMPORTANT: We DO NOT increment nextGameCount for Rapidle.
+      // This pauses the normal cycle so no levels are skipped.
+      if (advanceLevel) {
+        setLastRapidleCycle(currentCycle10);
+      }
+    } else {
+      // --- STANDARD 5-LEVEL CYCLE LOGIC ---
+      nextGameCount = advanceLevel ? gameCount + 1 : gameCount;
+      typeInfo = advanceLevel
+        ? getGameTypeInfo(nextGameCount, playedBossTypes, playedMiniBossTypes)
+        : {
+            isBoss: isBossGame,
+            isMiniBoss: isMiniBossGame,
+            isHardNormal: isHardNormalGame,
+            bossType,
+            category: bossCategory,
+            wordCount: bossWordCount,
+            maxTurns,
+          };
+
+      if (advanceLevel && typeInfo.isBoss && !DEV_SETTINGS.FORCE_BOSS_ID) {
+        if (typeInfo.isMiniBoss) {
+          nextPlayedMiniBossTypes = MINI_BOSS_TYPES.some(
+            (b) => !playedMiniBossTypes.includes(b.id),
+          )
+            ? [...playedMiniBossTypes, typeInfo.bossType]
+            : [typeInfo.bossType];
+        } else {
+          nextPlayedBossTypes = BOSS_TYPES.some(
+            (b) => !playedBossTypes.includes(b.id),
+          )
+            ? [...playedBossTypes, typeInfo.bossType]
+            : [typeInfo.bossType];
+        }
       }
     }
 
@@ -223,12 +266,15 @@ export default function useWordPool(mode) {
       } else {
         chosenIndex = pickRandom(eligible);
       }
+
       nextRandom = chosenIndex;
       const chosenWord = solutionWords[chosenIndex];
       setShapeBannedWords((prev) => [...prev, chosenWord]);
+    } else if (typeInfo.category === "rapidle") {
+      nextRandom = 0; // Dummy Word
+      nextRandomIndices = [];
     } else {
       const eligible = getEligible(availableIndices);
-
       const hardEligible = eligible.filter(
         (idx) => idx < HARD_SOLUTION_WORD_COUNT,
       );
@@ -245,7 +291,6 @@ export default function useWordPool(mode) {
           1,
           hardEligible.length > 0 ? hardEligible : eligible,
         );
-
         const remainingForEasy = easyEligible.filter(
           (id) => !hardPicks.includes(id),
         );
@@ -268,7 +313,6 @@ export default function useWordPool(mode) {
         const easyCount = Math.max(0, typeInfo.maxTurns - 1);
         const hardCount = 1;
 
-        // Refill Easy Bag
         if (currentBombEasyBag.length < easyCount) {
           const fresh = [...new Set(BOMB_PHRASES.easy || [])].sort(
             () => Math.random() - 0.5,
@@ -276,7 +320,6 @@ export default function useWordPool(mode) {
           currentBombEasyBag = [...currentBombEasyBag, ...fresh];
         }
 
-        // Refill Hard Bag
         if (
           currentBombHardBag.length < hardCount &&
           (BOMB_PHRASES.hard || []).length > 0
@@ -290,7 +333,6 @@ export default function useWordPool(mode) {
         const pickedEasy = currentBombEasyBag.splice(0, easyCount);
         const pickedHard = currentBombHardBag.splice(0, hardCount);
 
-        // Fallback if Hard Phrases array is totally empty
         if (pickedHard.length < hardCount) {
           const fallback = currentBombEasyBag.splice(
             0,
@@ -299,10 +341,10 @@ export default function useWordPool(mode) {
           pickedHard.push(...fallback);
         }
 
-        // Shuffle the 5 easy and 1 hard
         nextBombPhrases = [...pickedEasy, ...pickedHard].sort(
           () => Math.random() - 0.5,
         );
+
         nextRandom = Math.floor(Math.random() * SOLUTION_WORD_COUNT); // Dummy Target
       } else if (finalBossType === "500dle") {
         const eligible500 = getEligible(
@@ -311,7 +353,6 @@ export default function useWordPool(mode) {
         nextRandom = pickRandom(eligible500);
         nextRandomIndices = [];
       } else {
-        // Hard Normal Clamp (Level 4) vs Easy/Medium (Level 1 & 2)
         if (typeInfo.isHardNormal) {
           nextRandom = pickRandom(
             hardEligible.length > 0 ? hardEligible : eligible,
@@ -359,6 +400,7 @@ export default function useWordPool(mode) {
   const resetPoolData = () => {
     const setup = getInitialSetup(true);
     setGameCount(0);
+    setLastRapidleCycle(-1); // Reset the rapidle tracker so it triggers correctly on fresh runs
     setPlayedBossTypes([]);
     setPlayedMiniBossTypes([]);
     setBannedOpeningWords([]);

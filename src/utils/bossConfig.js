@@ -2,6 +2,7 @@
 export const DEV_SETTINGS = {
   FORCE_BOSS_ID: null,
   EVERY_ROUND_IS_BOSS: false,
+  FORCE_RAPIDLE: false,
 };
 
 export const MINI_BOSS_REGISTRY = {

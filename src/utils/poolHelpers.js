@@ -32,6 +32,7 @@ export const getGameTypeInfo = (
   playedBosses = [],
   playedMiniBosses = [],
 ) => {
+  // Strictly the 5-Game Cycle (1, 2 standard; 3 mini-boss; 4 hard; 5 boss)
   const cyclePos = (count + 1) % 5;
   const isBossRound = DEV_SETTINGS.EVERY_ROUND_IS_BOSS || cyclePos === 0;
   const isMiniBossRound = cyclePos === 3 && !DEV_SETTINGS.EVERY_ROUND_IS_BOSS;
@@ -87,17 +88,29 @@ export const getGameTypeInfo = (
 };
 
 let cachedInitialSetup = null;
-
 export const getInitialSetup = (forceNew = false) => {
   if (cachedInitialSetup && !forceNew) return cachedInitialSetup;
-  const typeInfo = getGameTypeInfo(0, [], []);
+
+  let typeInfo = getGameTypeInfo(0, [], []);
+
+  // Ensure Rapidle handles the first game correctly if forced in DEV settings
+  if (DEV_SETTINGS.FORCE_RAPIDLE) {
+    typeInfo = {
+      isBoss: true,
+      isMiniBoss: false,
+      isHardNormal: false,
+      bossType: "rapidle",
+      category: "rapidle",
+      wordCount: 0,
+      maxTurns: 999,
+    };
+  }
 
   let finalBossType = typeInfo.bossType;
   let finalRandom = null;
   let finalRandomIndices = [];
   let initialBag = [];
   let initialBanned = [];
-
   let initialBombEasyBag = [...new Set(BOMB_PHRASES.easy || [])].sort(
     () => Math.random() - 0.5,
   );
@@ -107,7 +120,9 @@ export const getInitialSetup = (forceNew = false) => {
   let initialBombPhrases = [];
 
   if (typeInfo.isBoss) {
-    if (typeInfo.category === "shape") {
+    if (typeInfo.category === "rapidle") {
+      finalRandom = 0; // Dummy target
+    } else if (typeInfo.category === "shape") {
       initialBag = [...SHAPE_KEYS].sort(() => Math.random() - 0.5);
       finalBossType = initialBag.shift();
       const validIndices = shapeData[finalBossType] || [];
@@ -124,6 +139,7 @@ export const getInitialSetup = (forceNew = false) => {
         { length: SOLUTION_WORD_COUNT - HARD_SOLUTION_WORD_COUNT },
         (_, idx) => idx + HARD_SOLUTION_WORD_COUNT,
       );
+
       const hardPicks = pickDistinct(1, hardPool);
       const easyPicks = pickDistinct(typeInfo.wordCount - 1, easyPool);
       finalRandomIndices = [...hardPicks, ...easyPicks].sort(
