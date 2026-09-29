@@ -34,10 +34,9 @@ export default function Survival({ mode = "survival" }) {
   const [streakBeforeLastLoss, setStreakBeforeLastLoss] = useState(0);
   const modalReadyAtRef = useRef(0);
 
-  const GUIDE_SEEN_KEY = `wordle-survival-guide-seen-${mode}`;
-  const [isGuideOpen, setIsGuideOpen] = useState(
-    () => !secureStorage.getItem(GUIDE_SEEN_KEY, false),
-  );
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [guideInitialTab, setGuideInitialTab] = useState("basics");
+
   const [isShapeModalOpen, setIsShapeModalOpen] = useState(false);
 
   const game = useSurvivalGame(mode);
@@ -71,6 +70,42 @@ export default function Survival({ mode = "survival" }) {
     modalReadyAtRef,
   });
 
+  // --- AUTO-OPEN GUIDE ON FIRST EVER ENCOUNTER ---
+  useEffect(() => {
+    if (game.gameState !== "playing" || progress.runCompleted) return;
+
+    if (game.isBossGame || game.isMiniBossGame) {
+      let tabId =
+        game.bossCategory === "shape"
+          ? "shapedle"
+          : game.bossCategory === "rapidle"
+            ? "rapidle"
+            : game.bossType; // Returns "duodle", "fourdle", "bombedle", "500dle"
+
+      if (tabId && !progress.seenBossGuides[tabId]) {
+        // Mark as seen so it never auto-opens for this boss again
+        progress.setSeenBossGuides((prev) => ({ ...prev, [tabId]: true }));
+        setGuideInitialTab(tabId);
+        setIsGuideOpen(true);
+      }
+    } else {
+      // Show basics if it's the very first game ever
+      if (!progress.seenBossGuides["basics"]) {
+        progress.setSeenBossGuides((prev) => ({ ...prev, basics: true }));
+        setGuideInitialTab("basics");
+        setIsGuideOpen(true);
+      }
+    }
+  }, [
+    game.isBossGame,
+    game.isMiniBossGame,
+    game.bossCategory,
+    game.bossType,
+    game.gameCount, // Tied to gameCount so it runs exactly when a new game generates
+    game.gameState,
+    progress.runCompleted,
+  ]);
+
   useEffect(() => {
     const handleSysEvent = (e) => {
       if (!progress.bonusClaimed) {
@@ -89,10 +124,6 @@ export default function Survival({ mode = "survival" }) {
     progress.setBonusClaimed,
     addToast,
   ]);
-
-  useEffect(() => {
-    if (isGuideOpen) secureStorage.setItem(GUIDE_SEEN_KEY, true);
-  }, [isGuideOpen, GUIDE_SEEN_KEY]);
 
   if (progress.runCompleted) {
     return (
@@ -139,8 +170,8 @@ export default function Survival({ mode = "survival" }) {
           bossKeyboardLineColors={bossKeyboardLineColors}
           handleGameOver={handleGameOver}
           addToast={addToast}
-          isBombTimerPaused={isBombWarningOpen}
-          isRapidleTimerPaused={isRapidleWarningOpen}
+          isBombTimerPaused={isBombWarningOpen || isGuideOpen}
+          isRapidleTimerPaused={isRapidleWarningOpen || isGuideOpen}
         />
       ) : (
         <StandardGameView
@@ -158,6 +189,7 @@ export default function Survival({ mode = "survival" }) {
       <div className="absolute bottom-4 right-4 z-40 flex flex-col items-end">
         <button
           onClick={() => {
+            setGuideInitialTab("basics");
             setIsGuideOpen(true);
             document.activeElement.blur();
             window.focus();
@@ -354,6 +386,7 @@ export default function Survival({ mode = "survival" }) {
 
       <SurvivalGuideCustomModal
         isOpen={isGuideOpen}
+        initialTab={guideInitialTab}
         onClose={() => {
           setIsGuideOpen(false);
           document.activeElement.blur();

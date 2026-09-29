@@ -54,6 +54,12 @@ export default function useSurvivalProgress(mode) {
     false,
   );
 
+  // NEW: Track first-ever encounters for auto-opening the guide
+  const [seenBossGuides, setSeenBossGuides] = useSecureState(
+    `wordle-seen-boss-guides-${mode}`,
+    {},
+  );
+
   const [currency, setCurrency] = useSecureState(CURRENCY_KEY, 2500);
   const [hintsArray, setHintsArray] = useSecureState(SHOP_DATA_KEY, () => {
     const parsed = secureStorage.getItem(SHOP_DATA_KEY, null);
@@ -154,6 +160,7 @@ export default function useSurvivalProgress(mode) {
     setBonusClaimed(false);
     setHasSeenBombWarning(false);
     setHasSeenRapidleWarning(false);
+    // CRITICAL: We DO NOT reset `seenBossGuides` here so the guide memory persists across runs!
   };
 
   return {
@@ -193,5 +200,7 @@ export default function useSurvivalProgress(mode) {
     setHasSeenBombWarning,
     hasSeenRapidleWarning,
     setHasSeenRapidleWarning,
+    seenBossGuides,
+    setSeenBossGuides,
   };
 }
