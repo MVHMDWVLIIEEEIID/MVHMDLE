@@ -1,3 +1,4 @@
+// hooks/useGameInput.js
 import { useState, useEffect, useRef } from "react";
 import data from "../data/words.json";
 
@@ -10,6 +11,7 @@ export default function useGameInput({
   onGameOver,
   triggerShake,
   addToast,
+  isPaused = false, // ADDED: Global pause flag
 }) {
   const [currentGuess, setCurrentGuess] = useState("");
   const isSubmittingRef = useRef(false);
@@ -21,16 +23,21 @@ export default function useGameInput({
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // FIX: Completely block typing and Enter submissions if the game is paused by a modal
+      if (isPaused) return;
+
       if (e.key === "Tab") {
         e.preventDefault();
         return;
       }
+
       if (e.repeat) return;
       const key = e.key;
 
       if (key === "Enter") {
         e.preventDefault();
         if (isSubmittingRef.current) return;
+
         if (gameState !== "playing" || turn >= rowCount) {
           if (gameState === "won") onGameOver?.("won-already");
           else onGameOver?.("lost-already");
@@ -52,7 +59,6 @@ export default function useGameInput({
               detail: { handled: false },
             });
             window.dispatchEvent(event);
-
             if (event.detail.handled) {
               sysSeqRef.current = 0;
               setCurrentGuess("");
@@ -104,6 +110,7 @@ export default function useGameInput({
     onGameOver,
     triggerShake,
     addToast,
+    isPaused,
   ]);
 
   return { currentGuess, setCurrentGuess };

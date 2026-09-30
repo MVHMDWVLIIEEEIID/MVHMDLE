@@ -6,10 +6,9 @@ import useSecureState from "./useSecureState";
 const DEFAULT_HINTS = {
   "Hide a Letter": { cost: 1000, bought: 0, desc: "Discard 1 incorrect key." },
   "Vowel Letter": { cost: 2500, bought: 0, desc: "Locate a hidden vowel." },
-  "Yellow Letter": { cost: 4000, bought: 0, desc: "Find a misplaced key." },
-  "Green Letter": { cost: 7500, bought: 0, desc: "Confirm a correct spot." },
-  Row: { cost: 10000, bought: 0, desc: "Get a Seventh Row" },
-  Heart: { cost: 75000, bought: 0, desc: "+1 Extra Life." },
+  "Yellow Letter": { cost: 3000, bought: 0, desc: "Find a misplaced key." },
+  "Green Letter": { cost: 5000, bought: 0, desc: "Confirm a correct spot." },
+  Heart: { cost: 50000, bought: 0, desc: "+1 Extra Life." },
   "Beat The Game": { cost: 1000000, bought: 0, desc: "Instant Extraction." },
 };
 
@@ -43,7 +42,6 @@ export default function useSurvivalProgress(mode) {
     `wordle-bonus-claim-${mode}`,
     false,
   );
-
   const [hasSeenBombWarning, setHasSeenBombWarning] = useSecureState(
     `wordle-bomb-warning-${mode}`,
     false,
@@ -52,7 +50,6 @@ export default function useSurvivalProgress(mode) {
     `wordle-rapidle-warning-${mode}`,
     false,
   );
-
   const [seenBossGuides, setSeenBossGuides] = useSecureState(
     `wordle-seen-boss-guides-${mode}`,
     {},
@@ -80,16 +77,15 @@ export default function useSurvivalProgress(mode) {
   const [hearts, setHearts] = useSecureState(HEARTS_KEY, 3);
   const [streak, setStreak] = useSecureState(STREAK_KEY, 0);
   const [lastReward, setLastReward] = useSecureState(LAST_REWARD_KEY, null);
-
   const [boss2Count, setBoss2Count] = useSecureState(BOSS2_COUNT_KEY, 0);
   const [boss4Count, setBoss4Count] = useSecureState(BOSS4_COUNT_KEY, 0);
   const [boss500Count, setBoss500Count] = useSecureState(BOSS500_COUNT_KEY, 0);
-
   const [gamesPlayed, setGamesPlayed] = useSecureState(GAMES_PLAYED_KEY, 1);
   const [runCompleted, setRunCompleted] = useSecureState(
     RUN_COMPLETED_KEY,
     false,
   );
+
   const [runStats, setRunStats] = useSecureState(RUN_STATS_KEY, () => {
     const saved = secureStorage.getItem(RUN_STATS_KEY, null);
     return { ...DEFAULT_RUN_STATS, ...(saved || {}) };

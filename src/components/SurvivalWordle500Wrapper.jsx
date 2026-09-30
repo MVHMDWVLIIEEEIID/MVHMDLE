@@ -1,3 +1,4 @@
+// components/SurvivalWordle500Wrapper.jsx
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Wordle500Board from "./Wordle500Board";
 import useGameInput from "../hooks/useGameInput";
@@ -13,6 +14,7 @@ export default function SurvivalWordle500Wrapper({
   onGuessSubmit,
   onGameOver,
   addToast,
+  isPaused = false,
 }) {
   const [manualColors, setManualColors] = useState(() => {
     if (!game.guesses) return [];
@@ -129,6 +131,7 @@ export default function SurvivalWordle500Wrapper({
     onGameOver: (type) => onGameOver?.(type),
     triggerShake,
     addToast,
+    isPaused, // Passed down from parent
   });
 
   const changeManualColor = useCallback(
@@ -139,7 +142,8 @@ export default function SurvivalWordle500Wrapper({
       forceReset = false,
       clearAllBoard = false,
     ) => {
-      if (game.gameState !== "playing") return;
+      if (game.gameState !== "playing" || isPaused) return;
+
       setManualColors((prev) =>
         getUpdatedManualColors(
           rowIndex,
@@ -152,18 +156,18 @@ export default function SurvivalWordle500Wrapper({
         ),
       );
     },
-    [game.gameState, game.guesses],
+    [game.gameState, game.guesses, isPaused],
   );
 
   useEffect(() => {
     const handleClear = () => {
-      if (game.gameState === "playing") {
+      if (game.gameState === "playing" && !isPaused) {
         changeManualColor(0, 0, false, false, true);
       }
     };
     window.addEventListener("clear-wordle500", handleClear);
     return () => window.removeEventListener("clear-wordle500", handleClear);
-  }, [changeManualColor, game.gameState]);
+  }, [changeManualColor, game.gameState, isPaused]);
 
   const unifiedGameObj = {
     ...game,

@@ -78,6 +78,7 @@ export default function usePracticeGame(bossId, subId) {
           shapeArrays,
           data,
         );
+
         console.log(
           `%c[SHAPE BOSS ACTIVE] Shape: ${pool.bossType} | Target: ${pool.targetWord}`,
           "color: #00e196; font-weight: bold; font-size: 14px;",
@@ -98,7 +99,6 @@ export default function usePracticeGame(bossId, subId) {
         );
       } else if (pool.bossCategory === "bomb") {
         if (!pool.bombPhrases || pool.bombPhrases.length === 0) return;
-
         const usedWords = new Set();
         const cheatSheet = pool.bombPhrases.map((phrase) => {
           const match = data.find(
@@ -107,7 +107,6 @@ export default function usePracticeGame(bossId, subId) {
           if (match) usedWords.add(match);
           return match || "NO_MATCH";
         });
-
         console.log(
           `[DEBUG][practice] target phrases: ${pool.bombPhrases.join(", ")}\n[DEBUG][practice] cheat sheet (unique): ${cheatSheet.join(", ")}`,
         );
@@ -214,6 +213,7 @@ export default function usePracticeGame(bossId, subId) {
 
       const statuses = getGuessStatuses(guess, pool.targetWord);
       let matches = true;
+
       for (let i = 0; i < 5; i++) {
         let expected = "bg-gameGrey";
         if (requiredRow[i] === "G") expected = "bg-gameGreen";
@@ -252,7 +252,6 @@ export default function usePracticeGame(bossId, subId) {
     if (pool.bossCategory === "multi") {
       const limit = pool.bossWordCount;
       const guessesToAdd = [];
-
       for (let i = 0; i < limit; i++) {
         const isSolved = guesses.some(
           (g) =>
@@ -316,6 +315,7 @@ export default function usePracticeGame(bossId, subId) {
         }
       }
     }
+
     return true;
   };
 
@@ -328,6 +328,8 @@ export default function usePracticeGame(bossId, subId) {
     setGameState("playing");
     setShapeMistakes(2);
     setBombTimeLeft(60);
+    localStorage.removeItem("wordle-bomb-last-tick");
+    localStorage.removeItem("wordle-rapidle-last-tick");
   };
 
   return {

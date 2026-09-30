@@ -1,3 +1,4 @@
+// hooks/useBossMechanics.js
 import { useState, useRef, useLayoutEffect, useEffect } from "react";
 
 export default function useBossMechanics(game) {
@@ -33,6 +34,7 @@ export default function useBossMechanics(game) {
     }
 
     const currentLen = game.guesses.length;
+
     if (!bossRevealInitializedRef.current) {
       bossRevealInitializedRef.current = true;
       prevBossGuessesLenRef.current = currentLen;
@@ -80,7 +82,6 @@ export default function useBossMechanics(game) {
     }, BOSS_KEY_REVEAL_START_MS);
 
     bossRevealTimersRef.current.push(startTimer);
-
     return clearTimers;
   }, [game.guesses, game.isBossGame, game.bossWordCount]);
 
@@ -147,7 +148,7 @@ export default function useBossMechanics(game) {
     bossKeyboardView,
   ]);
 
-  // --- Derived State: Line Colors [THE FIX IS HERE] ---
+  // --- Derived State: Line Colors ---
   const getBossKeyboardLineColors = () => {
     if (!game.isBossGame || game.bossWordCount <= 1) return {};
 
@@ -159,21 +160,6 @@ export default function useBossMechanics(game) {
       bossKeyboardView === "all"
         ? Array.from({ length: game.bossWordCount }, (_, idx) => idx)
         : [bossKeyboardView];
-
-    const isLetterRevealedForGuess = (guessObj, letter) => {
-      const guess = guessObj.word.toLowerCase();
-      if (
-        isRevealLocked &&
-        typeof guessObj?.rowNumber === "number" &&
-        guessObj.rowNumber === latestRowNumber
-      ) {
-        for (let i = 0; i < Math.min(revealedCount, guess.length); i++) {
-          if (guess[i] === letter) return true;
-        }
-        return false;
-      }
-      return guess.includes(letter);
-    };
 
     const keyMap = {};
     Object.keys(game.letters).forEach((key) => {
@@ -190,57 +176,63 @@ export default function useBossMechanics(game) {
         const letter = key.toLowerCase();
         if (!/^[a-z]$/.test(letter)) return;
 
-        // هل الحرف تم استخدامه في اللعبة بشكل عام؟
         const globalColor = game.letters[key].color;
         const isGuessedGlobally = !globalColor.includes("bg-gameLight");
 
-        // 1. إذا كان الحرف (غير موجود) في الكلمة الحالية:
         if (!solution.includes(letter)) {
           if (isGuessedGlobally) {
-            // تم استخدامه في مكان ما، إذن هو بالتأكيد "رصاصي" لهذه الكلمة
             keyMap[key][segmentIdx] = "bg-gameGrey";
           } else {
-            // لم يتم استخدامه أبداً
             keyMap[key][segmentIdx] = "bg-gameLight";
           }
           return;
         }
 
-        // 2. إذا كان الحرف (موجود) في الكلمة، نختبر مدى صحة مكانه
-        const guessesForWord = game.guesses.filter(
-          (g) =>
-            typeof g?.word === "string" &&
-            g.wordIndex === wordIdx &&
-            isLetterRevealedForGuess(g, letter),
-        );
-
         let hasGreen = false;
         let hasYellow = false;
+        let unrevealedWillBeGreen = false; // Add fix for the yellow-flash animation drift
+
+        const guessesForWord = game.guesses.filter(
+          (g) => typeof g?.word === "string" && g.wordIndex === wordIdx,
+        );
 
         guessesForWord.forEach((guessObj) => {
           const guess = guessObj.word.toLowerCase();
-          const maxIdx =
+          const isCurrentReveal =
             isRevealLocked &&
             typeof guessObj?.rowNumber === "number" &&
-            guessObj.rowNumber === latestRowNumber
-              ? Math.min(revealedCount, guess.length)
-              : guess.length;
+            guessObj.rowNumber === latestRowNumber;
 
-          for (let i = 0; i < maxIdx; i++) {
+          const maxIdx = isCurrentReveal
+            ? Math.min(revealedCount, guess.length)
+            : guess.length;
+
+          for (let i = 0; i < guess.length; i++) {
             if (guess[i] === letter) {
-              if (solution[i] === letter) {
-                hasGreen = true;
-              } else {
-                hasYellow = true;
+              if (i < maxIdx) {
+                if (solution[i] === letter) {
+                  hasGreen = true;
+                } else {
+                  hasYellow = true;
+                }
+              } else if (isCurrentReveal) {
+                if (solution[i] === letter) {
+                  unrevealedWillBeGreen = true;
+                }
               }
             }
           }
         });
 
+        // Compensate for interval drift: if the global color has already updated to Green
+        // for this exact letter, bypass the 'Yellow' fallback check entirely.
+        if (unrevealedWillBeGreen && globalColor.includes("bg-gameGreen")) {
+          hasGreen = true;
+        }
+
         if (hasGreen) {
           keyMap[key][segmentIdx] = "bg-gameGreen";
         } else if (hasYellow || isGuessedGlobally) {
-          // إذا كان الحرف موجوداً في الكلمة، وتم تخمينه (سواء أصفر، أو في كلمة أخرى)
           keyMap[key][segmentIdx] = "bg-gameYellow";
         } else {
           keyMap[key][segmentIdx] = "bg-gameLight";

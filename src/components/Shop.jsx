@@ -1,22 +1,8 @@
 // components/Shop.jsx
 import React from "react";
 
-const HIDE_A_LETTER_STEP = 250;
 const HEART_STEP = 25000;
-
-const STANDARD_HINT_SCALING = {
-  "Vowel Letter": { perBuyStep: 0.15, maxMultiplier: 3.0 },
-  "Yellow Letter": { perBuyStep: 0.15, maxMultiplier: 3.0 },
-  "Green Letter": { perBuyStep: 0.2, maxMultiplier: 3.5 },
-  Row: { perBuyStep: 0.25, maxMultiplier: 3.0 },
-};
-
-const getScaledHintPrice = (baseCost, totalBought, scaling) => {
-  if (!scaling) return baseCost;
-  const scaled = Math.floor(baseCost * (1 + totalBought * scaling.perBuyStep));
-  const capped = Math.floor(baseCost * scaling.maxMultiplier);
-  return Math.min(scaled, capped);
-};
+const MAX_HEART_PRICE = 100000;
 
 export default function Shop({
   currency,
@@ -34,21 +20,15 @@ export default function Shop({
       {Object.entries(hintsArray).map(([name, data]) => {
         const usedCount = hintsUsedInRound[name] || 0;
         const totalBought = data.bought || 0;
+
         let currentPrice;
 
         // --- PRICING LOGIC ---
-        if (name === "Hide a Letter") {
-          currentPrice = data.cost + usedCount * HIDE_A_LETTER_STEP;
-        } else if (name === "Heart") {
+        if (name === "Heart") {
           currentPrice = data.cost + totalBought * HEART_STEP;
-        } else if (name === "Beat The Game") {
-          currentPrice = data.cost;
+          if (currentPrice > MAX_HEART_PRICE) currentPrice = MAX_HEART_PRICE;
         } else {
-          currentPrice = getScaledHintPrice(
-            data.cost,
-            totalBought,
-            STANDARD_HINT_SCALING[name],
-          );
+          currentPrice = data.cost;
         }
 
         const canAfford = currency >= currentPrice;
@@ -60,9 +40,7 @@ export default function Shop({
         } else if (name === "Heart") {
           isLocked = usedCount >= 1 || hearts >= MAX_HEARTS;
         } else if (
-          ["Green Letter", "Yellow Letter", "Vowel Letter", "Row"].includes(
-            name,
-          )
+          ["Green Letter", "Yellow Letter", "Vowel Letter"].includes(name)
         ) {
           isLocked = usedCount >= 1;
         }

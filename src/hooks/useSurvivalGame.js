@@ -148,7 +148,6 @@ export default function useSurvivalGame(mode) {
         );
       } else if (pool.bossCategory === "bomb") {
         if (!pool.bombPhrases || pool.bombPhrases.length === 0) return;
-
         const usedWords = new Set();
         const cheatSheet = pool.bombPhrases.map((phrase) => {
           const match = data.find(
@@ -157,7 +156,6 @@ export default function useSurvivalGame(mode) {
           if (match) usedWords.add(match);
           return match || "NO_MATCH";
         });
-
         console.log(
           `[DEBUG][${mode}] target phrases: ${pool.bombPhrases.join(", ")}\n[DEBUG][${mode}] cheat sheet (unique): ${cheatSheet.join(", ")}`,
         );
@@ -278,6 +276,7 @@ export default function useSurvivalGame(mode) {
 
       const statuses = getGuessStatuses(guess, pool.targetWord);
       let matches = true;
+
       for (let i = 0; i < 5; i++) {
         let expected = "bg-gameGrey";
         if (requiredRow[i] === "G") expected = "bg-gameGreen";
@@ -317,7 +316,6 @@ export default function useSurvivalGame(mode) {
     if (pool.bossCategory === "multi") {
       const limit = pool.bossWordCount;
       const guessesToAdd = [];
-
       for (let i = 0; i < limit; i++) {
         const isSolved = guesses.some(
           (g) =>
@@ -394,6 +392,7 @@ export default function useSurvivalGame(mode) {
         }
       }
     }
+
     return true;
   };
 
@@ -408,6 +407,8 @@ export default function useSurvivalGame(mode) {
     setShapeMistakes(2);
     setBombTimeLeft(60);
     setRapidleTimeLeft(10);
+    localStorage.removeItem("wordle-bomb-last-tick");
+    localStorage.removeItem("wordle-rapidle-last-tick");
   };
 
   const resetGame = () => {
@@ -474,6 +475,7 @@ export default function useSurvivalGame(mode) {
     gameCount: pool.gameCount,
     availableSolutionCount: pool.availableSolutionCount,
     bannedRows,
+    bannedOpeningWords: pool.bannedOpeningWords,
     playedBossTypes: pool.playedBossTypes,
     totalBossTypes: pool.totalBossTypes,
     playedMiniBossTypes: pool.playedMiniBossTypes,

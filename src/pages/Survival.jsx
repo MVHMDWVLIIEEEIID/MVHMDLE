@@ -29,14 +29,13 @@ import useToast from "../hooks/useToast";
 export default function Survival({ mode = "survival" }) {
   const navigate = useNavigate();
   const { toasts, addToast } = useToast();
-  const [gameResetKey, setGameResetKey] = useState(0);
 
+  const [gameResetKey, setGameResetKey] = useState(0);
   const [streakBeforeLastLoss, setStreakBeforeLastLoss] = useState(0);
   const modalReadyAtRef = useRef(0);
 
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [guideInitialTab, setGuideInitialTab] = useState("basics");
-
   const [isShapeModalOpen, setIsShapeModalOpen] = useState(false);
 
   const game = useSurvivalGame(mode);
@@ -80,16 +79,14 @@ export default function Survival({ mode = "survival" }) {
           ? "shapedle"
           : game.bossCategory === "rapidle"
             ? "rapidle"
-            : game.bossType; // Returns "duodle", "fourdle", "bombedle", "500dle"
+            : game.bossType;
 
       if (tabId && !progress.seenBossGuides[tabId]) {
-        // Mark as seen so it never auto-opens for this boss again
         progress.setSeenBossGuides((prev) => ({ ...prev, [tabId]: true }));
         setGuideInitialTab(tabId);
         setIsGuideOpen(true);
       }
     } else {
-      // Show basics if it's the very first game ever
       if (!progress.seenBossGuides["basics"]) {
         progress.setSeenBossGuides((prev) => ({ ...prev, basics: true }));
         setGuideInitialTab("basics");
@@ -101,7 +98,7 @@ export default function Survival({ mode = "survival" }) {
     game.isMiniBossGame,
     game.bossCategory,
     game.bossType,
-    game.gameCount, // Tied to gameCount so it runs exactly when a new game generates
+    game.gameCount,
     game.gameState,
     progress.runCompleted,
   ]);
@@ -111,7 +108,7 @@ export default function Survival({ mode = "survival" }) {
       if (!progress.bonusClaimed) {
         e.detail.handled = true;
         progress.setBonusClaimed(true);
-        progress.setHearts((h) => Math.min(5, h + 1));
+        progress.setHearts(5);
         addToast(atob("SGVhcnQgcmVkZWVtZWQ="), "special");
         window.dispatchEvent(new CustomEvent("sys-particles"));
       }
@@ -150,7 +147,6 @@ export default function Survival({ mode = "survival" }) {
   return (
     <div className="flex flex-col h-screen relative overflow-hidden bg-gameDark text-white">
       <Toast toasts={toasts} />
-
       <div className="flex-1 center flex-col">
         <Header
           mode="SURVIVAL CHALLENGE"
@@ -182,10 +178,10 @@ export default function Survival({ mode = "survival" }) {
           handleBuyHint={handleBuyHint}
           handleGameOver={handleGameOver}
           addToast={addToast}
+          isPaused={isGuideOpen}
         />
       )}
 
-      {/* Guide Button FAB */}
       <div className="absolute bottom-4 right-4 z-40 flex flex-col items-end">
         <button
           onClick={() => {
@@ -210,7 +206,6 @@ export default function Survival({ mode = "survival" }) {
         </button>
       </div>
 
-      {/* Debug Menu */}
       {import.meta.env.DEV && (
         <div className="dropdown dropdown-bottom dropdown-end absolute top-15 right-4 z-50">
           <div
@@ -314,7 +309,6 @@ export default function Survival({ mode = "survival" }) {
         </div>
       )}
 
-      {/* Warning Modals */}
       <WarningModal
         isOpen={isBombWarningOpen}
         onClose={() => {
@@ -327,7 +321,6 @@ export default function Survival({ mode = "survival" }) {
         buttonText="Roger That"
         theme="danger"
       />
-
       <WarningModal
         isOpen={isRapidleWarningOpen}
         onClose={() => {
@@ -387,6 +380,7 @@ export default function Survival({ mode = "survival" }) {
       <SurvivalGuideCustomModal
         isOpen={isGuideOpen}
         initialTab={guideInitialTab}
+        bannedWords={game.bannedOpeningWords}
         onClose={() => {
           setIsGuideOpen(false);
           document.activeElement.blur();

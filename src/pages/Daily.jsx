@@ -5,7 +5,7 @@ import Header from "../components/Header";
 import Keyboard from "../components/Keyboard";
 import Tiles from "../components/Tiles";
 import DailyGameModals from "../components/DailyGameModals";
-import DailyGuideModal from "../components/DailyGuideModal"; // <-- Added Guide Modal
+import DailyGuideModal from "../components/DailyGuideModal";
 import useDailyGame from "../hooks/useDailyGame";
 import Toast from "../components/Toast";
 import useToast from "../hooks/useToast";
@@ -17,13 +17,13 @@ export default function Daily({ mode = "daily" }) {
   const game = useDailyGame(mode);
   const { toasts, addToast } = useToast();
 
-  const [isGuideOpen, setIsGuideOpen] = useState(false); // <-- Track Guide State
-
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(() => {
     if (game.gameState === "won") return [true, "won"];
     if (game.gameState === "lost") return [true, "lost"];
     return [false, "playing"];
   });
+
   const modalReadyAtRef = useRef(0);
   const RESULT_ANIMATION_MS = 1500;
 
@@ -37,9 +37,11 @@ export default function Daily({ mode = "daily" }) {
     document.activeElement.blur();
     window.focus();
     const now = Date.now();
+
     if (result === "won" || result === "lost") {
       modalReadyAtRef.current = now + RESULT_ANIMATION_MS;
     }
+
     if (result === "won-already" && now >= modalReadyAtRef.current) {
       setIsModalOpen([true, "won"]);
       return;
@@ -48,6 +50,7 @@ export default function Daily({ mode = "daily" }) {
       setIsModalOpen([true, "lost"]);
       return;
     }
+
     if (result === "won" || result === "lost") {
       setTimeout(() => {
         if (result === "won") {
@@ -67,14 +70,12 @@ export default function Daily({ mode = "daily" }) {
         const splitSolution = game.targetWord.toLowerCase().split("");
         const splitGuess = guess.toLowerCase().split("");
         const statuses = Array(5).fill("⬛");
-
         splitGuess.forEach((char, i) => {
           if (char === splitSolution[i]) {
             statuses[i] = "🟩";
             splitSolution[i] = null;
           }
         });
-
         splitGuess.forEach((char, i) => {
           if (statuses[i] !== "🟩") {
             const idx = splitSolution.indexOf(char);
@@ -84,7 +85,6 @@ export default function Daily({ mode = "daily" }) {
             }
           }
         });
-
         return statuses.join("");
       })
       .join("\n");
@@ -122,6 +122,7 @@ export default function Daily({ mode = "daily" }) {
             onGuessSubmit={(g) => game.submitGuess(g, handleGameOver)}
             onGameOver={handleGameOver}
             addToast={addToast}
+            isPaused={isGuideOpen || isModalOpen[0]}
           />
         }
         keyboard={
@@ -129,7 +130,6 @@ export default function Daily({ mode = "daily" }) {
         }
       />
 
-      {/* Guide Button FAB - Right Aligned & Blue */}
       <div className="absolute bottom-4 right-4 z-40 flex flex-col items-end">
         <button
           onClick={() => {
@@ -153,7 +153,6 @@ export default function Daily({ mode = "daily" }) {
         </button>
       </div>
 
-      {/* Daily Mode Guide Modal */}
       <DailyGuideModal
         isOpen={isGuideOpen}
         onClose={() => setIsGuideOpen(false)}

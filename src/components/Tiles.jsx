@@ -16,6 +16,7 @@ export default function Tiles({
   isShapeMode = false,
   isBombMode = false,
   isRapidleMode = false,
+  isPaused = false,
 }) {
   const [shake, setShake] = useState(false);
   const [bannedFlash, setBannedFlash] = useState(false);
@@ -51,7 +52,7 @@ export default function Tiles({
       }
       return false;
     },
-    [onGuessSubmit, triggerShake, addToast, turn],
+    [onGuessSubmit, triggerShake, addToast, turn, triggerBannedFlash],
   );
 
   const { currentGuess } = useGameInput({
@@ -64,6 +65,7 @@ export default function Tiles({
     onGameOver,
     triggerShake,
     addToast,
+    isPaused, // Passed down from parent
   });
 
   // --- Infinite Scroll Setup for Rapidle ---
@@ -76,7 +78,6 @@ export default function Tiles({
     // Strictly require the game to be active to show the empty typing row
     const needsActiveRow = gameState === "playing";
     const totalVisualRows = guesses.length + (needsActiveRow ? 1 : 0);
-
     displayRowCount = Math.min(6, totalVisualRows);
     displayRowCount = Math.max(1, displayRowCount); // Ensure at least 1 row exists
 

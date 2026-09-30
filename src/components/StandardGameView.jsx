@@ -14,11 +14,15 @@ export default function StandardGameView({
   handleBuyHint,
   handleGameOver,
   addToast,
+  isPaused = false,
 }) {
   const [isShopOpen, setIsShopOpen] = useState(false);
-  
+
   // Extract parsed hint indicators strictly from the active game session
   const indicators = useKeyboardIndicators(progress.hintHistory);
+
+  // Stop input completely if guide, shop, or game over modals are on screen
+  const isInputPaused = isPaused || isShopOpen || isModalOpen;
 
   return (
     <>
@@ -32,6 +36,7 @@ export default function StandardGameView({
             targetWord={game.targetWord}
             gameState={game.gameState}
             bannedRows={game.bannedRows}
+            isPaused={isInputPaused}
             onGuessSubmit={(
               g,
               _wordIdx,
@@ -59,10 +64,10 @@ export default function StandardGameView({
           />
         }
         keyboard={
-          <Keyboard 
-            letters={game.letters} 
-            lastChanged={game.lastChanged} 
-            indicators={indicators} 
+          <Keyboard
+            letters={game.letters}
+            lastChanged={game.lastChanged}
+            indicators={indicators}
           />
         }
       />
@@ -80,7 +85,7 @@ export default function StandardGameView({
           gameState={game.gameState}
           isModalOpen={isModalOpen}
         />
-        
+
         {/* NEW: Bigger, Green, 90% Opacity Shop Button with Cart Icon */}
         <button
           onClick={(e) => {

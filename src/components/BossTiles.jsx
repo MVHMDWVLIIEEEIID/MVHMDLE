@@ -20,8 +20,8 @@ export default function BossTiles({
   selectedView = "all",
   onWordClick,
   onWordDoubleClick,
+  isPaused = false,
 }) {
-  // FIXED: Converted from useState to useMemo so it reacts when targetWords populate asynchronously
   const solutions = useMemo(
     () => targetWords.map((w) => w?.toLowerCase()),
     [targetWords],
@@ -102,7 +102,6 @@ export default function BossTiles({
         setPendingFlipTurn(turn);
         return true;
       }
-
       return false;
     },
     [
@@ -110,6 +109,7 @@ export default function BossTiles({
       guesses,
       onGuessSubmit,
       triggerShake,
+      triggerBannedFlash,
       addToast,
       turn,
       isFourWordMode,
@@ -125,6 +125,7 @@ export default function BossTiles({
     onGameOver,
     triggerShake,
     addToast,
+    isPaused, // Passed down from parent
   });
 
   const containerClass = isFourWordMode
@@ -136,8 +137,8 @@ export default function BossTiles({
       {solutions.map((solution, wordIdx) => {
         const wordGuessesObjs = guesses.filter((g) => g.wordIndex === wordIdx);
         const isSolved = wordGuessesObjs.some((g) => g.word === solution);
-        const gridGuesses = Array(rowCount).fill("");
 
+        const gridGuesses = Array(rowCount).fill("");
         wordGuessesObjs.forEach((g) => {
           if (typeof g.rowNumber === "number") {
             gridGuesses[g.rowNumber] = g.word;

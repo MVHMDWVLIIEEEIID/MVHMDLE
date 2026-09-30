@@ -1,3 +1,4 @@
+// components/WarningModal.jsx
 import React, { useEffect } from "react";
 
 export default function WarningModal({
@@ -19,9 +20,11 @@ export default function WarningModal({
       }
     };
 
-    // Use capture phase to intercept the enter key before the game registers it
-    window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
+    // Switched to regular bubbling phase (`false`) instead of capture phase.
+    // This allows Modals higher in the hierarchy (like the Guide Modals, which use `true`)
+    // to intercept the Enter key and stop it before it reaches the Warning Modal.
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
   const visibilityClass = isOpen
@@ -32,17 +35,13 @@ export default function WarningModal({
   const isDanger = theme === "danger";
   const colorText = isDanger ? "text-gameRed" : "text-gameYellow";
   const colorBorder = isDanger ? "border-gameRed/50" : "border-gameYellow/50";
-  const buttonClass = isDanger
-    ? "bg-gameRed"
-    : "bg-gameYellow";
+  const buttonClass = isDanger ? "bg-gameRed" : "bg-gameYellow";
 
   return (
     <div
       className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ease-out ${visibilityClass}`}
     >
-      {/* No onClick handler here makes it strictly un-dismissible by clicking outside */}
       <div className="fixed inset-0 bg-black/80" />
-
       <div
         className={`relative w-full max-w-md rounded-3xl bg-[#0a0a0a] border-2 ${colorBorder} p-8 text-center transition-colors duration-500 ${modalTransform}`}
       >

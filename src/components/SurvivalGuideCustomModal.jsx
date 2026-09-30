@@ -68,6 +68,7 @@ const GUIDE_MENU = [
     color: "#f5f5f5",
     children: [
       { value: "basics", label: "How to Play" },
+      { value: "bans", label: "Banned Words" },
       { value: "earnings", label: "Economy & Earnings" },
       { value: "hints", label: "Hints & Shop" },
     ],
@@ -100,6 +101,7 @@ export default function SurvivalGuideCustomModal({
   isOpen,
   onClose,
   initialTab = "basics",
+  bannedWords = [],
 }) {
   const [activeTab, setActiveTab] = useState(initialTab);
 
@@ -111,7 +113,8 @@ export default function SurvivalGuideCustomModal({
     if (!isOpen) return;
 
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
+      // Intercept Enter key here and stop it so it won't trigger the Warning Modal
+      if (e.key === "Escape" || e.key === "Enter") {
         e.preventDefault();
         e.stopPropagation();
         onClose?.();
@@ -209,6 +212,96 @@ export default function SurvivalGuideCustomModal({
                 instances always take priority over Yellow, and excess copies
                 are marked Grey.
               </p>
+            </div>
+          </div>
+        );
+
+      case "bans":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-3xl font-black uppercase tracking-widest text-gameRed mb-2">
+                The Ban List
+              </h3>
+              <p className="text-white/70 font-mono text-sm leading-relaxed">
+                To prevent you from using the exact same overpowered starting
+                words (like "STARE" or "AUDIO") in every single game, Survival
+                enforces a strict <strong>Opening Word Ban</strong>.
+              </p>
+            </div>
+
+            {/* Visual Ban Showcase */}
+            <div className="flex flex-col items-center justify-center gap-3 my-5 bg-[#050505] p-6 rounded-2xl border border-gameRed/30">
+              <div className="flex gap-1">
+                <MockTile char="A" state="R" pulse />
+                <MockTile char="U" state="R" pulse />
+                <MockTile char="D" state="R" pulse />
+                <MockTile char="I" state="R" pulse />
+                <MockTile char="O" state="R" pulse />
+              </div>
+              <span className="text-[10px] text-gameRed font-black uppercase tracking-widest mt-2 px-3 py-1 bg-gameRed/10 rounded border border-gameRed/20">
+                Word is Banned!
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 font-mono">
+              <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-2">
+                <h4 className="text-white font-bold text-xs uppercase tracking-widest border-b border-white/10 pb-2">
+                  How It Works
+                </h4>
+                <p className="text-[11px] text-white/60 leading-relaxed pt-1">
+                  Any word you guess in the <strong>very first row</strong> of a
+                  normal game is instantly added to your Ban List for the rest
+                  of the run. You cannot use it as an opener ever again.
+                </p>
+              </div>
+
+              <div className="p-4 bg-[#050505] border border-gameRed/30 rounded-xl space-y-2">
+                <h4 className="text-gameRed font-bold text-xs uppercase tracking-widest border-b border-white/10 pb-2">
+                  Boss Scaling
+                </h4>
+                <p className="text-[11px] text-white/60 leading-relaxed pt-1">
+                  Multi-word bosses lock out even more rows. In{" "}
+                  <strong>Duodle</strong>, your first 2 guesses are tracked and
+                  banned. In <strong>Fourdle</strong>, your first 3 guesses are
+                  banned!
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mt-2">
+              <p className="text-[11px] font-mono text-white/50 leading-relaxed">
+                <strong className="text-gameYellow">Note:</strong> Banned words
+                are only restricted in the opening rows (usually Rows 1 and 2).
+                Once you get deeper into the board, you can use them as regular
+                guesses. <br />
+                <br />
+                <strong className="text-gameGreen">Exceptions:</strong> Bans DO
+                NOT apply to Special Bosses (Shapedle, Bombedle, Rapidle) or the
+                Practice Menu.
+              </p>
+            </div>
+
+            <div className="mt-6">
+              <h4 className="text-white font-bold text-xs uppercase tracking-widest border-b border-white/10 pb-2 mb-3">
+                Banned Words of the Current Run
+              </h4>
+              {bannedWords && bannedWords.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {bannedWords.map((word, idx) => (
+                    <span
+                      key={idx}
+                      className="text-[10px] font-black uppercase tracking-widest text-gameRed bg-gameRed/10 border border-gameRed/20 px-2 py-1 rounded"
+                    >
+                      {word}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-white/40 text-[10px] uppercase tracking-widest font-bold bg-white/5 p-3 rounded-lg border border-white/5 text-center">
+                  No words banned yet
+                </div>
+              )}
             </div>
           </div>
         );
@@ -328,6 +421,7 @@ export default function SurvivalGuideCustomModal({
                   (Max 5 per round)
                 </span>
               </div>
+
               <div className="p-3 bg-white/5 border-l-4 border-gameYellow rounded-r-xl flex items-center justify-between">
                 <div>
                   <h4 className="text-gameYellow font-bold text-xs uppercase">
@@ -341,6 +435,7 @@ export default function SurvivalGuideCustomModal({
                   (Max 1 per round)
                 </span>
               </div>
+
               <div className="p-3 bg-white/5 border-l-4 border-gameGreen rounded-r-xl flex items-center justify-between">
                 <div>
                   <h4 className="text-gameGreen font-bold text-xs uppercase">
@@ -354,6 +449,7 @@ export default function SurvivalGuideCustomModal({
                   (Max 1 per round)
                 </span>
               </div>
+
               <div className="p-3 bg-white/5 border-l-4 border-gameRed rounded-r-xl flex items-center justify-between">
                 <div>
                   <h4 className="text-gameRed font-bold text-xs uppercase">
@@ -587,8 +683,15 @@ export default function SurvivalGuideCustomModal({
                 <li className="flex items-center gap-2">
                   <MouseSVG highlight="left" />
                   <span>
-                    <strong>Left Click:</strong> Cycles color (Grey Red Yellow
-                    Green).
+                    <strong>Left Click:</strong> Cycles color (Grey, Red,
+                    Yellow, Green, then Grey to remove).
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <MouseSVG highlight="right" />
+                  <span>
+                    <strong>Right Click:</strong> Instantly removes the current
+                    box color.
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -600,16 +703,6 @@ export default function SurvivalGuideCustomModal({
                   <span>
                     <strong>Mass Paint:</strong> Applies the next color to ALL
                     identical letters.
-                  </span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="flex items-center">
-                    <Key>ALT</Key> <span className="mx-1 text-white/30">+</span>{" "}
-                    <MouseSVG highlight="right" />
-                  </div>
-                  <span>
-                    <strong>Lock Dead:</strong> Marks ALL identical letters as{" "}
-                    <strong>Locked Red</strong>.
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -682,6 +775,7 @@ export default function SurvivalGuideCustomModal({
       className={`fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 transition-all duration-300 ease-out ${visibilityClass}`}
     >
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
+
       <div
         className={`relative w-full max-w-[65rem] h-[85vh] md:h-[75vh] flex flex-col md:flex-row overflow-hidden rounded-3xl bg-[#0a0a0a] border-2 border-white/20 transition-all duration-500 ${modalTransform}`}
       >
@@ -744,7 +838,6 @@ export default function SurvivalGuideCustomModal({
               />
             </svg>
           </button>
-
           <div className="flex-1 overflow-y-auto custom-shape-scroll p-8 md:p-12 lg:p-16">
             <AnimatePresence mode="wait">
               <motion.div

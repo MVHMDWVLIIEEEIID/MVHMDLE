@@ -25,8 +25,10 @@ export default function BossGameView({
   const isShapeBoss = game.bossCategory === "shape";
   const isBombBoss = game.bossCategory === "bomb";
   const isRapidleBoss = game.bossCategory === "rapidle";
-
   const multiWordCount = game.bossWordCount || game.targetWords?.length || 0;
+
+  // Calculates global pause state to send to children components to freeze input
+  const isPaused = Boolean(isBombTimerPaused || isRapidleTimerPaused);
 
   const [wordle500State, setWordle500State] = useState(() => {
     try {
@@ -173,7 +175,7 @@ export default function BossGameView({
             bombTimeLeft={game.bombTimeLeft}
             setBombTimeLeft={game.setBombTimeLeft}
             onTimeUp={() => game.triggerBombTimeUp(handleGameOver)}
-            isPaused={isBombTimerPaused}
+            isPaused={isPaused}
           />
         ) : isRapidleBoss ? (
           <RapidleRightPanel
@@ -182,7 +184,7 @@ export default function BossGameView({
             rapidleTimeLeft={game.rapidleTimeLeft}
             setRapidleTimeLeft={game.setRapidleTimeLeft}
             onTimeUp={() => game.triggerRapidleTimeUp(handleGameOver)}
-            isPaused={isRapidleTimerPaused}
+            isPaused={isPaused}
           />
         ) : null
       }
@@ -191,6 +193,7 @@ export default function BossGameView({
           <SurvivalWordle500Wrapper
             key={gameResetKey}
             game={game}
+            isPaused={isPaused}
             onGuessSubmit={(
               g,
               _wordIdx,
@@ -226,6 +229,7 @@ export default function BossGameView({
             isShapeMode={isShapeBoss}
             isBombMode={isBombBoss}
             isRapidleMode={isRapidleBoss}
+            isPaused={isPaused}
             onGuessSubmit={(
               g,
               _wordIdx,
@@ -268,6 +272,7 @@ export default function BossGameView({
             targetWords={game.targetWords}
             gameState={game.gameState}
             bannedRows={game.bannedRows}
+            isPaused={isPaused}
             onGuessSubmit={(
               g,
               wordIdx,
@@ -306,7 +311,7 @@ export default function BossGameView({
         <div className="flex flex-col items-center gap-3 w-full">
           {isWordle500Boss && (
             <div
-              className={`w-full flex justify-center px-4 max-w-2xl mx-auto transition-opacity duration-300 ease-in-out ${showClearButton ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+              className={`w-full flex justify-center px-4 max-w-2xl mx-auto transition-opacity duration-300 ease-in-out ${showClearButton && !isPaused ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
             >
               <button
                 type="button"
@@ -334,7 +339,6 @@ export default function BossGameView({
               </button>
             </div>
           )}
-
           <Keyboard
             letters={displayLetters}
             lastChanged={game.lastChanged}
