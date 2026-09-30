@@ -45,7 +45,7 @@ export default function PracticeMenu() {
               <button
                 key={boss.id}
                 onClick={() => handleSelectBoss(boss.id)}
-                className="flex flex-col items-center justify-center p-8 bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-gameLight/50 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] rounded-2xl transition-all duration-300 active:scale-95 group w-full sm:w-[calc(50%-1.5rem)] md:w-[calc(33.333%-1.5rem)] min-w-[220px]"
+                className="flex flex-col items-center justify-center p-8 bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-gameLight/50  rounded-2xl transition-all duration-300 active:scale-95 group w-full sm:w-[calc(50%-1.5rem)] md:w-[calc(33.333%-1.5rem)] min-w-[220px]"
               >
                 <h3 className="text-2xl font-black text-gameLight uppercase tracking-wider text-center group-hover:scale-105 transition-transform duration-300">
                   {/* Because the IDs are clean now (duodle, fourdle), we can print them directly */}

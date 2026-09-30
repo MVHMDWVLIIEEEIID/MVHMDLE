@@ -89,7 +89,7 @@ export default function StandardGameView({
             document.activeElement.blur();
             window.focus();
           }}
-          className="flex flex-col items-center justify-center w-16 h-16 bg-gameGreen/90 hover:bg-gameGreen text-gameDark border-2 border-gameGreen rounded-2xl shadow-[0_0_15px_rgba(0,225,150,0.3)] hover:shadow-[0_0_20px_rgba(0,225,150,0.5)] transition-all active:scale-95"
+          className="flex flex-col items-center justify-center w-16 h-16 bg-gameGreen/90 hover:bg-gameGreen text-gameDark border-2 border-gameGreen rounded-2xl  transition-all active:scale-95"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

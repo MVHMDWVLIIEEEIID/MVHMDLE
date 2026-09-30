@@ -31,7 +31,7 @@ export default function ShopModal({ isOpen, onClose, currency, ...shopProps }) {
 
       {/* ADDED h-[36rem] to firmly cap the height, maintaining max-h-[85vh] for mobile screens */}
       <div
-        className={`relative w-full max-w-md h-[30rem] max-h-[85vh] flex flex-col rounded-3xl bg-[#0a0a0a] border-2 border-gameLight/50 p-6 shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-colors duration-500 ${modalTransform}`}
+        className={`relative w-full max-w-md h-[30rem] max-h-[85vh] flex flex-col rounded-3xl bg-[#0a0a0a] border-2 border-gameLight/50 p-6 transition-colors duration-500 ${modalTransform}`}
       >
         {/* FIXED HEADER */}
         <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-4 shrink-0">

@@ -13,7 +13,7 @@ const MouseSVG = ({ highlight }) => (
 );
 
 const Key = ({ children }) => (
-  <div className="inline-flex items-center justify-center px-1.5 py-0.5 mx-1 min-w-[28px] text-[10px] font-black text-gameDark bg-white border border-white/80 rounded shadow-[0_3px_0_rgba(150,150,150,1)] tracking-wider">
+  <div className="inline-flex items-center justify-center px-1.5 py-0.5 mx-1 min-w-[28px] text-[10px] font-black text-gameDark bg-white border border-white/80 rounded tracking-wider">
     {children}
   </div>
 );
@@ -27,7 +27,7 @@ const MockTile = ({ char, state, pulse }) => {
   if (state === "R") colors = "bg-gameRed border-gameRed text-white";
 
   return (
-    <div className={`flex h-10 w-10 items-center justify-center rounded border-2 text-xl font-bold uppercase shadow-lg ${colors} ${pulse ? "animate-pulse" : ""}`}>
+    <div className={`flex h-10 w-10 items-center justify-center rounded border-2 text-xl font-bold uppercase ${colors} ${pulse ? "animate-pulse" : ""}`}>
       {char}
     </div>
   );
@@ -74,11 +74,11 @@ export default function PracticeGuideModal({ isOpen, onClose, bossId }) {
               Solve {isFourdle ? "4 words" : "2 words"} simultaneously. Every guess you submit is tested against all remaining unsolved boards at exactly the same time.
             </p>
 
-            <div className="flex flex-col items-center gap-2 p-5 bg-[#050505] rounded-xl border border-gameBlue/20 w-fit mx-auto shadow-inner">
+            <div className="flex flex-col items-center gap-2 p-5 bg-[#050505] rounded-xl border border-gameBlue/20 w-fit mx-auto">
               <span className="text-[10px] text-gameBlue uppercase font-black tracking-widest">Keyboard Focus</span>
-              <div className="flex items-center justify-center rounded-md border border-gameLight/25 bg-black p-1 shadow-lg">
+              <div className="flex items-center justify-center rounded-md border border-gameLight/25 bg-black p-1">
                  <button className="mx-0.5 min-w-12 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide transition-all bg-gameLight/20 text-gameLight">1ST</button>
-                 <button className="mx-0.5 min-w-12 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide transition-all bg-gameGreen text-gameDark shadow-[0_0_10px_rgba(0,225,150,0.5)]">2ND</button>
+                 <button className="mx-0.5 min-w-12 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide transition-all bg-gameGreen text-gameDark">2ND</button>
                  {isFourdle && (
                    <>
                      <button className="mx-0.5 min-w-12 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide transition-all bg-gameLight/20 text-gameLight">3RD</button>
@@ -124,11 +124,11 @@ export default function PracticeGuideModal({ isOpen, onClose, bossId }) {
             </p>
             
             <div className="flex gap-4 items-center justify-center my-6">
-              <div className="w-24 h-24 rounded-2xl border-2 border-gameRed flex flex-col items-center justify-center bg-[#050505] shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+              <div className="w-24 h-24 rounded-2xl border-2 border-gameRed flex flex-col items-center justify-center bg-[#050505]">
                 <span className="text-[9px] text-gameRed font-black uppercase tracking-widest mb-1">Timer</span>
                 <span className="text-4xl font-mono font-black text-gameRed animate-pulse">42s</span>
               </div>
-              <div className="w-24 h-24 rounded-2xl border-2 border-gameYellow flex flex-col items-center justify-center bg-[#050505] shadow-[0_0_15px_rgba(250,204,21,0.2)]">
+              <div className="w-24 h-24 rounded-2xl border-2 border-gameYellow flex flex-col items-center justify-center bg-[#050505]">
                 <span className="text-[9px] text-gameYellow font-black uppercase tracking-widest mb-1">Phrase</span>
                 <span className="text-3xl font-black text-white uppercase">SH</span>
               </div>
@@ -152,7 +152,7 @@ export default function PracticeGuideModal({ isOpen, onClose, bossId }) {
             </p>
             
             <div className="flex flex-col md:flex-row items-center gap-6 p-4 bg-[#050505] border border-white/10 rounded-2xl">
-              <div className="flex flex-col gap-1 p-3 bg-black border-2 border-gameGreen/30 rounded-xl shadow-inner">
+              <div className="flex flex-col gap-1 p-3 bg-black border-2 border-gameGreen/30 rounded-xl">
                 <div className="flex gap-1"><div className="w-6 h-6 bg-gameGreen rounded" /><div className="w-6 h-6 bg-transparent border-2 border-gameGrey/30 rounded" /><div className="w-6 h-6 bg-gameYellow rounded" /></div>
                 <div className="flex gap-1"><div className="w-6 h-6 bg-transparent border-2 border-gameGrey/30 rounded" /><div className="w-6 h-6 bg-gameGreen rounded" /><div className="w-6 h-6 bg-transparent border-2 border-gameGrey/30 rounded" /></div>
               </div>
@@ -223,7 +223,7 @@ export default function PracticeGuideModal({ isOpen, onClose, bossId }) {
   return (
     <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 transition-all duration-300 ease-out ${visibilityClass}`}>
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
-      <div className={`relative w-full max-w-2xl max-h-[85vh] overflow-y-auto custom-shape-scroll rounded-3xl bg-[#0a0a0a] border-2 ${borderColor} p-8 md:p-12 shadow-[0_0_60px_rgba(255,255,255,0.05)] transition-all duration-500 ${modalTransform}`}>
+      <div className={`relative w-full max-w-2xl max-h-[85vh] overflow-y-auto custom-shape-scroll rounded-3xl bg-[#0a0a0a] border-2 ${borderColor} p-8 md:p-12  transition-all duration-500 ${modalTransform}`}>
         <button
           onClick={onClose}
           className="absolute top-6 right-6 md:top-8 md:right-8 z-50 bg-white/5 hover:bg-white/15 text-white rounded-full p-2.5 transition-all active:scale-90"

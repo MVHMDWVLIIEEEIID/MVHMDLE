@@ -32,12 +32,9 @@ export default function WarningModal({
   const isDanger = theme === "danger";
   const colorText = isDanger ? "text-gameRed" : "text-gameYellow";
   const colorBorder = isDanger ? "border-gameRed/50" : "border-gameYellow/50";
-  const colorShadow = isDanger
-    ? "shadow-[0_0_40px_rgba(239,68,68,0.15)]"
-    : "shadow-[0_0_40px_rgba(250,204,21,0.15)]";
   const buttonClass = isDanger
-    ? "bg-gameRed shadow-gameRed/20"
-    : "bg-gameYellow shadow-gameYellow/20";
+    ? "bg-gameRed"
+    : "bg-gameYellow";
 
   return (
     <div
@@ -47,7 +44,7 @@ export default function WarningModal({
       <div className="fixed inset-0 bg-black/80" />
 
       <div
-        className={`relative w-full max-w-md rounded-3xl bg-[#0a0a0a] border-2 ${colorBorder} p-8 text-center ${colorShadow} transition-colors duration-500 ${modalTransform}`}
+        className={`relative w-full max-w-md rounded-3xl bg-[#0a0a0a] border-2 ${colorBorder} p-8 text-center transition-colors duration-500 ${modalTransform}`}
       >
         <div className={`flex justify-center mb-4 ${colorText}`}>
           <svg
@@ -75,7 +72,7 @@ export default function WarningModal({
         </p>
         <button
           onClick={onClose}
-          className={`w-full text-gameDark font-black py-4 rounded-2xl uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all shadow-lg ${buttonClass}`}
+          className={`w-full text-gameDark font-black py-4 rounded-2xl uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all ${buttonClass}`}
         >
           {buttonText}
         </button>

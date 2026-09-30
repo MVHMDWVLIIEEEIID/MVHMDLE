@@ -44,7 +44,7 @@ export default function ShopPopover({ isOpen, onClose, currency, ...shopProps })
     <div
       ref={popoverRef}
       // FIXED: Now anchors to left-0 and scales from origin-bottom-left
-      className={`absolute bottom-full mb-3 left-0 w-72 max-h-[65vh] flex flex-col rounded-3xl bg-[#0a0a0a] border-2 border-gameLight/50 p-4 shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all duration-300 ease-[cubic-bezier(0.2,1,0.3,1)] origin-bottom-left z-50 ${visibilityClass}`}
+      className={`absolute bottom-full mb-3 left-0 w-72 max-h-[65vh] flex flex-col rounded-3xl bg-[#0a0a0a] border-2 border-gameLight/50 p-4 transition-all duration-300 ease-[cubic-bezier(0.2,1,0.3,1)] origin-bottom-left z-50 ${visibilityClass}`}
     >
       {/* FIXED HEADER */}
       <div className="flex justify-between items-center mb-3 border-b border-white/10 pb-3 shrink-0">

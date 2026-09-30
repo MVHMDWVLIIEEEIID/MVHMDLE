@@ -63,9 +63,6 @@ export default function SurvivalGameModals({
       onClick: onNext,
     });
 
-    const rapidleDropShadow = typedZero
-      ? "drop-shadow-[0_0_15px_rgba(250,204,21,0.4)]"
-      : "drop-shadow-[0_0_15px_rgba(74,222,128,0.25)]";
     const textColor = typedZero ? "text-gameYellow" : "text-gameGreen";
     const borderColor = typedZero
       ? "border-gameYellow/20"
@@ -97,7 +94,7 @@ export default function SurvivalGameModals({
       highlight: stats.isBossGame ? (
         isRapidle ? (
           <div
-            className={`text-4xl font-black text-gameLight uppercase tracking-wider ${rapidleDropShadow} mb-2 text-center`}
+            className={`text-4xl font-black text-gameLight uppercase tracking-wider mb-2 text-center`}
           >
             {stats.guesses.length} WORDS TYPED
           </div>
@@ -226,7 +223,7 @@ export default function SurvivalGameModals({
         : "Attempt Failed:",
       highlight: stats.isBossGame ? (
         isRapidle ? (
-          <div className="text-4xl font-black text-gameLight uppercase tracking-wider drop-shadow-[0_0_15px_rgba(250,204,21,0.4)] mb-2 text-center">
+          <div className="text-4xl font-black text-gameLight uppercase tracking-wider mb-2 text-center">
             {stats.guesses.length} WORDS TYPED
           </div>
         ) : isBomb ? (
@@ -279,7 +276,7 @@ export default function SurvivalGameModals({
         : "The word was",
       highlight: stats.isBossGame ? (
         isRapidle ? (
-          <div className="text-4xl font-black text-gameLight uppercase tracking-wider drop-shadow-[0_0_15px_rgba(239,68,68,0.4)] mb-2 text-center">
+          <div className="text-4xl font-black text-gameLight uppercase tracking-wider mb-2 text-center">
             {stats.guesses.length} WORDS TYPED
           </div>
         ) : isBomb ? (

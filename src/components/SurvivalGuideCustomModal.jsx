@@ -39,7 +39,7 @@ const MouseSVG = ({ highlight }) => (
 );
 
 const Key = ({ children }) => (
-  <div className="inline-flex items-center justify-center px-1.5 py-0.5 mx-1 min-w-[28px] text-[10px] font-black text-gameDark bg-white border border-white/80 rounded shadow-[0_3px_0_rgba(150,150,150,1)] tracking-wider">
+  <div className="inline-flex items-center justify-center px-1.5 py-0.5 mx-1 min-w-[28px] text-[10px] font-black text-gameDark bg-white border border-white/80 rounded tracking-wider">
     {children}
   </div>
 );
@@ -54,7 +54,7 @@ const MockTile = ({ char, state, pulse }) => {
 
   return (
     <div
-      className={`flex h-10 w-10 items-center justify-center rounded border-2 text-xl font-bold uppercase shadow-lg ${colors} ${pulse ? "animate-pulse" : ""}`}
+      className={`flex h-10 w-10 items-center justify-center rounded border-2 text-xl font-bold uppercase ${colors} ${pulse ? "animate-pulse" : ""}`}
     >
       {char}
     </div>
@@ -260,7 +260,7 @@ export default function SurvivalGuideCustomModal({
                 </div>
               </div>
 
-              <div className="p-4 bg-[#050505] border border-gameYellow/30 rounded-xl space-y-2 shadow-inner">
+              <div className="p-4 bg-[#050505] border border-gameYellow/30 rounded-xl space-y-2">
                 <h4 className="text-gameYellow font-bold text-xs uppercase tracking-widest border-b border-white/10 pb-2">
                   Boss Windfalls
                 </h4>
@@ -385,15 +385,15 @@ export default function SurvivalGuideCustomModal({
               at exactly the same time.
             </p>
 
-            <div className="flex flex-col items-center gap-2 p-5 bg-[#050505] rounded-xl border border-gameBlue/20 w-fit mx-auto shadow-inner">
+            <div className="flex flex-col items-center gap-2 p-5 bg-[#050505] rounded-xl border border-gameBlue/20 w-fit mx-auto">
               <span className="text-[10px] text-gameBlue uppercase font-black tracking-widest">
                 Keyboard Focus
               </span>
-              <div className="flex items-center justify-center rounded-md border border-gameLight/25 bg-black p-1 shadow-lg">
+              <div className="flex items-center justify-center rounded-md border border-gameLight/25 bg-black p-1">
                 <button className="mx-0.5 min-w-12 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide transition-all bg-gameLight/20 text-gameLight">
                   1ST
                 </button>
-                <button className="mx-0.5 min-w-12 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide transition-all bg-gameGreen text-gameDark shadow-[0_0_10px_rgba(0,225,150,0.5)]">
+                <button className="mx-0.5 min-w-12 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide transition-all bg-gameGreen text-gameDark">
                   2ND
                 </button>
                 {isFourdle && (
@@ -465,7 +465,7 @@ export default function SurvivalGuideCustomModal({
             </p>
 
             <div className="flex gap-4 items-center justify-center my-6">
-              <div className="w-24 h-24 rounded-2xl border-2 border-gameRed flex flex-col items-center justify-center bg-[#050505] shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+              <div className="w-24 h-24 rounded-2xl border-2 border-gameRed flex flex-col items-center justify-center bg-[#050505]">
                 <span className="text-[9px] text-gameRed font-black uppercase tracking-widest mb-1">
                   Timer
                 </span>
@@ -473,7 +473,7 @@ export default function SurvivalGuideCustomModal({
                   42s
                 </span>
               </div>
-              <div className="w-24 h-24 rounded-2xl border-2 border-gameYellow flex flex-col items-center justify-center bg-[#050505] shadow-[0_0_15px_rgba(250,204,21,0.2)]">
+              <div className="w-24 h-24 rounded-2xl border-2 border-gameYellow flex flex-col items-center justify-center bg-[#050505]">
                 <span className="text-[9px] text-gameYellow font-black uppercase tracking-widest mb-1">
                   Phrase
                 </span>
@@ -509,7 +509,7 @@ export default function SurvivalGuideCustomModal({
             </p>
 
             <div className="flex flex-col md:flex-row items-center gap-6 p-4 bg-[#050505] border border-white/10 rounded-2xl">
-              <div className="flex flex-col gap-1 p-3 bg-black border-2 border-gameGreen/30 rounded-xl shadow-inner">
+              <div className="flex flex-col gap-1 p-3 bg-black border-2 border-gameGreen/30 rounded-xl">
                 <div className="flex gap-1">
                   <div className="w-6 h-6 bg-gameGreen rounded" />
                   <div className="w-6 h-6 bg-transparent border-2 border-gameGrey/30 rounded" />
@@ -641,7 +641,7 @@ export default function SurvivalGuideCustomModal({
             </p>
 
             <div className="flex gap-4 items-center justify-center my-6">
-              <div className="w-24 h-24 rounded-2xl border-2 border-gameBlue flex flex-col items-center justify-center bg-[#050505] shadow-[0_0_15px_rgba(0,153,255,0.2)]">
+              <div className="w-24 h-24 rounded-2xl border-2 border-gameBlue flex flex-col items-center justify-center bg-[#050505]">
                 <span className="text-[10px] text-gameBlue font-black uppercase tracking-widest mb-1">
                   Time
                 </span>
@@ -683,10 +683,10 @@ export default function SurvivalGuideCustomModal({
     >
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
       <div
-        className={`relative w-full max-w-[65rem] h-[85vh] md:h-[75vh] flex flex-col md:flex-row overflow-hidden rounded-3xl bg-[#0a0a0a] border-2 border-white/20 transition-all duration-500 shadow-[0_0_60px_rgba(255,255,255,0.05)] ${modalTransform}`}
+        className={`relative w-full max-w-[65rem] h-[85vh] md:h-[75vh] flex flex-col md:flex-row overflow-hidden rounded-3xl bg-[#0a0a0a] border-2 border-white/20 transition-all duration-500 ${modalTransform}`}
       >
         {/* --- LEFT SIDEBAR (Branched Menu Component) --- */}
-        <div className="w-full md:w-72 lg:w-80 h-[35%] md:h-full flex-shrink-0 border-b md:border-b-0 md:border-r border-white/10 bg-[#0f0f0f] flex flex-col relative z-20 shadow-[10px_0_20px_rgba(0,0,0,0.3)]">
+        <div className="w-full md:w-72 lg:w-80 h-[35%] md:h-full flex-shrink-0 border-b md:border-b-0 md:border-r border-white/10 bg-[#0f0f0f] flex flex-col relative z-20">
           <div className="p-6 md:p-8 border-b border-white/10 shrink-0">
             <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-white flex items-center gap-3">
               <svg

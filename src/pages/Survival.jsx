@@ -194,7 +194,7 @@ export default function Survival({ mode = "survival" }) {
             document.activeElement.blur();
             window.focus();
           }}
-          className="flex flex-col items-center justify-center w-16 h-16 bg-gameBlue/90 hover:bg-gameBlue text-gameDark border-2 border-gameBlue rounded-2xl shadow-[0_0_15px_rgba(0,153,255,0.3)] hover:shadow-[0_0_20px_rgba(0,153,255,0.5)] transition-all active:scale-95"
+          className="flex flex-col items-center justify-center w-16 h-16 bg-gameBlue/90 hover:bg-gameBlue text-gameDark border-2 border-gameBlue rounded-2xl transition-all active:scale-95"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -216,7 +216,7 @@ export default function Survival({ mode = "survival" }) {
           <div
             tabIndex={0}
             role="button"
-            className="flex items-center justify-center w-10 h-10 bg-gameRed hover:opacity-100 opacity-75 text-black hover:text-gameDark border border-gameRed/30 rounded-xl transition-all shadow-lg active:scale-95"
+            className="flex items-center justify-center w-10 h-10 bg-gameRed hover:opacity-100 opacity-75 text-black hover:text-gameDark border border-gameRed/30 rounded-xl transition-all active:scale-95"
             title="Debug Menu"
           >
             <svg
@@ -241,7 +241,7 @@ export default function Survival({ mode = "survival" }) {
           </div>
           <ul
             tabIndex={0}
-            className="dropdown-content menu mt-3 p-2 shadow-[0_0_20px_rgba(255,0,0,0.15)] bg-[#0a0a0a] border-2 border-gameRed/30 rounded-2xl w-48 gap-1.5 z-[100]"
+            className="dropdown-content menu mt-3 p-2 bg-[#0a0a0a] border-2 border-gameRed/30 rounded-2xl w-48 gap-1.5 z-[100]"
           >
             <li>
               <button

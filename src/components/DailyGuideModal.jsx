@@ -9,7 +9,7 @@ const MockTile = ({ char, state }) => {
 
   return (
     <div
-      className={`flex h-11 w-11 items-center justify-center rounded-lg border-2 text-xl font-black uppercase shadow-md ${colors}`}
+      className={`flex h-11 w-11 items-center justify-center rounded-lg border-2 text-xl font-black uppercase ${colors}`}
     >
       {char}
     </div>
@@ -38,12 +38,12 @@ export default function DailyGuideModal({ isOpen, onClose }) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 transition-all duration-300 ease-out ${visibilityClass}`}
+      className={`fixed inset-0 z-100 flex items-center justify-center p-4 md:p-8 transition-all duration-300 ease-out ${visibilityClass}`}
     >
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
 
       <div
-        className={`relative w-full max-w-2xl max-h-[85vh] overflow-y-auto custom-guide-scroll rounded-3xl bg-[#0a0a0a] border-2 border-gameGreen/50 p-8 md:p-12 shadow-[0_0_60px_rgba(0,225,150,0.1)] transition-all duration-500 ${modalTransform}`}
+        className={`relative w-full max-w-2xl max-h-[85vh] overflow-y-auto custom-guide-scroll rounded-3xl bg-[#0a0a0a] border-2 border-gameGreen/50 p-8 md:p-12 transition-all duration-500 ${modalTransform}`}
       >
         <button
           onClick={onClose}

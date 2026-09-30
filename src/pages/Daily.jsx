@@ -137,7 +137,7 @@ export default function Daily({ mode = "daily" }) {
             document.activeElement.blur();
             window.focus();
           }}
-          className="flex flex-col items-center justify-center w-16 h-16 bg-gameBlue/90 hover:bg-gameBlue text-gameDark border-2 border-gameBlue rounded-2xl shadow-[0_0_15px_rgba(0,153,255,0.3)] hover:shadow-[0_0_20px_rgba(0,153,255,0.5)] transition-all active:scale-95"
+          className="flex flex-col items-center justify-center w-16 h-16 bg-gameBlue/90 hover:bg-gameBlue text-gameDark border-2 border-gameBlue transition-all active:scale-95"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

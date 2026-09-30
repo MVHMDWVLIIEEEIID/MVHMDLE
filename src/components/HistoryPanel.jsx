@@ -70,7 +70,7 @@ export default function HistoryPanel({ history, currentGameCount, gameState }) {
   const reversedGroups = [...groups].reverse();
 
   return (
-    <div className="w-72 h-72 text-gameLight rounded-lg flex flex-col bg-[#0a0a0a] border-2 border-gameLight shadow-[0_0_15px_rgba(0,0,0,0.5)] overflow-hidden font-sans">
+    <div className="w-72 h-72 text-gameLight rounded-lg flex flex-col bg-[#0a0a0a] border-2 border-gameLight overflow-hidden font-sans">
       <header className="h-12 flex-none bg-gameLight px-4 flex justify-between items-center border-b-2 border-gameLight/30 z-10">
         <h2 className="text-xs font-black uppercase text-gameDark leading-none">
           History

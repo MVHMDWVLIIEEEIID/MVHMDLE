@@ -48,7 +48,7 @@ export default function PracticeShapeSelectorModal({
       `}</style>
 
       <div
-        className={`relative flex flex-col w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-3xl bg-[#0a0a0a] border-2 border-white/20 transition-colors duration-500 shadow-[0_0_40px_rgba(255,255,255,0.05)] ${modalTransform}`}
+        className={`relative flex flex-col w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-3xl bg-[#0a0a0a] border-2 border-white/20 transition-colors duration-500 ${modalTransform}`}
       >
         <div className="relative flex items-center justify-center h-20 shrink-0 w-full border-b border-white/10 bg-[#0a0a0a] z-10 px-6 md:px-8">
           <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase text-center text-gameLight">
@@ -81,7 +81,7 @@ export default function PracticeShapeSelectorModal({
               onClick={() => onSelect("random")}
               className="flex flex-col justify-center items-center p-4 bg-white/5 hover:bg-white/10 border-2 border-white/20 hover:border-white/50 rounded-xl transition-all active:scale-95 group h-full min-h-[120px]"
             >
-              <span className="text-5xl font-black text-gameLight drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+              <span className="text-5xl font-black text-gameLight">
                 ?
               </span>
               <span className="text-white/80 group-hover:text-white font-bold uppercase tracking-widest mt-3 text-[10px]">
@@ -113,9 +113,9 @@ export default function PracticeShapeSelectorModal({
                           /* REMOVED transition-all here to prevent massive browser reflow lag on resize */
                           className={`w-4 h-4 rounded border ${
                             cell === "G"
-                              ? "bg-gameGreen border-gameGreen shadow-[0_0_6px_rgba(0,225,150,0.5)]"
+                              ? "bg-gameGreen border-gameGreen"
                               : cell === "Y"
-                                ? "bg-gameYellow border-gameYellow shadow-[0_0_6px_rgba(255,213,0,0.5)]"
+                                ? "bg-gameYellow border-gameYellow"
                                 : "bg-transparent border-gameGrey/30"
                           }`}
                         />
