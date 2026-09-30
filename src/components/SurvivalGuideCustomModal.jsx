@@ -282,16 +282,17 @@ export default function SurvivalGuideCustomModal({
               </p>
             </div>
 
-            <div className="mt-6">
-              <h4 className="text-white font-bold text-xs uppercase tracking-widest border-b border-white/10 pb-2 mb-3">
+            {/* Banned Words Container */}
+            <div className="p-5 mt-6 rounded-2xl bg-[#050505] border border-white/10">
+              <h4 className="text-white font-bold text-xs uppercase tracking-widest border-b border-white/10 pb-3 mb-4">
                 Banned Words of the Current Run
               </h4>
               {bannedWords && bannedWords.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {bannedWords.map((word, idx) => (
                     <span
                       key={idx}
-                      className="text-[10px] font-black uppercase tracking-widest text-gameRed bg-gameRed/10 border border-gameRed/20 px-2 py-1 rounded"
+                      className="text-[11px] font-black uppercase tracking-widest text-gameRed bg-gameRed/10 border border-gameRed/20 px-3 py-1.5 rounded-lg"
                     >
                       {word}
                     </span>
