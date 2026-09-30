@@ -56,7 +56,7 @@ export default function MobileBlocker({ children }) {
         </p>
         <div className="mt-8 px-4 py-2 bg-white/5 rounded-lg border-2 border-gameRed">
           <span className="text-xs uppercase font-bold text-gameRed/80 tracking-widest">
-            GET A PC U STUPID NIGGER
+            GET A PC U STUPID :3
           </span>
         </div>
       </div>
