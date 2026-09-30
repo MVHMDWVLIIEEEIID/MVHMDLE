@@ -68,6 +68,7 @@ const GUIDE_MENU = [
     color: "#f5f5f5",
     children: [
       { value: "basics", label: "How to Play" },
+      { value: "earnings", label: "Economy & Earnings" },
       { value: "hints", label: "Hints & Shop" },
     ],
   },
@@ -108,6 +109,7 @@ export default function SurvivalGuideCustomModal({
 
   useEffect(() => {
     if (!isOpen) return;
+
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -115,6 +117,7 @@ export default function SurvivalGuideCustomModal({
         onClose?.();
       }
     };
+
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [isOpen, onClose]);
@@ -122,6 +125,7 @@ export default function SurvivalGuideCustomModal({
   const visibilityClass = isOpen
     ? "opacity-100 pointer-events-auto backdrop-blur-xl"
     : "opacity-0 pointer-events-none backdrop-blur-none";
+
   const modalTransform = isOpen
     ? "scale-100 opacity-100"
     : "scale-95 opacity-0";
@@ -167,6 +171,7 @@ export default function SurvivalGuideCustomModal({
                 <MockTile char="V" state="B" />
                 <MockTile char="E" state="B" />
               </div>
+
               <ul className="space-y-2 font-mono text-xs text-white/60 bg-white/5 border border-white/10 p-4 rounded-xl">
                 <li className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-gameGreen rounded shrink-0"></div>
@@ -208,6 +213,94 @@ export default function SurvivalGuideCustomModal({
           </div>
         );
 
+      case "earnings":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-3xl font-black uppercase tracking-widest text-gameGreen mb-2">
+                Economy & Earnings
+              </h3>
+              <p className="text-white/70 font-mono text-sm leading-relaxed">
+                Reaching the $1,000,000 extraction goal requires maximizing your
+                multipliers. Here is how your cash payouts are calculated.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 font-mono">
+              <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-2">
+                <h4 className="text-white font-bold text-xs uppercase tracking-widest border-b border-white/10 pb-2">
+                  Standard Multipliers
+                </h4>
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <div className="flex justify-between text-xs text-white/80">
+                      <span>Base Win</span>
+                      <span className="text-gameGreen font-bold">+$4,000</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs text-white/80">
+                      <span>Speed Bonus</span>
+                      <span className="text-gameGreen font-bold">+$1,500</span>
+                    </div>
+                    <p className="text-[10px] text-white/40 mt-0.5 leading-tight">
+                      Per unused row. ($2.5k for Bosses).
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs text-white/80">
+                      <span>Streak Bonus</span>
+                      <span className="text-gameGreen font-bold">+$500</span>
+                    </div>
+                    <p className="text-[10px] text-white/40 mt-0.5 leading-tight">
+                      Compounds per consecutive win. Losing a game resets this
+                      to $0.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-[#050505] border border-gameYellow/30 rounded-xl space-y-2 shadow-inner">
+                <h4 className="text-gameYellow font-bold text-xs uppercase tracking-widest border-b border-white/10 pb-2">
+                  Boss Windfalls
+                </h4>
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <div className="flex justify-between text-xs text-white/80">
+                      <span>Flawless Shape</span>
+                      <span className="text-gameYellow font-bold">+$5,000</span>
+                    </div>
+                    <p className="text-[10px] text-white/40 mt-0.5 leading-tight">
+                      Per mistake NOT made during Shapedle (Up to $10,000).
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs text-white/80">
+                      <span>Rapidle Carry</span>
+                      <span className="text-gameYellow font-bold">+$3,500</span>
+                    </div>
+                    <p className="text-[10px] text-white/40 mt-0.5 leading-tight">
+                      Per word typed. No streak multipliers apply.
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs text-white/80">
+                      <span>Cycle Completion</span>
+                      <span className="text-gameYellow font-bold">
+                        +$75,000
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-white/40 mt-0.5 leading-tight">
+                      Awarded if you beat a full boss cycle while at Max (5)
+                      Hearts.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
       case "hints":
         return (
           <div className="space-y-6">
@@ -220,6 +313,7 @@ export default function SurvivalGuideCustomModal({
               in the bottom-left corner. Hint prices scale up the more you buy
               them across the entire run.
             </p>
+
             <div className="grid grid-cols-1 gap-2 mt-4 font-mono">
               <div className="p-3 bg-white/5 border-l-4 border-gameLight rounded-r-xl flex items-center justify-between">
                 <div>
@@ -493,8 +587,8 @@ export default function SurvivalGuideCustomModal({
                 <li className="flex items-center gap-2">
                   <MouseSVG highlight="left" />
                   <span>
-                    <strong>Left Click:</strong> Cycles color (Grey ➔ Red ➔
-                    Yellow ➔ Green).
+                    <strong>Left Click:</strong> Cycles color (Grey Red Yellow
+                    Green).
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -571,7 +665,7 @@ export default function SurvivalGuideCustomModal({
               <p className="text-white/70 font-mono text-sm leading-relaxed">
                 Rapidle is a free bonus round. You cannot lose a heart. Every
                 valid word you successfully submit grants a massive{" "}
-                <strong>$2,500 Cash Bonus</strong>. The grid scrolls infinitely
+                <strong>$3,500 Cash Bonus</strong>. The grid scrolls infinitely
                 as you type!
               </p>
             </div>
@@ -588,7 +682,6 @@ export default function SurvivalGuideCustomModal({
       className={`fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 transition-all duration-300 ease-out ${visibilityClass}`}
     >
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
-
       <div
         className={`relative w-full max-w-[65rem] h-[85vh] md:h-[75vh] flex flex-col md:flex-row overflow-hidden rounded-3xl bg-[#0a0a0a] border-2 border-white/20 transition-all duration-500 shadow-[0_0_60px_rgba(255,255,255,0.05)] ${modalTransform}`}
       >
@@ -613,7 +706,6 @@ export default function SurvivalGuideCustomModal({
               Intel Guide
             </h2>
           </div>
-
           <div className="flex-1 overflow-y-auto p-4 custom-shape-scroll">
             {isOpen && (
               <BranchedMenu
@@ -669,6 +761,7 @@ export default function SurvivalGuideCustomModal({
           </div>
         </div>
       </div>
+
       <style>{`
         .custom-shape-scroll::-webkit-scrollbar { width: 6px; }
         .custom-shape-scroll::-webkit-scrollbar-track { background: transparent; }
