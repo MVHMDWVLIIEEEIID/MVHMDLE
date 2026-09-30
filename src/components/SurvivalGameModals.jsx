@@ -11,7 +11,6 @@ export default function SurvivalGameModals({
   stats,
 }) {
   const [showModal, modalType] = isOpen;
-
   const renderBossWordsInline = (words = []) => words.join(", ");
 
   const isBomb = stats.bossCategory === "bomb";
@@ -55,7 +54,6 @@ export default function SurvivalGameModals({
     };
   } else if (modalType === "won") {
     let wonButtons = [];
-
     if (!isRapidle) {
       wonButtons.push({ label: "Share", variant: "default", onClick: onShare });
     }
@@ -68,7 +66,6 @@ export default function SurvivalGameModals({
     const rapidleDropShadow = typedZero
       ? "drop-shadow-[0_0_15px_rgba(250,204,21,0.4)]"
       : "drop-shadow-[0_0_15px_rgba(74,222,128,0.25)]";
-
     const textColor = typedZero ? "text-gameYellow" : "text-gameGreen";
     const borderColor = typedZero
       ? "border-gameYellow/20"
@@ -153,29 +150,44 @@ export default function SurvivalGameModals({
                   <span>+{stats.lastReward.breakdown.base}</span>
                 </div>
 
+                {/* Boss Streak or Normal Speed */}
                 {stats.isBossGame ? (
                   !isRapidle && (
                     <div className="flex justify-between text-[10px] font-mono text-white/60">
-                      <span>Boss Defeat Streak</span>
+                      <span>Boss Defeat Multiplier</span>
                       <span>
-                        +
-                        {stats.bossWordCount === 2
-                          ? 2000 * stats.boss2Count || 0
-                          : stats.bossWordCount === 4
-                            ? 4000 * stats.boss4Count || 0
-                            : stats.bossWordCount === 1
-                              ? 2000 * stats.boss500Count || 0
-                              : 0}
+                        +{stats.lastReward.breakdown.bossStreakBonus || 0}
                       </span>
                     </div>
                   )
                 ) : (
                   <div className="flex justify-between text-[10px] font-mono text-white/60">
                     <span>
-                      Guesses Not Used ({stats.lastReward.breakdown.unusedCount}
-                      )
+                      Speed Bonus ({stats.lastReward.breakdown.unusedCount}{" "}
+                      unused)
                     </span>
                     <span>+{stats.lastReward.breakdown.speed}</span>
+                  </div>
+                )}
+
+                {/* Show Speed Bonus on Bosses too now! */}
+                {stats.isBossGame &&
+                  !isRapidle &&
+                  stats.lastReward.breakdown.speed > 0 && (
+                    <div className="flex justify-between text-[10px] font-mono text-white/60">
+                      <span>
+                        Speed Bonus ({stats.lastReward.breakdown.unusedCount}{" "}
+                        unused)
+                      </span>
+                      <span>+{stats.lastReward.breakdown.speed}</span>
+                    </div>
+                  )}
+
+                {/* Flawless Shape Bonus */}
+                {stats.lastReward.breakdown.shapeBonus > 0 && (
+                  <div className="flex justify-between text-[10px] font-mono text-gameGreen/80">
+                    <span>Flawless Shape Bonus</span>
+                    <span>+{stats.lastReward.breakdown.shapeBonus}</span>
                   </div>
                 )}
 
@@ -194,7 +206,7 @@ export default function SurvivalGameModals({
               <p className="text-gameRed text-[11px] font-black uppercase tracking-wider">
                 {stats.lastReward.breakdown.heartAdded
                   ? "+1 Heart Added For Beating Entire Bosses Cycle"
-                  : "+$50,000 Hearts Full Bonus"}
+                  : "+$75,000 Hearts Full Bonus"}
               </p>
             </div>
           )}

@@ -1,14 +1,14 @@
 // components/Shop.jsx
 import React from "react";
 
-const HIDE_A_LETTER_STEP = 150;
-const HEART_STEP = 20000;
+const HIDE_A_LETTER_STEP = 250;
+const HEART_STEP = 25000;
 
 const STANDARD_HINT_SCALING = {
-  "Vowel Letter": { perBuyStep: 0.07, maxMultiplier: 2.3 },
-  "Yellow Letter": { perBuyStep: 0.09, maxMultiplier: 2.9 },
-  "Green Letter": { perBuyStep: 0.11, maxMultiplier: 2.9 },
-  Row: { perBuyStep: 0.11, maxMultiplier: 2.3 },
+  "Vowel Letter": { perBuyStep: 0.15, maxMultiplier: 3.0 },
+  "Yellow Letter": { perBuyStep: 0.15, maxMultiplier: 3.0 },
+  "Green Letter": { perBuyStep: 0.2, maxMultiplier: 3.5 },
+  Row: { perBuyStep: 0.25, maxMultiplier: 3.0 },
 };
 
 const getScaledHintPrice = (baseCost, totalBought, scaling) => {
@@ -74,7 +74,6 @@ export default function Shop({
             key={name}
             onClick={() => onBuyHint(name, currentPrice)}
             disabled={isDisabled}
-            // Reduced padding and minimum height to squeeze the rows together
             className={`group w-full border-b border-white/5 px-2 py-2 transition-all duration-200 flex flex-row items-center justify-between min-h-[3.5rem] relative
               ${!isDisabled ? "hover:bg-white/5 active:bg-white/10 cursor-pointer rounded-xl" : "opacity-30 cursor-not-allowed"}
             `}

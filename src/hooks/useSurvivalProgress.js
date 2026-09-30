@@ -4,12 +4,12 @@ import { secureStorage } from "../utils/secureStorage";
 import useSecureState from "./useSecureState";
 
 const DEFAULT_HINTS = {
-  "Hide a Letter": { cost: 800, bought: 0, desc: "Discard 1 incorrect key." },
-  "Vowel Letter": { cost: 1500, bought: 0, desc: "Locate a hidden vowel." },
-  "Yellow Letter": { cost: 2500, bought: 0, desc: "Find a misplaced key." },
-  "Green Letter": { cost: 4000, bought: 0, desc: "Confirm a correct spot." },
-  Row: { cost: 6000, bought: 0, desc: "Get a Seventh Row" },
-  Heart: { cost: 60000, bought: 0, desc: "+1 Extra Life." },
+  "Hide a Letter": { cost: 1000, bought: 0, desc: "Discard 1 incorrect key." },
+  "Vowel Letter": { cost: 2500, bought: 0, desc: "Locate a hidden vowel." },
+  "Yellow Letter": { cost: 4000, bought: 0, desc: "Find a misplaced key." },
+  "Green Letter": { cost: 7500, bought: 0, desc: "Confirm a correct spot." },
+  Row: { cost: 10000, bought: 0, desc: "Get a Seventh Row" },
+  Heart: { cost: 75000, bought: 0, desc: "+1 Extra Life." },
   "Beat The Game": { cost: 1000000, bought: 0, desc: "Instant Extraction." },
 };
 
@@ -48,19 +48,18 @@ export default function useSurvivalProgress(mode) {
     `wordle-bomb-warning-${mode}`,
     false,
   );
-
   const [hasSeenRapidleWarning, setHasSeenRapidleWarning] = useSecureState(
     `wordle-rapidle-warning-${mode}`,
     false,
   );
 
-  // NEW: Track first-ever encounters for auto-opening the guide
   const [seenBossGuides, setSeenBossGuides] = useSecureState(
     `wordle-seen-boss-guides-${mode}`,
     {},
   );
 
   const [currency, setCurrency] = useSecureState(CURRENCY_KEY, 2500);
+
   const [hintsArray, setHintsArray] = useSecureState(SHOP_DATA_KEY, () => {
     const parsed = secureStorage.getItem(SHOP_DATA_KEY, null);
     if (parsed) {
@@ -81,9 +80,11 @@ export default function useSurvivalProgress(mode) {
   const [hearts, setHearts] = useSecureState(HEARTS_KEY, 3);
   const [streak, setStreak] = useSecureState(STREAK_KEY, 0);
   const [lastReward, setLastReward] = useSecureState(LAST_REWARD_KEY, null);
+
   const [boss2Count, setBoss2Count] = useSecureState(BOSS2_COUNT_KEY, 0);
   const [boss4Count, setBoss4Count] = useSecureState(BOSS4_COUNT_KEY, 0);
   const [boss500Count, setBoss500Count] = useSecureState(BOSS500_COUNT_KEY, 0);
+
   const [gamesPlayed, setGamesPlayed] = useSecureState(GAMES_PLAYED_KEY, 1);
   const [runCompleted, setRunCompleted] = useSecureState(
     RUN_COMPLETED_KEY,
@@ -160,7 +161,6 @@ export default function useSurvivalProgress(mode) {
     setBonusClaimed(false);
     setHasSeenBombWarning(false);
     setHasSeenRapidleWarning(false);
-    // CRITICAL: We DO NOT reset `seenBossGuides` here so the guide memory persists across runs!
   };
 
   return {
