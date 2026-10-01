@@ -1,5 +1,5 @@
 // components/BossGameView.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import BossTiles from "./BossTiles";
 import Keyboard from "./Keyboard";
 import SurvivalWordle500Wrapper from "./SurvivalWordle500Wrapper";
@@ -29,7 +29,39 @@ export default function BossGameView({
 
   // Calculates global pause state to send to children components to freeze input
   const isPaused = Boolean(isBombTimerPaused || isRapidleTimerPaused);
-  
+  // --- NEW: Stagger 500dle keyboard win colors to reveal letter by letter ---
+  // --- NEW: Stagger 500dle keyboard win colors to reveal letter by letter ---
+  // --- NEW: Stagger 500dle keyboard win colors to reveal letter by letter ---
+  // --- NEW: Stagger 500dle keyboard win colors to reveal letter by letter ---
+  const [revealedWinCount, setRevealedWinCount] = useState(() =>
+    game.gameState === "won" ? 5 : 0,
+  );
+
+  const hasAnimatedWinRef = useRef(game.gameState === "won");
+
+  useEffect(() => {
+    if (game.gameState === "won" && !hasAnimatedWinRef.current) {
+      hasAnimatedWinRef.current = true;
+      const timers = [];
+
+      for (let i = 0; i < 5; i++) {
+        // Trigger the keyboard color the exact moment the tile begins its flip
+        timers.push(
+          setTimeout(
+            () => {
+              setRevealedWinCount(i + 1);
+            },
+            300 + i * 100,
+          ),
+        );
+      }
+      return () => timers.forEach(clearTimeout);
+    } else if (game.gameState !== "won") {
+      hasAnimatedWinRef.current = false;
+      setRevealedWinCount(0);
+    }
+  }, [game.gameState]);
+
   useEffect(() => {
     if (isPaused || multiWordCount <= 1) return;
 
@@ -95,9 +127,13 @@ export default function BossGameView({
 
   let wordle500LetterColors = {};
   if (isWordle500Boss && game.guesses && wordle500State.manualColors) {
+    // 1. Define strict priority: Green beats everything, Grey is beaten by everything
+    const priority = { green: 4, yellow: 3, red: 2, "locked-red": 2, gray: 1 };
+
     game.guesses.forEach((guessObj, rIdx) => {
       const guessStr =
         typeof guessObj === "string" ? guessObj : guessObj?.word || "";
+
       const isWinningGuess =
         game.gameState === "won" && guessStr === game.targetWord;
 
@@ -105,18 +141,18 @@ export default function BossGameView({
         const char = guessStr[cIdx];
         if (!char) continue;
 
-        let color = wordle500State.manualColors[rIdx]?.[cIdx];
-        if (isWinningGuess) {
+        let color = wordle500State.manualColors[rIdx]?.[cIdx] || "gray";
+
+        // FIXED: Only turn green if the sequential reveal has reached this column
+        if (isWinningGuess && cIdx < revealedWinCount) {
           color = "green";
         }
 
-        const currentHighest = wordle500LetterColors[char];
-        if (color === "green") {
-          wordle500LetterColors[char] = "green";
-        } else if (color === "yellow" && currentHighest !== "green") {
-          wordle500LetterColors[char] = "yellow";
-        } else if (!currentHighest) {
-          wordle500LetterColors[char] = "gray";
+        // 2. Compare the current tile's color against the highest recorded color for this letter
+        const currentHighest = wordle500LetterColors[char] || "gray";
+
+        if (priority[color] > priority[currentHighest]) {
+          wordle500LetterColors[char] = color;
         }
       }
     });
@@ -141,12 +177,16 @@ export default function BossGameView({
             let finalColorClass = "bg-gameLight border-gameLight text-gameDark";
 
             if (!isDefault) {
-              const highest = wordle500LetterColors[key];
+              const highest = wordle500LetterColors[key] || "gray";
+
+              // 3. Map the highest priority color to its Tailwind classes
               if (highest === "green") {
                 finalColorClass = "bg-gameGreen border-gameGreen text-gameDark";
               } else if (highest === "yellow") {
                 finalColorClass =
                   "bg-gameYellow border-gameYellow text-gameDark";
+              } else if (highest === "red" || highest === "locked-red") {
+                finalColorClass = "bg-gameRed border-gameRed text-white";
               } else {
                 finalColorClass = "bg-gameGrey border-gameGrey text-gameDark";
               }
