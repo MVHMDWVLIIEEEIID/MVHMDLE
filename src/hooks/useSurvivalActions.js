@@ -309,12 +309,62 @@ export default function useSurvivalActions({
         return;
       }
 
-      // --- MULTI-WORD BOSS SHARE ---
-      const gridsByWord = game.targetWords.map((word, wordIdx) => {
-        const wordGuesses = game.guesses.filter((g) => g.wordIndex === wordIdx);
-        return wordGuesses.map((guessObj) => {
-          const splitSolution = word.toLowerCase().split("");
-          const splitGuess = guessObj.word.toLowerCase().split("");
+      // --- MULTI-WORD BOSS SHARE (Duodle / Fourdle) ---
+      if (game.bossCategory === "multi") {
+        const gridsByWord = game.targetWords.map((word, wordIdx) => {
+          const wordGuesses = game.guesses.filter(
+            (g) => g.wordIndex === wordIdx,
+          );
+          return wordGuesses.map((guessObj) => {
+            const splitSolution = word.toLowerCase().split("");
+            const splitGuess = guessObj.word.toLowerCase().split("");
+            const statuses = Array(5).fill("⬛");
+            splitGuess.forEach((char, i) => {
+              if (char === splitSolution[i]) {
+                statuses[i] = "🟩";
+                splitSolution[i] = null;
+              }
+            });
+            splitGuess.forEach((char, i) => {
+              if (statuses[i] === "⬛") {
+                const idx = splitSolution.indexOf(char);
+                if (idx !== -1) {
+                  statuses[i] = "🟨";
+                  splitSolution[idx] = null;
+                }
+              }
+            });
+            return statuses.join("");
+          });
+        });
+
+        const maxRows = Math.max(0, ...gridsByWord.map((rows) => rows.length));
+        const allGrids = Array.from({ length: maxRows }, (_, rowIdx) =>
+          gridsByWord.map((rows) => rows[rowIdx] || "⬛⬛⬛⬛⬛").join("   "),
+        ).join("\n");
+
+        const streakText =
+          progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
+        const bossName = game.bossWordCount === 4 ? "FOURDLE" : "DUODLE";
+
+        const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) ${bossName}\n\n${allGrids}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
+        try {
+          await navigator.clipboard.writeText(shareText);
+          addToast("Copied!", "success");
+        } catch (err) {
+          addToast("Failed to copy", "error");
+        }
+        return;
+      }
+
+      // --- 500DLE & OTHER SINGLE WORD BOSSES SHARE ---
+      const grid = game.guesses
+        .map((guess) => {
+          const splitSolution = game.targetWord.toLowerCase().split("");
+          const splitGuess =
+            typeof guess === "string"
+              ? guess.toLowerCase().split("")
+              : guess.word.toLowerCase().split("");
           const statuses = Array(5).fill("⬛");
 
           splitGuess.forEach((char, i) => {
@@ -333,27 +383,24 @@ export default function useSurvivalActions({
               }
             }
           });
-
           return statuses.join("");
-        });
-      });
+        })
+        .join("\n");
 
-      const maxRows = Math.max(0, ...gridsByWord.map((rows) => rows.length));
-      const allGrids = Array.from({ length: maxRows }, (_, rowIdx) =>
-        gridsByWord.map((rows) => rows[rowIdx] || "⬜⬜⬜⬜⬜").join("   "),
-      ).join("\n");
-
+      const score = isModalOpen[1] === "won" ? game.guesses.length : "X";
       const streakText =
         progress.streak > 3 ? `${progress.streak} 🔥` : `${progress.streak}`;
-      const bossName = game.bossWordCount === 4 ? "FOURDLE" : "DUODLE";
+      const bossName =
+        game.bossType === "500dle" ? "500DLE" : game.bossType.toUpperCase();
 
-      const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) ${bossName}\n\n${allGrids}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
+      const shareText = `[MVHMDLE](https://wordle.mvhmd.dev/) ${bossName} - ${score}/${game.maxTurns}\n\n${grid}\n\nStreak: ${streakText}\nTotal: $${progress.currency.toLocaleString()}`;
       try {
         await navigator.clipboard.writeText(shareText);
         addToast("Copied!", "success");
       } catch (err) {
         addToast("Failed to copy", "error");
       }
+      return;
     } else {
       // --- STANDARD GAME SHARE ---
       const grid = game.guesses

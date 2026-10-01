@@ -372,6 +372,9 @@ export default function Survival({ mode = "survival" }) {
           boss4Count: progress.boss4Count,
           boss500Count: progress.boss500Count,
           isCycleComplete:
+            game.isBossGame &&
+            !game.isMiniBossGame &&
+            game.bossCategory !== "rapidle" &&
             (game.playedBossTypes?.length || 0) > 0 &&
             (game.playedBossTypes?.length || 0) === (game.totalBossTypes || 3),
         }}

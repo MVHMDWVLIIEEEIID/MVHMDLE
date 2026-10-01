@@ -415,20 +415,17 @@ export default function Modal({
                 let btnClass =
                   "w-full font-black py-4 rounded-2xl transition-all uppercase text-sm tracking-widest active:scale-95 ";
                 if (btn.variant === "success")
-                  btnClass +=
-                    "bg-gameGreen text-gameDark hover:scale-105";
+                  btnClass += "bg-gameGreen text-gameDark hover:scale-105";
                 else if (btn.variant === "danger")
-                  btnClass +=
-                    "bg-gameRed text-gameDark hover:scale-105";
+                  btnClass += "bg-gameRed text-gameDark hover:scale-105";
                 else if (btn.variant === "warning")
-                  btnClass +=
-                    "bg-gameYellow text-gameDark hover:scale-105";
+                  btnClass += "bg-gameYellow text-gameDark hover:scale-105";
                 else if (btn.variant === "ghost")
                   btnClass +=
                     "bg-transparent text-white/30 hover:text-white border border-transparent py-2";
                 else
-                  btnClass +=
-                    "bg-gameDark border-2 border-gameGreen text-gameGreen hover:scale-105";
+                  // FIXED: Now adapts to the modal's context (loss = red, win = green)
+                  btnClass += `bg-gameDark border-2 ${theme.border} ${theme.text} hover:scale-105`;
                 return (
                   <button key={idx} onClick={btn.onClick} className={btnClass}>
                     {btn.label}

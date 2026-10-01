@@ -54,9 +54,10 @@ export const calculateWinRewards = ({
     }
 
     // 2. Cycle Completion Check
-    if (!game.isMiniBossGame && !isRapidle) {
+    if (game.isBossGame && !game.isMiniBossGame && !isRapidle) {
       const currentCycleLength = game.playedBossTypes?.length || 0;
       const totalInCycle = game.totalBossTypes || 3;
+
       if (currentCycleLength > 0 && currentCycleLength === totalInCycle) {
         heartAdded = progress.hearts < MAX_HEARTS;
         if (heartAdded) {

@@ -145,6 +145,19 @@ export default function PracticeGuideModal({ isOpen, onClose, bossId }) {
                 letter across all active boards. To isolate a specific word:
               </p>
               <ul className="space-y-3 text-sm text-white/90 font-mono">
+                {/* NEW SHORTCUT INSTRUCTION */}
+                <li className="flex items-start gap-2">
+                  <div className="mt-0.5 flex items-center shrink-0">
+                    <Key>1</Key>{" "}
+                    <span className="text-white/30 text-[10px] mx-0.5">-</span>{" "}
+                    <Key>{isFourdle ? "4" : "2"}</Key>
+                  </div>
+                  <span className="leading-tight">
+                    <strong>Number Keys:</strong> Press the board's number to
+                    focus it. Press it again to return to "ALL".
+                  </span>
+                </li>
+                {/* EXISTING MOUSE INSTRUCTIONS */}
                 <li className="flex items-start gap-2">
                   <div className="mt-1">
                     <MouseSVG highlight="left" />

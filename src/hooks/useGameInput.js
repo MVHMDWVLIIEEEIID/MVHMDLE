@@ -95,6 +95,7 @@ export default function useGameInput({
           setCurrentGuess((prev) => (prev + key)?.toLowerCase());
         }
       } else if (key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (/^[1-4]$/.test(key)) return; // Allow 1-4 to pass through for boss shortcuts
         addToast?.("Game only accepts English letters", "error");
       }
     };

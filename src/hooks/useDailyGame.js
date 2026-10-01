@@ -190,10 +190,13 @@ export default function useDailyGame(mode = "daily") {
 
   const changeColor = (newColor, letterKey) => {
     const key = letterKey.toLowerCase();
+
+    // Trigger animation for EVERY evaluated letter, regardless of color upgrade
+    setLastChanged({ letter: key, timestamp: Date.now() });
+
     setLetters((prev) => {
       const current = prev[key];
       if (!current) return prev;
-
       const currentColor = current.color;
 
       if (currentColor.includes("bg-gameGreen")) return prev;
@@ -208,7 +211,6 @@ export default function useDailyGame(mode = "daily") {
       )
         return prev;
 
-      setLastChanged({ letter: key, timestamp: Date.now() });
       return { ...prev, [key]: { ...current, color: newColor } };
     });
   };

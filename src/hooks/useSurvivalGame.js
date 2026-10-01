@@ -176,6 +176,10 @@ export default function useSurvivalGame(mode) {
 
   const changeColor = (newColor, letterKey) => {
     const key = letterKey.toLowerCase();
+
+    // Trigger animation for EVERY evaluated letter, regardless of color upgrade
+    setLastChanged({ letter: key, timestamp: Date.now() });
+
     setLetters((prev) => {
       const current = prev[key];
       if (!current) return prev;
@@ -193,11 +197,9 @@ export default function useSurvivalGame(mode) {
       )
         return prev;
 
-      setLastChanged({ letter: key, timestamp: Date.now() });
       return { ...prev, [key]: { ...current, color: newColor } };
     });
   };
-
   const submitGuess = (
     guess,
     _wordIndex,

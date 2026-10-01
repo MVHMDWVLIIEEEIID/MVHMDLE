@@ -137,6 +137,10 @@ export default function usePracticeGame(bossId, subId) {
 
   const changeColor = (newColor, letterKey) => {
     const key = letterKey.toLowerCase();
+
+    // Trigger animation for EVERY evaluated letter, regardless of color upgrade
+    setLastChanged({ letter: key, timestamp: Date.now() });
+
     setLetters((prev) => {
       const current = prev[key];
       if (!current) return prev;
@@ -154,7 +158,6 @@ export default function usePracticeGame(bossId, subId) {
       )
         return prev;
 
-      setLastChanged({ letter: key, timestamp: Date.now() });
       return { ...prev, [key]: { ...current, color: newColor } };
     });
   };

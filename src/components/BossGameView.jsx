@@ -29,6 +29,26 @@ export default function BossGameView({
 
   // Calculates global pause state to send to children components to freeze input
   const isPaused = Boolean(isBombTimerPaused || isRapidleTimerPaused);
+  
+  useEffect(() => {
+    if (isPaused || multiWordCount <= 1) return;
+
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const keyNum = parseInt(e.key, 10);
+
+      // If pressing a valid board number (1-2 or 1-4)
+      if (keyNum >= 1 && keyNum <= multiWordCount) {
+        e.preventDefault();
+        const targetIdx = keyNum - 1;
+        // Toggle logic: If already focused on this board, revert to "all"
+        setBossKeyboardView((prev) => (prev === targetIdx ? "all" : targetIdx));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isPaused, multiWordCount, setBossKeyboardView]);
 
   const [wordle500State, setWordle500State] = useState(() => {
     try {
