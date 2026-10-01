@@ -120,6 +120,24 @@ export default function useSurvivalGame(mode) {
     return "playing";
   });
 
+  const [shapedleTimeElapsed, setShapedleTimeElapsed] = useSecureState(
+    `${mode}-shapedle-time`,
+    0,
+  );
+
+  useEffect(() => {
+    if (
+      pool.isBossGame &&
+      pool.bossCategory === "shape" &&
+      gameState === "playing"
+    ) {
+      const interval = setInterval(() => {
+        setShapedleTimeElapsed((prev) => prev + 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [pool.isBossGame, pool.bossCategory, gameState]);
+
   const triggerBombTimeUp = useCallback(
     (onGameOverCallback) => {
       if (gameState !== "playing") return;
@@ -405,6 +423,7 @@ export default function useSurvivalGame(mode) {
     setLastChanged({ letter: null, timestamp: 0 });
     setGuesses([]);
     setTurn(0);
+    setShapedleTimeElapsed(0);
     setGameState("playing");
     setShapeMistakes(2);
     setBombTimeLeft(60);
@@ -482,5 +501,6 @@ export default function useSurvivalGame(mode) {
     totalBossTypes: pool.totalBossTypes,
     playedMiniBossTypes: pool.playedMiniBossTypes,
     totalMiniBossTypes: pool.totalMiniBossTypes,
+    shapedleTimeElapsed,
   };
 }

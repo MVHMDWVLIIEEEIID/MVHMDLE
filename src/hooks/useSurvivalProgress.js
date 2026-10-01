@@ -19,11 +19,19 @@ const DEFAULT_RUN_STATS = {
   wordsTyped: 0,
   highestStreak: 0,
   highestCash: 2500,
+  wordFrequencies: {},
+  hardestWord: { word: "N/A", guesses: 0 },
+  totalGuesses: 0,
+  bannedWordsCount: 0,
+  bossesBeaten: 0,
+  miniBossesBeaten: 0,
+  fastestBombedle: 9999,
+  mostRapidleWords: 0,
+  longestShapedle: 0,
+  hintsPurchased: 0,
 };
-
 export default function useSurvivalProgress(mode) {
   const MAX_HEARTS = 5;
-
   const STREAK_KEY = `wordle-streak-${mode}`;
   const HEARTS_KEY = `wordle-hearts-${mode}`;
   const CURRENCY_KEY = `wordle-shop-currency`;
@@ -133,6 +141,69 @@ export default function useSurvivalProgress(mode) {
     }));
   };
 
+  const trackGuess = (word) => {
+    setRunStats((prev) => {
+      const current = { ...DEFAULT_RUN_STATS, ...(prev || {}) };
+      const freqs = { ...(current.wordFrequencies || {}) };
+      freqs[word] = (freqs[word] || 0) + 1;
+      return { ...current, wordFrequencies: freqs };
+    });
+  };
+
+  const updateHardestWord = (word, guesses) => {
+    setRunStats((prev) => {
+      const current = { ...DEFAULT_RUN_STATS, ...(prev || {}) };
+      const currentHardest = current.hardestWord || { word: "N/A", guesses: 0 };
+      if (guesses > currentHardest.guesses) {
+        return { ...current, hardestWord: { word, guesses } };
+      }
+      return current;
+    });
+  };
+  const addGuessStat = () => {
+    setRunStats((prev) => ({
+      ...DEFAULT_RUN_STATS,
+      ...(prev || {}),
+      totalGuesses: (prev?.totalGuesses || 0) + 1,
+    }));
+  };
+
+  const recordBossWinStat = (isMiniBoss) => {
+    setRunStats((prev) => {
+      const p = { ...DEFAULT_RUN_STATS, ...(prev || {}) };
+      if (isMiniBoss) return { ...p, miniBossesBeaten: p.miniBossesBeaten + 1 };
+      return { ...p, bossesBeaten: p.bossesBeaten + 1 };
+    });
+  };
+
+  const recordSpecialBossStat = (category, value) => {
+    setRunStats((prev) => {
+      const p = { ...DEFAULT_RUN_STATS, ...(prev || {}) };
+      if (category === "bomb") {
+        const currentFastest = !p.fastestBombedle ? 9999 : p.fastestBombedle;
+        return { ...p, fastestBombedle: Math.min(currentFastest, value) };
+      }
+      if (category === "rapidle")
+        return {
+          ...p,
+          mostRapidleWords: Math.max(p.mostRapidleWords || 0, value),
+        };
+      if (category === "shape")
+        return {
+          ...p,
+          longestShapedle: Math.max(p.longestShapedle || 0, value),
+        };
+      return p;
+    });
+  };
+  const addHintPurchaseStat = () => {
+    setRunStats((prev) => ({
+      ...DEFAULT_RUN_STATS,
+      ...(prev || {}),
+      hintsPurchased: (prev?.hintsPurchased || 0) + 1,
+    }));
+  };
+
   const resetRoundInfo = () => {
     setHintsUsedInRound({});
     setLastReward(null);
@@ -183,6 +254,7 @@ export default function useSurvivalProgress(mode) {
     boss500Count,
     setBoss500Count,
     runStats,
+    setRunStats,
     addWordsTyped,
     addWin,
     addLoss,
@@ -198,5 +270,11 @@ export default function useSurvivalProgress(mode) {
     setHasSeenRapidleWarning,
     seenBossGuides,
     setSeenBossGuides,
+    trackGuess,
+    updateHardestWord,
+    addGuessStat,
+    recordBossWinStat,
+    recordSpecialBossStat,
+    addHintPurchaseStat,
   };
 }

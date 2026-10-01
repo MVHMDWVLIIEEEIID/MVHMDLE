@@ -111,6 +111,21 @@ export default function useSurvivalActions({
           progress.setHearts(rewards.newHearts);
         }
 
+        if (!game.isBossGame && !game.isMiniBossGame && game.targetWord) {
+          progress.updateHardestWord(game.targetWord, guessCount);
+        }
+        if (game.isBossGame || game.isMiniBossGame) {
+          progress.recordBossWinStat(game.isMiniBossGame);
+
+          if (game.bossCategory === "bomb") {
+            progress.recordSpecialBossStat("bomb", 60 - game.bombTimeLeft);
+          } else if (game.bossCategory === "rapidle") {
+            progress.recordSpecialBossStat("rapidle", guessCount);
+          } else if (game.bossCategory === "shape") {
+            progress.recordSpecialBossStat("shape", game.shapedleTimeElapsed);
+          }
+        }
+
         progress.setCurrency((prev) => prev + rewards.grandTotal);
         progress.setLastReward({
           total: rewards.grandTotal,
@@ -211,7 +226,8 @@ export default function useSurvivalActions({
         [name]: (prev[name] || 0) + 1,
       }));
 
-      if (name !== "Heart") {
+      if (name !== "Beat The Game") {
+        progress.addHintPurchaseStat(); // <-- ADDED: Track hint purchase
         progress.setHintHistory((prev) => [
           ...prev,
           { name, msg: logMsg, spent: cost, time: Date.now() },
@@ -219,6 +235,11 @@ export default function useSurvivalActions({
       }
 
       if (name === "Beat The Game") {
+        // <-- ADDED: Lock in final banned words count upon extraction
+        progress.setRunStats((prev) => ({
+          ...prev,
+          bannedWordsCount: game.bannedOpeningWords.length,
+        }));
         progress.setRunCompleted(true);
         setIsModalOpen([false, "playing"]);
       }

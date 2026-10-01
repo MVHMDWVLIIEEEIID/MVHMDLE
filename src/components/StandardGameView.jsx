@@ -55,7 +55,11 @@ export default function StandardGameView({
                 },
                 onDuplicateWord,
               );
-              if (accepted) progress.addWordsTyped(1);
+              if (accepted) {
+                progress.addWordsTyped(1);
+                progress.trackGuess(g); // <--- ADD THIS LINE
+                progress.addGuessStat(); // <--- ADD THIS TO ALL ONSUBMITS
+              }
               return accepted;
             }}
             onGameOver={handleGameOver}
