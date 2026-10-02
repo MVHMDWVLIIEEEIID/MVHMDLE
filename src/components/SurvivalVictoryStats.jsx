@@ -53,16 +53,16 @@ export default function SurvivalVictoryStats({
   };
 
   const getAccuracyColor = (val) => {
-    if (val >= 55) return "text-gameGreen";
-    if (val >= 25) return "text-gameYellow";
+    if (val >= 40) return "text-gameYellow";
+    if (val >= 25) return "text-gameGreen";
     return "text-gameRed";
   };
 
   const getStreakColor = (val) => {
-    if (val >= 10) return "text-gameYellow";
-    if (val >= 7) return "text-gameGreen";
-    if (val >= 4) return "text-gameBlue";
-    if (val >= 2) return "text-white";
+    if (val >= 15) return "text-gameYellow";
+    if (val >= 12) return "text-gameGreen";
+    if (val >= 8) return "text-gameBlue";
+    if (val >= 5) return "text-white";
     return "text-gameRed";
   };
 
